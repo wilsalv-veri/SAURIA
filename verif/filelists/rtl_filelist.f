@@ -1,8 +1,8 @@
 ${PULP_DIR}/common_cells/src/ecc_pkg.sv
 ${PULP_DIR}/common_cells/src/cf_math_pkg.sv
 ${PULP_DIR}/fpnew/src/fpnew_pkg.sv
-${PULP_DIR}/common_cells/include/common_cells/assertions.svh
-${PULP_DIR}/common_cells/include/common_cells/registers.svh
++incdir+${PULP_DIR}/common_cells/include/
+
 ${PULP_DIR}/fpnew/src/fpnew_classifier.sv
 ${PULP_DIR}/fpnew/src/fpnew_rounding.sv
 ${PULP_DIR}/common_cells/src/binary_to_gray.sv
@@ -59,8 +59,10 @@ ${PULP_DIR}/common_cells/src/rstgen.sv
 ${PULP_DIR}/common_cells/src/unread.sv
 ${PULP_DIR}/common_cells/src/shift_reg.sv
 ${PULP_DIR}/common_cells/src/cdc_fifo_2phase.sv
-${PULP_DIR}/axi/include/axi/typedef.svh
-${PULP_DIR}/axi/include/axi/assign.svh
+
++incdir+${PULP_DIR}/axi/include/
+
+${PULP_DIR}/axi/src/axi_pkg.sv
 ${PULP_DIR}/axi/src/axi_serializer.sv
 ${PULP_DIR}/axi/src/axi_err_slv.sv
 ${PULP_DIR}/axi/src/axi_demux.sv
@@ -93,6 +95,7 @@ ${PULP_DIR}/axi/src/axi_id_remap.sv
 ${PULP_DIR}/axi/src/axi_id_serialize.sv
 ${PULP_DIR}/axi/src/axi_lite_to_apb.sv
 ${RTL_DIR}/src/sauria_addr_pkg.sv
+${RTL_DIR}/src/sauria_pkg.sv
 ${RTL_DIR}/src/df_controller/df_controller_pkg.sv
 ${RTL_DIR}/src/df_controller/interfaces.sv
 ${RTL_DIR}/src/df_controller/acc_ready_queue.sv

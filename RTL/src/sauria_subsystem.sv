@@ -34,7 +34,7 @@ module sauria_subsystem #(
     parameter CFG_AXI_ADDR_WIDTH    = 32,       // Configuration AXI4-Lite Slave address width
     parameter DATA_AXI_DATA_WIDTH   = 1024,     // Data AXI4 Slave data width
     parameter DATA_AXI_ADDR_WIDTH   = 32,       // Data AXI4 Slave address width
-    parameter DATA_AXI_ID_WIDTH      = 2,       // Data AXI4 Slave ID width
+    parameter DATA_AXI_ID_WIDTH     = 2,       // Data AXI4 Slave ID width
     
     localparam  BYTE = 8,
     localparam  CFG_AXI_BYTE_NUM = CFG_AXI_DATA_WIDTH/BYTE,
