@@ -1,55 +1,38 @@
-import axi_pkg::*;
-import sauria_pkg::*;
-import sauria_addr_pkg::*;
 import sauria_tb_top_pkg::*;
+import uvm_pkg::*;
 
 module SAURIA_tb_top;
     
-    SAURIA_ss_ifc          sa_ss_ifc();
-    virtual SAURIA_ss_ifc  sa_ss_ifc_v;
+    sauria_subsystem_ifc  sauria_subsystem_if();
+    sauria_axi4_lite_ifc  axi4_lite_cfg_if();
+    sauria_axi4_ifc       axi4_mem_if();
 
-    `include "sauria_ss_interface_connections.sv"
+    virtual sauria_subsystem_ifc  sauria_subsystem_if_v;
+
+    `include "sauria_subsystem_ifc_connections.sv"
    
-    always #SAURIA_CLK_HALF_PERIOD sa_ss_ifc.i_sauria_clk = ~sa_ss_ifc.i_sauria_clk;
-    always #SYSTEM_CLK_HALF_PERIOD sa_ss_ifc.i_system_clk = ~sa_ss_ifc.i_system_clk;
+    always #SAURIA_CLK_HALF_PERIOD sauria_subsystem_if.i_sauria_clk = ~sauria_subsystem_if.i_sauria_clk;
+    always #SYSTEM_CLK_HALF_PERIOD sauria_subsystem_if.i_system_clk = ~sauria_subsystem_if.i_system_clk;
 
     initial begin
-        sa_ss_ifc.i_sauria_clk = 0;
-        sa_ss_ifc.i_system_clk = 0;
-
-        sa_ss_ifc.i_sauria_rstn = 0;
-        sa_ss_ifc.i_system_rstn = 0;
-
-        sa_ss_ifc_v = sa_ss_ifc;
-        toggle_reset(sa_ss_ifc_v);
+        sauria_subsystem_if_v = sauria_subsystem_if;
+        init_sauria_subsystem_if(sauria_subsystem_if_v);
+        toggle_reset(sauria_subsystem_if_v);
     end 
 
-    sauria_subsystem sauria_ss(
-    // SAURIA Clk & RST @500M
-	//.i_sauria_clk (sauria_clk),
-	//.i_sauria_rstn (sauria_reset),
-    // System Clk & RST @1500M
-	//.i_system_clk (system_clk),
-	//.i_system_rstn (system_reset),
+    initial begin
+        uvm_config_db #(virtual sauria_axi4_lite_ifc)::set(null, "*", "sauria_axi4_lite_cfg_if", axi4_lite_cfg_if);
+        uvm_config_db #(virtual sauria_axi4_ifc)::set(null, "*", "sauria_axi4_mem_if",           axi4_mem_if);
+    end
 
-    .*
-    // Configuration AXI4-Lite SLAVE interface
-   
-    // Data AXI4 MASTER interface
-    
-    // Control FSM Interrupt
+    sauria_subsystem sauria_ss(.*);
 
-    // DMA Interrupt
-    
-    // SAURIA Interrupt
-);
-
-initial begin
-    $display("TB_TOP running at time %0t", $time);     
-    repeat(100) @ (posedge i_sauria_clk);
-    $dumpvars(0, SAURIA_tb_top);
-    $display("TB_TOP finished at time %0t", $time);
-    $finish();
-end
+    initial begin
+        $display("TB_TOP running at time %0t", $time);     
+        run_test();
+        $dumpvars(0, SAURIA_tb_top);
+        $display("TB_TOP finished at time %0t", $time);
+        $finish();
+    end
 
 endmodule

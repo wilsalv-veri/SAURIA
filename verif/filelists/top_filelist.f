@@ -5,7 +5,9 @@
 // files that depend on it
 $UVM_HOME/src/uvm_pkg.sv
 
+
 //Reference other filelists
 -f $SAURIA/verif/filelists/hw_version_filelist.f
 -f $SAURIA/verif/filelists/rtl_filelist.f
 -f $SAURIA/verif/filelists/tb_filelist.f
+-f $SAURIA/verif/filelists/tests_filelist.f

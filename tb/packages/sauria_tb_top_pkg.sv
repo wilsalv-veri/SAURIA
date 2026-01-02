@@ -1,25 +1,7 @@
 `ifndef SAURIA_TB_TOP_PKG_VH
 `define SAURIA_TB_TOP_PKG_VH
 
-import axi_pkg::*;
-import sauria_pkg::*;
-import sauria_addr_pkg::*;
-
 package sauria_tb_top_pkg;
-
-    
-    parameter SAURIA_CLK_HALF_PERIOD = 1000; // in picoseconds (based on timescale)
-    parameter SYSTEM_CLK_HALF_PERIOD = 333;
-    
-    parameter CFG_AXI_DATA_WIDTH    = 32;       // Configuration AXI4-Lite Slave data width
-    parameter CFG_AXI_ADDR_WIDTH    = 32;       // Configuration AXI4-Lite Slave address width
-    parameter DATA_AXI_DATA_WIDTH   = 1024;     // Data AXI4 Slave data width
-    parameter DATA_AXI_ADDR_WIDTH   = 32;       // Data AXI4 Slave address width
-    parameter DATA_AXI_ID_WIDTH     = 2;       // Data AXI4 Slave ID width
-    
-    localparam  BYTE = 8;
-    localparam  CFG_AXI_BYTE_NUM = CFG_AXI_DATA_WIDTH/BYTE;
-    localparam  DATA_AXI_BYTE_NUM = DATA_AXI_DATA_WIDTH/BYTE;
 
     logic                               i_sauria_clk;
     logic                               i_system_clk;
@@ -109,13 +91,27 @@ package sauria_tb_top_pkg;
     logic                               o_sauriaintr;           // SAURIA core completion interrupt
 
 
-    task toggle_reset(virtual SAURIA_ss_ifc sa_ss_if);
-        @ (posedge sa_ss_if.i_sauria_clk);
-        sa_ss_if.i_sauria_rstn = 1;
-        sa_ss_if.i_system_rstn = 1;
-        @ (posedge sa_ss_if.i_sauria_clk);
-        sa_ss_if.i_sauria_rstn = 0;
-        sa_ss_if.i_system_rstn = 0;
+    task init_sauria_subsystem_if(virtual sauria_subsystem_ifc sauria_subsystem_if);
+        sauria_subsystem_if.i_sauria_clk = 0;
+        sauria_subsystem_if.i_system_clk = 0;
+        
+        sauria_subsystem_if.i_sauria_rstn = 0;
+        sauria_subsystem_if.i_system_rstn = 0;
+    endtask
+
+    task toggle_reset(virtual sauria_subsystem_ifc sauria_subsystem_if);
+        fork 
+            toggle_sauria_reset(sauria_subsystem_if);
+            toggle_system_reset(sauria_subsystem_if);
+        join
+    endtask
+
+    task toggle_sauria_reset(virtual sauria_subsystem_ifc sauria_subsystem_if);
+        repeat(2) @ (posedge sauria_subsystem_if.i_sauria_clk) sauria_subsystem_if.i_sauria_rstn = ~ sauria_subsystem_if.i_sauria_rstn;
+    endtask
+
+    task toggle_system_reset(virtual sauria_subsystem_ifc sauria_subsystem_if);
+        repeat(2) @ (posedge sauria_subsystem_if.i_system_clk) sauria_subsystem_if.i_system_rstn = ~ sauria_subsystem_if.i_system_rstn;
     endtask
 
 endpackage

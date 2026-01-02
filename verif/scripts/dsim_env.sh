@@ -26,6 +26,8 @@ function compile_sauria(){
     
     local OUTPUT_DIR="$SAURIA/output"
 
+    rm -rf "$OUTPUT_DIR"
+
     # Ensure the output directory exists
     mkdir -p "$OUTPUT_DIR"
 
@@ -52,9 +54,7 @@ function run_sauria(){
     mkdir -p $SAURIA/test_runs
 
     #Create directory for current test run
-    #FIXME: wilsalv :Add back once UVM tests have been enabled
-    #make_incremental_dir $SAURIA/test_runs/"$1"
-    make_incremental_dir $SAURIA/test_runs/top_test
+    make_incremental_dir $SAURIA/test_runs/"$1"
     
     local DIR_NAME=$(basename "$LAST_CREATED_DIR")
     mkdir $LAST_CREATED_DIR/cov_reports
