@@ -2,6 +2,7 @@
 
     typedef enum {AXI4_LITE, AXI4} sauria_axi_type_t;
     typedef enum {RD_ADDR, RD_DATA, WR_ADDR, WR_DATA,WR_RSP} sauria_axi_ch_type_t;
+    typedef enum {RD_TXN, WR_TXN} sauria_axi_txn_type_t;
 
     typedef bit [CFG_AXI_ADDR_WIDTH-1:0]  sauria_axi4_lite_addr_t;
   
@@ -22,7 +23,7 @@
     /// AXI Transaction Cacheability Type.
     typedef bit [3:0] sauria_axi_cache_t;
     /// AXI Transaction Protection Type.
-    typedef bit [2:0] sauria_axi_prot_t;
+    //typedef bit [2:0] sauria_axi_prot_t;
     /// AXI Transaction Quality of Service Type.
     typedef bit [3:0] sauria_axi_qos_t;
     /// AXI Transaction Region Type.
@@ -35,6 +36,17 @@
     typedef bit [5:0] sauria_axi_atop_t; // atomic operations
     /// AXI5 Non-Secure Address Identifier.
     typedef bit [3:0] sauria_axi_nsaid_t;
+
+    typedef enum {DATA=0, INSTR=1} sauria_data_type_t;
+    typedef enum {OKAY=sauria_axi_resp_t'('h0), EXOKAY=sauria_axi_resp_t'('h1), 
+                SLVERR=sauria_axi_resp_t'('h2), DECERR=sauria_axi_resp_t'('h3)} 
+                sauria_axi_resp_type_t;
+    
+    typedef struct packed{
+        bit data_type_access;
+        bit secure_access;
+        bit priviliged_access;
+    } sauria_axi_prot_t;
 
     //AXI4-LITE TYPES
     typedef struct packed{

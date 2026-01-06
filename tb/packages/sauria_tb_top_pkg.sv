@@ -95,8 +95,8 @@ package sauria_tb_top_pkg;
         sauria_subsystem_if.i_sauria_clk = 0;
         sauria_subsystem_if.i_system_clk = 0;
         
-        sauria_subsystem_if.i_sauria_rstn = 0;
-        sauria_subsystem_if.i_system_rstn = 0;
+        sauria_subsystem_if.i_sauria_rstn = 1;
+        sauria_subsystem_if.i_system_rstn = 1;
     endtask
 
     task toggle_reset(virtual sauria_subsystem_ifc sauria_subsystem_if);

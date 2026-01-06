@@ -17,19 +17,25 @@ package sauria_common_pkg;
     localparam  CFG_AXI_BYTE_NUM     = CFG_AXI_DATA_WIDTH/BYTE;
     localparam  DATA_AXI_BYTE_NUM    = DATA_AXI_DATA_WIDTH/BYTE;
 
+    localparam N_SAURIA_REGS         = sauria_pkg::TOTAL_REGS_CON + sauria_pkg::TOTAL_REGS_ACT + sauria_pkg::TOTAL_REGS_WEI + sauria_pkg::TOTAL_REGS_OUT;
+    localparam N_SAURIA_CFG_WRITES   = 2 + N_SAURIA_REGS;
+    localparam SEQ_CFG_WRITES        = 2 + N_SAURIA_CFG_WRITES;
+
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
+    `include "sauria_tb_defines.svh"
     `include "sauria_tb_types.svh"
     
     `include "sauria_axi_base_seq_items.sv"
-
+    
     //AXI4_LITE_SEQ_ITEMS
     `include "sauria_axi4_lite_rd_addr_seq_item.sv"
     `include "sauria_axi4_lite_rd_data_seq_item.sv"
     `include "sauria_axi4_lite_wr_addr_seq_item.sv"
     `include "sauria_axi4_lite_wr_data_seq_item.sv"
     `include "sauria_axi4_lite_wr_rsp_seq_item.sv"
+    `include "sauria_axi4_lite_wr_txn_seq_item.sv"
 
     //AXI4_SEQ_ITEMS
     `include "sauria_axi4_rd_addr_seq_item.sv"
@@ -37,6 +43,8 @@ package sauria_common_pkg;
     `include "sauria_axi4_wr_addr_seq_item.sv"
     `include "sauria_axi4_wr_data_seq_item.sv"
     `include "sauria_axi4_wr_rsp_seq_item.sv"
+
+    `include "sauria_cfg_cr_queue.sv"
 
     `include "sauria_axi4_lite_driver.sv"
     `include "sauria_axi4_lite_agent.sv"

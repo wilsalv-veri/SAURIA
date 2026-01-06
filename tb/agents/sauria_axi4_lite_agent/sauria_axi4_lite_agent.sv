@@ -4,7 +4,7 @@ class sauria_axi4_lite_agent extends uvm_agent;
 
     sauria_axi4_lite_driver                         axi4_lite_drv;
     //sauria_axi4_lite_monitor                      axi4_lite_mon;
-    uvm_sequencer #(sauria_axi4_lite_base_seq_item) axi4_lite_seqr;
+    uvm_sequencer #(sauria_axi_txn_base_seq_item)   axi4_lite_seqr;
 
     function new(string name="sauria_axi4_lite_agent", uvm_component parent=null);
         super.new(name, parent);
@@ -15,7 +15,7 @@ class sauria_axi4_lite_agent extends uvm_agent;
 
         axi4_lite_drv  = sauria_axi4_lite_driver::type_id::create("sauria_axi4_lite_driver", this);
         //axi4_lite_mon  = sauria_axi4_lite_monitor::type_id::create("sauria_axi4_lite_monitor", this);
-        axi4_lite_seqr = uvm_sequencer #(sauria_axi4_lite_base_seq_item)::type_id::create("sauria_axi4_lite_seqr", this);
+        axi4_lite_seqr = uvm_sequencer #(sauria_axi_txn_base_seq_item)::type_id::create("sauria_axi4_lite_seqr", this);
     endfunction
 
     virtual function void connect_phase(uvm_phase phase);
