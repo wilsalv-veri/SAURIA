@@ -1,6 +1,6 @@
 class sauria_axi4_wr_rsp_seq_item extends sauria_axi4_base_seq_item;
 
-    sauria_axi4_data_id_t bid;
+    sauria_axi4_id_t      bid;
     sauria_axi_resp_t     bresp;
     bit                   bvalid;
     bit                   bready;

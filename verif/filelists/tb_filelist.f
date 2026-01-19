@@ -49,8 +49,34 @@ $SAURIA/tb/interfaces/sauria_axi_ifcs.sv
 //Include Files under $SAURIA/tb/seqs
 +incdir+$SAURIA/tb/seqs
 
+//Include Files under $SAURIA/tb/seqs/core_weights_cfg_seqs
++incdir+$SAURIA/tb/seqs/core_weights_cfg_seqs
+
+
+//Include Files under $SAURIA/tb/seqs/df_controller_cfg_seqs
++incdir+$SAURIA/tb/seqs/df_controller_cfg_seqs
+
+$SAURIA/tb/seqs/df_controller_cfg_seqs/sauria_stand_alone_OFF_df_controller_cfg_seq.sv
+
+//Include Files under $SAURIA/tb/seqs/dma_controller_cfg_seqs
++incdir+$SAURIA/tb/seqs/dma_controller_cfg_seqs
+
+$SAURIA/tb/seqs/dma_controller_cfg_seqs/sauria_2tile_dma_controller_cfg_seq.sv
+
+//Include Files under $SAURIA/tb/seqs/core_psums_cfg_seqs
++incdir+$SAURIA/tb/seqs/core_psums_cfg_seqs
+
+
+//Include Files under $SAURIA/tb/seqs/core_ifmaps_cfg_seqs
++incdir+$SAURIA/tb/seqs/core_ifmaps_cfg_seqs
+
+
 //Include Files under $SAURIA/tb/seqs/base_seqs
 +incdir+$SAURIA/tb/seqs/base_seqs
+
+
+//Include Files under $SAURIA/tb/seqs/core_main_controller_cfg_seqs
++incdir+$SAURIA/tb/seqs/core_main_controller_cfg_seqs
 
 
 $SAURIA/tb/tb_top.sv

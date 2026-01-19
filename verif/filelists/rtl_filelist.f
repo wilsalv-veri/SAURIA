@@ -20,7 +20,7 @@ ${PULP_DIR}/common_cells/src/ecc_decode.sv
 ${PULP_DIR}/common_cells/src/stream_fork.sv
 ${PULP_DIR}/common_cells/src/lzc.sv
 ${PULP_DIR}/common_cells/src/stream_filter.sv
-${PULP_DIR}/common_cells/src/fifo_v3.sv
+//${PULP_DIR}/common_cells/src/fifo_v3.sv
 ${PULP_DIR}/common_cells/src/popcount.sv
 ${PULP_DIR}/common_cells/src/edge_propagator_tx.sv
 ${PULP_DIR}/common_cells/src/edge_detect.sv
@@ -47,7 +47,7 @@ ${PULP_DIR}/common_cells/src/gray_to_binary.sv
 ${PULP_DIR}/common_cells/src/stream_intf.sv
 ${PULP_DIR}/common_cells/src/sub_per_hash.sv
 ${PULP_DIR}/common_cells/src/stream_register.sv
-${PULP_DIR}/common_cells/src/rr_arb_tree.sv
+//${PULP_DIR}/common_cells/src/rr_arb_tree.sv
 ${PULP_DIR}/common_cells/src/cdc_2phase.sv
 ${PULP_DIR}/common_cells/src/counter.sv
 ${PULP_DIR}/common_cells/src/spill_register_flushable.sv
@@ -65,7 +65,14 @@ ${PULP_DIR}/common_cells/src/cdc_fifo_2phase.sv
 ${PULP_DIR}/axi/src/axi_pkg.sv
 ${PULP_DIR}/axi/src/axi_serializer.sv
 ${PULP_DIR}/axi/src/axi_err_slv.sv
-${PULP_DIR}/axi/src/axi_demux.sv
+
+//${PULP_DIR}/axi/src/axi_demux.sv
+//Use Sauria version of axi_demux and axi_demux_simple
++incdir+${RTL_DIR}/src/dma/redma/test/axi
+${RTL_DIR}/src/dma/redma/test/axi/fifo_v3.sv
+${RTL_DIR}/src/dma/redma/test/axi/rr_arb_tree.sv
+${RTL_DIR}/src/dma/redma/test/axi/axi_demux.sv
+
 ${PULP_DIR}/axi/src/axi_demux_simple.sv
 ${PULP_DIR}/axi/src/axi_cut.sv
 ${PULP_DIR}/axi/src/axi_lite_join.sv

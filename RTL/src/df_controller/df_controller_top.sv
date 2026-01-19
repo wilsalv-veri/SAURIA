@@ -36,7 +36,7 @@ module df_controller_top #(
     AXI_LITE.Master     dma_mst,
     output              control_interrput_out
 );
-
+    //FIXME: wilsalv ? Doc shows IFMAP feeder has 8 CRs, code shows 9
     // Total number of registers (14 for controller + SAURIA registers)
     localparam N_REGS = 22 + sauria_pkg::TOTAL_REGS_CON + sauria_pkg::TOTAL_REGS_ACT + sauria_pkg::TOTAL_REGS_WEI + sauria_pkg::TOTAL_REGS_OUT;
     localparam N_REGS_BITS = $clog2(N_REGS);

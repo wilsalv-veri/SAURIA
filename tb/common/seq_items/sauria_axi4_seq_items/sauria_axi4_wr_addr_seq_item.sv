@@ -1,7 +1,7 @@
 class sauria_axi4_wr_addr_seq_item extends sauria_axi4_base_seq_item;
 
-    sauria_axi4_data_id_t   awid;
-    sauria_axi4_data_addr_t awaddr;
+    sauria_axi4_id_t        awid;
+    sauria_axi4_addr_t      awaddr;
     sauria_axi_prot_t       awprot;
     sauria_axi_burst_t      awburst;
     sauria_axi_len_t        awlen;

@@ -304,4 +304,8 @@ assign dma_align0_resp = sauria_axi_resp;
 assign mem_axi_req = dma_align1_req;
 assign dma_align1_resp = mem_axi_resp;
 
+//FIXME: wilsalv: Atop needs to be set to 0 
+assign dma_req.aw.atop = 6'b0;
+
+
 endmodule

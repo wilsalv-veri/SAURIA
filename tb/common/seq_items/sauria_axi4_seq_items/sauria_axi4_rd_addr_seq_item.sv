@@ -1,7 +1,7 @@
 class sauria_axi4_rd_addr_seq_item extends sauria_axi4_base_seq_item;
 
-    sauria_axi4_data_id_t   arid;
-    sauria_axi4_data_addr_t araddr;
+    sauria_axi4_id_t        arid;
+    sauria_axi4_addr_t      araddr;
     sauria_axi_prot_t       arprot;
     sauria_axi_burst_t      arburst;
     sauria_axi_len_t        arlen;

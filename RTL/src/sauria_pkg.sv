@@ -106,7 +106,12 @@ package sauria_pkg;
 
     // Register count
     localparam int TOTAL_REGS_CON = $ceil(sauria_pkg::TOTAL_BITS_CON/32);
-    localparam int TOTAL_REGS_ACT = $ceil(sauria_pkg::TOTAL_BITS_ACT/32);
+    
+    //FIXME: wilsalv
+    //localparam int TOTAL_REGS_ACT = $ceil(sauria_pkg::TOTAL_BITS_ACT/32);
+    localparam int TOTAL_REGS_ACT = $ceil(sauria_pkg::TOTAL_BITS_ACT/32) - 1;
+   
+
     localparam int TOTAL_REGS_WEI = $ceil(sauria_pkg::TOTAL_BITS_WEI/32);
     localparam int TOTAL_REGS_OUT = $ceil(sauria_pkg::TOTAL_BITS_OUT/32);
 
