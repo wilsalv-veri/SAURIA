@@ -20,8 +20,8 @@ class sauria_axi4_lite_cfg_seq_lib extends uvm_sequence_library #(sauria_axi_txn
     endtask
 
     virtual function void add_sauria_cfg_seqs();
-        add_df_controller_cfg_seq();
         add_dma_controller_cfg_sequence();
+        add_df_controller_cfg_seq();
         add_core_main_controller_cfg_sequence();
         add_core_ifmaps_cfg_sequence();
         add_core_weights_cfg_sequence();

@@ -44,10 +44,11 @@ def addLinesUnderCurrentDirectory(cwd_path,include_files):
             sort_by_match(dir_entries, "seqs")
             sort_by_match(dir_entries, "scoreboards")
             sort_by_match(dir_entries, "agents")
-            sort_by_match(dir_entries, "memory_model")
             sort_by_match(dir_entries, "interfaces")
+            sort_by_match(dir_entries, "golden_models")
             sort_by_match(dir_entries, "common")
             sort_by_match(dir_entries, "packages")
+           
         elif cwd == 'packages':
             sort_by_match(file_entries, "common_pkg")      
         elif cwd == 'seqs':
@@ -86,9 +87,9 @@ def addLinesUnderCurrentDirectory(cwd_path,include_files):
             skip_list = []
             skip_list.append(entry[0] == ".") #hidden files
             skip_list.append(format not in supported_formats) #unsupported_format
-            skip_list.append((cwd == 'common') and (not directory) and entry != "sauria_imports.sv") #common_pkg_files
+            skip_list.append((cwd == 'common') and (not directory) and (entry != "sauria_imports.sv") and (entry != "sauria_env.sv")) #common_pkg_files
             skip_list.append(cwd == 'base_seqs')
-            skip_list.append(cwd == 'scoreboards')
+            #skip_list.append(cwd == 'scoreboards')
             skip_list.append(cwd == 'interface_connections')
             skip_list.append(cwd == 'transaction_items')
             skip_list.append('seq_items' in cwd and not directory)

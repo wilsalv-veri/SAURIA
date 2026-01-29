@@ -2,6 +2,8 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
 
     `uvm_object_utils(sauria_axi4_lite_core_ifmaps_cfg_base_seq)
 
+    sauria_computation_params    computation_params;
+
     rand sauria_axi4_lite_data_t ifmaps_x_lim;
     rand sauria_axi4_lite_data_t ifmaps_x_step;
     rand sauria_axi4_lite_data_t ifmaps_y_lim;
@@ -82,6 +84,11 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
             `sauria_error(message_id, "Failed to randomize sauria_axi4_lite_core_ifmaps_cfg_base_seq")
     endfunction
 
+    virtual task body();
+        get_ifmaps_params();
+        super.body();
+    endtask
+
     virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
         add_core_ifmaps_cfg_CRs(cfg_cr_idx);
     endfunction
@@ -129,6 +136,28 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
         cfg_cr_queue[cfg_cr_idx] = axi4_lite_wr_txn_item;
 
     endfunction
+
+    virtual task get_ifmaps_params();
+
+        if (!uvm_config_db #(sauria_computation_params)::get(m_sequencer, "","computation_params", computation_params))
+            `sauria_error(message_id, "Failed to get access to computation params")
+        
+        wait(computation_params.shared);
+       
+        ifmaps_x_lim  = computation_params.ifmaps_X;       
+        ifmaps_y_lim  = computation_params.ifmaps_Y;         
+        ifmaps_ch_lim = computation_params.ifmaps_C;         
+
+        //ifmaps_x_step = computation_params.ifmap_x_step;
+        ifmaps_y_step = computation_params.ifmaps_y_step;
+        ifmaps_ch_step = computation_params.ifmaps_c_step;
+
+        ifmaps_tile_x_lim = computation_params.tile_ifmaps_X;
+        ifmaps_tile_y_lim = computation_params.tile_ifmaps_Y;
+    
+        ifmaps_tile_x_step = computation_params.tile_ifmaps_x_step;
+        ifmaps_tile_y_step = computation_params.tile_ifmaps_y_step;
+    endtask
 
     virtual function void set_ifmaps_x_lim();
         set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));

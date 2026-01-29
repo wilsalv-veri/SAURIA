@@ -13,6 +13,8 @@ package sauria_common_pkg;
     parameter DATA_AXI_ADDR_WIDTH    = 32;       // Data AXI4 Slave address width
     parameter DATA_AXI_ID_WIDTH      = 2;       // Data AXI4 Slave ID width
     
+    parameter MEM_BASE_OFFSET        = sauria_addr_pkg::DMA_OFFSET;
+
     parameter  BYTE = 8;
     parameter  CFG_AXI_BYTE_NUM     = CFG_AXI_DATA_WIDTH/BYTE;
     parameter  DATA_AXI_BYTE_NUM    = DATA_AXI_DATA_WIDTH/BYTE;
@@ -76,9 +78,8 @@ package sauria_common_pkg;
     `include "sauria_axi4_lite_agent.sv"
    
     `include "sauria_axi4_driver.sv"
+    `include "sauria_axi4_monitor.sv"
     `include "sauria_axi4_agent.sv"
-
-    `include "sauria_env.sv"
 
     `include "sauria_axi4_lite_cfg_base_seq.sv"
     `include "sauria_axi4_lite_df_controller_cfg_base_seq.sv"

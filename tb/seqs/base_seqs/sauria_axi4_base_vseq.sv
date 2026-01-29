@@ -17,22 +17,12 @@ class sauria_axi4_base_vseq extends uvm_sequence;
     endfunction
 
     task body();
-        
-      
-        //axi4_mem_seq.get_computation_params();
 
         if(!$cast(vseqr, m_sequencer))
             `sauria_error(message_id, "Failed to cast m_sequencer into sauria_axi_vseqr")
         else
             `sauria_info(message_id, "Casted m_sequencer successfully")
-
-        //    //axi4_mem_seq.receive_params.connect(axi4_lite_cfg_seq.share_params);
-        //    axi4_lite_cfg_seq_lib.vseqr = vseqr;
-        //    axi4_mem_seq.vseqr          = vseqr;
-        //
-        //end
-        //else  `sauria_error(message_id, "Failed to cast m_sequencer into sauria_axi_vseqr")
-        
+    
         fork
             axi4_lite_cfg_seq_lib.start(vseqr.axi4_lite_seqr);
             axi4_mem_seq.start(vseqr.axi4_seqr);

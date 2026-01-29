@@ -7,8 +7,8 @@ class sauria_base_test extends uvm_test;
 
     string message_id = "SAURIA_BASE_TEST";
     sauria_env                    env;
-    sauria_axi4_lite_cfg_base_seq seq;
-
+    sauria_axi4_lite_cfg_seq_lib  seq;
+    
     virtual sauria_subsystem_ifc sauria_ss_if;
 
     function new(string name="sauria_base_test", uvm_component parent=null);
@@ -19,8 +19,9 @@ class sauria_base_test extends uvm_test;
         super.build_phase(phase);
 
         env = sauria_env::type_id::create("sauria_env", this);
-        seq = sauria_axi4_lite_cfg_base_seq::type_id::create("sauria_axi4_lite_cfg_base_seq");
-    
+        seq = sauria_axi4_lite_cfg_seq_lib::type_id::create("sauria_axi4_lite_cfg_seq_lib");
+        
+        init_cfg_seq_lib_parameters();
         if (!uvm_config_db #(virtual sauria_subsystem_ifc)::get(this, "", "sauria_ss_if", sauria_ss_if))
             `sauria_error(message_id, "Failed to get access to sauria_ss_if")
 
@@ -48,4 +49,11 @@ class sauria_base_test extends uvm_test;
         phase.drop_objection(this);
     endtask
 
+    virtual function void init_cfg_seq_lib_parameters();
+        seq.selection_mode = UVM_SEQ_LIB_USER;
+        seq.min_random_count = 1;
+        seq.max_random_count = 1000;
+        `sauria_info(message_id, "Initialized Sequence Library")
+    endfunction
+    
 endclass

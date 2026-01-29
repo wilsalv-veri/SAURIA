@@ -2,6 +2,8 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
 
     `uvm_object_utils(sauria_axi4_lite_core_weights_cfg_base_seq)
 
+    sauria_computation_params    computation_params;
+
     rand sauria_axi4_lite_data_t weights_w_lim;
     rand sauria_axi4_lite_data_t weights_w_step;
     rand sauria_axi4_lite_data_t weights_k_lim;
@@ -51,6 +53,11 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
             `sauria_error(message_id, "Failed to randomize sauria_axi4_lite_core_weights_cfg_base_seq")
     endfunction
 
+    virtual task body();
+        get_weights_params();
+        super.body();
+    endtask
+
     virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
         add_core_weights_cfg_CRs(cfg_cr_idx);
     endfunction
@@ -78,6 +85,23 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
         cfg_cr_queue[cfg_cr_idx] = axi4_lite_wr_txn_item;
            
     endfunction
+
+    virtual task get_weights_params();
+
+        if (!uvm_config_db #(sauria_computation_params)::get(m_sequencer, "","computation_params", computation_params))
+            `sauria_error(message_id, "Failed to get access to computation params")
+        
+        wait(computation_params.shared);
+       
+        weights_w_lim       = computation_params.weights_W;        
+        weights_k_lim       = computation_params.weights_K;         
+       
+        weights_w_step      = computation_params.weights_w_step; 
+        //weights_k_step    = computation_params.weights_k_step;  
+       
+        weights_tile_k_lim  = computation_params.tile_weights_K;     
+        weights_tile_k_step = computation_params.tile_weights_k_step; 
+    endtask
                 
     virtual function void set_weights_w_lim();
         set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));

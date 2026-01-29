@@ -220,8 +220,23 @@ module sauria_interface #(
         start_wresp_sync <= 1'b0;
         start_dma_controller <= 1'b0;
 
-        dma_params.dma.psums.k_lim <= (WXfer_op == 1'b1) ? (dma_params.dma.weights.w_step - 12'd1) : (dma_params.tile.weights.k_step - 12'd1);  // ETIL_W_WSTEP = Cout -> Becomes an auxiliary register to not mess up PSUMS
-        dma_params.dma.psums.y_lim <= dma_params.tile.psums.y_step - {12'd0, dma_params.dma.psums.y_step};
+        //FIXME: wilsalv
+        //K dimension is always defined by weights W step
+        //dma_params.dma.psums.k_lim <= (WXfer_op == 1'b1) ? (dma_params.dma.weights.w_step - 12'd1) : (dma_params.tile.weights.k_step - 12'd1);  // ETIL_W_WSTEP = Cout -> Becomes an auxiliary register to not mess up PSUMS
+        dma_params.dma.psums.k_lim <= (dma_params.dma.weights.w_step - 12'd1);  // ETIL_W_WSTEP = Cout -> Becomes an auxiliary register to not mess up PSUMS
+        
+        //FIXME: wilsalv
+        //tile Y step represents a multiple of tile X step.
+        // Since y lim is the number of times y increases, the most logical place to obtain that from
+        //is tile x step
+        //dma_params.dma.psums.y_lim <= dma_params.tile.psums.y_step - {12'd0, dma_params.dma.psums.y_step};
+        dma_params.dma.psums.y_lim <= dma_params.tile.psums.x_step - {12'd0, dma_params.dma.psums.y_step};
+        
+        //FIXME: wilsalv
+        //Because w_lim defines the last iteration inclusively, the only way to make it such that
+        //a single DMA transaction sends an entire weights tile, is by setting dma_params.tile.weights.c_step == dma_params.dma.weights.w_step
+        //Therefore the comment that you always transmit a whole weights tile in a single DMA transfer is false 
+        //two DMA transfers 
         dma_params.dma.weights.w_lim <= (WXfer_op == 1'b1) ? 1 : (dma_params.tile.weights.c_step - {12'd0, dma_params.dma.weights.w_step});     // WHOLE TILE WILL ALWAYS BE SENT IN A SINGLE DMA TRANSACTION!
               
         if (Cw_eq && Ch_eq) begin
@@ -229,13 +244,21 @@ module sauria_interface #(
         end else if (Cw_eq) begin
             dma_params.dma.psums.ett <= dma_params.tile.psums.y_step;
         end else begin
-            dma_params.dma.psums.ett <= {12'd0, dma_params.tile.psums.x_step};
+            //FIXME: wilsalv
+            //ETT is how many bytes are sent per DMA transfer
+            //Each DMA transfer for a psum tile is of size X dimension
+            //dma_params.dma.psums.ett <= {12'd0, dma_params.tile.psums.x_step};
+            dma_params.dma.psums.ett <= dma_params.dma.ifmaps.ett;
         end
 
         if (Ck_eq) begin
             dma_params.dma.weights.ett <= dma_params.tile.weights.c_step;
         end else begin
-            dma_params.dma.weights.ett <= {12'd0, dma_params.tile.weights.k_step};
+            //FIXME: wilsalv
+            //A single weights transfer is of K dimension, which is of size w_step
+            //tile K step does not make sense here
+            //dma_params.dma.weights.ett <= {12'd0, dma_params.tile.weights.k_step};
+            dma_params.dma.weights.ett <= {12'd0, dma_params.dma.weights.w_step};
         end
 
         case (state)

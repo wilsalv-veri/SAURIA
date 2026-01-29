@@ -13,7 +13,7 @@
 
     typedef bit [`IA_W-1:0]               sauria_ifmaps_elem_data_t;
     typedef bit [`IB_W-1:0]               sauria_weights_elem_data_t;
-    typedef bit [`IB_W-1:0]               sauria_psums_elem_data_t;
+    typedef bit [`OC_W-1:0]               sauria_psums_elem_data_t;
 
     typedef bit [CFG_AXI_BYTE_NUM-1:0]    sauria_axi4_lite_strobe_t;
     typedef bit [DATA_AXI_BYTE_NUM-1:0]   sauria_axi4_strobe_t;
@@ -208,3 +208,12 @@
         logic                          bvalid;
         logic                          bready;
     } sauria_axi4_wr_rsp_ch_t;
+
+
+    typedef enum bit [1:0] {
+        DMA_BRING_A,
+        DMA_BRING_B,
+        DMA_BRING_C,
+        DMA_SEND_C
+    } df_ctrl_substate_t;
+

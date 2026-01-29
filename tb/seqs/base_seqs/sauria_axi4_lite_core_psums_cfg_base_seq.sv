@@ -2,6 +2,8 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
 
     `uvm_object_utils(sauria_axi4_lite_core_psums_cfg_base_seq)
 
+    sauria_computation_params    computation_params;
+
     rand sauria_axi4_lite_data_t psums_reps;
     rand sauria_axi4_lite_data_t psums_cx_lim;
     rand sauria_axi4_lite_data_t psums_cx_step;
@@ -62,6 +64,11 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
             `sauria_error(message_id, "Failed to randomize sauria_axi4_lite_core_psums_cfg_base_seq")
     endfunction
 
+    virtual task body();
+        get_psums_params();
+        super.body();
+    endtask
+
     virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
         add_core_psums_cfg_CRs(cfg_cr_idx);
     endfunction
@@ -84,8 +91,11 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
                 set_psums_tile_cy_step(); 
             end
             39: begin
+                `sauria_info(message_id, "Got here")
                 set_psums_tile_ck_lim();
                 set_psums_tile_ck_step();
+                `sauria_info(message_id, "Got here2")
+               
             end
             40: begin
                 set_psums_inactive_cols();
@@ -95,6 +105,26 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
         cfg_cr_queue[cfg_cr_idx] = axi4_lite_wr_txn_item;
         
     endfunction
+
+    virtual task get_psums_params();
+       
+        if (!uvm_config_db #(sauria_computation_params)::get(m_sequencer, "","computation_params", computation_params))
+            `sauria_error(message_id, "Failed to get access to computation params")
+        
+        wait(computation_params.shared);
+     
+        //psums_cx_lim      = computation_params.psums_CX;          
+        //psums_cx_step     = computation_params.psums_cx_step;     
+       
+        psums_ck_lim        = computation_params.psums_CK;        
+        psums_ck_step       = computation_params.psums_ck_step;  
+       
+        //psums_tile_cy_lim = computation_params.tile_psums_CY; 
+        psums_tile_cy_step  = computation_params.tile_psums_cy_step;
+    
+        //psums_tile_ck_lim = computation_params.tile_psums_CK; 
+        psums_tile_ck_step  = computation_params.tile_psums_ck_step;
+    endtask
   
     virtual function void set_psums_reps();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();

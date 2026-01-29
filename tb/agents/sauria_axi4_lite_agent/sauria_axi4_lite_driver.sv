@@ -39,8 +39,6 @@ class sauria_axi4_lite_driver extends uvm_driver #(sauria_axi4_lite_wr_txn_seq_i
         forever begin
             seq_item_port.get_next_item(cfg_wr_txn_item);
             
-            //`sauria_info(message_id, "Received AXI4_LITE_CFG_TXN_ITEM")
-
             case(cfg_wr_txn_item.txn_type)
                 RD_TXN : drive_axi4_lite_cfg_rd_txn();
                 WR_TXN : drive_axi4_lite_cfg_wr_txn();
@@ -61,8 +59,6 @@ class sauria_axi4_lite_driver extends uvm_driver #(sauria_axi4_lite_wr_txn_seq_i
         wr_data_item = cfg_wr_txn_item.wr_data_item;
         wr_rsp_item  = cfg_wr_txn_item.wr_rsp_item;
         
-        //`sauria_info(message_id, "Driving AXI4_LITE_WR_TXN")
-
         fork 
             drive_wr_addr_ch(wr_addr_item);
             drive_wr_data_ch(wr_data_item);
@@ -105,43 +101,27 @@ class sauria_axi4_lite_driver extends uvm_driver #(sauria_axi4_lite_wr_txn_seq_i
     */
 
     virtual task drive_wr_addr_ch(sauria_axi4_lite_wr_addr_seq_item wr_addr_item);
-        
-        //`sauria_info(message_id, "Driving AXI4_LITE WR ADDRESS")
-
         @ (posedge sauria_ss_if.i_system_clk);
-        //`sauria_info(message_id, "Driving AXI4_LITE WR ADDRESS")
-
         sauria_axi4_lite_cfg_if.axi4_lite_wr_addr_ch.awaddr  <=  wr_addr_item.awaddr;
         sauria_axi4_lite_cfg_if.axi4_lite_wr_addr_ch.awprot  <=  wr_addr_item.awprot;
         sauria_axi4_lite_cfg_if.axi4_lite_wr_addr_ch.awvalid <=  1'b1;
         wait (sauria_axi4_lite_cfg_if.axi4_lite_wr_addr_ch.awready);
-        //`sauria_info(message_id, "Got AXI4_LITE AWREADY")
         @ (posedge sauria_ss_if.i_system_clk);
         sauria_axi4_lite_cfg_if.axi4_lite_wr_addr_ch.awvalid <=  1'b0;
-      
     endtask
 
     virtual task drive_wr_data_ch(sauria_axi4_lite_wr_data_seq_item wr_data_item);
-        
-        //`sauria_info(message_id, "Driving AXI4_LITE WR DATA")
-
         @ (posedge sauria_ss_if.i_system_clk);
-        //`sauria_info(message_id, "Driving AXI4_LITE WR DATA")
         sauria_axi4_lite_cfg_if.axi4_lite_wr_data_ch.wdata  <= wr_data_item.wdata;
         sauria_axi4_lite_cfg_if.axi4_lite_wr_data_ch.wstrb  <= wr_data_item.wstrb;
         sauria_axi4_lite_cfg_if.axi4_lite_wr_data_ch.wvalid <= 1'b1;
         wait (sauria_axi4_lite_cfg_if.axi4_lite_wr_data_ch.wready);
-        //`sauria_info(message_id, "Got AXI4_LITE WREADY")
         @ (posedge sauria_ss_if.i_system_clk);
-        //`sauria_info(message_id, "Next Clk")
             
         sauria_axi4_lite_cfg_if.axi4_lite_wr_data_ch.wvalid <= 1'b0;
     endtask
 
     virtual task drive_wr_rsp_ch();
-        
-        //`sauria_info(message_id, "Driving AXI4_LITE WR RESPONSE")
-
         sauria_axi4_lite_cfg_if.axi4_lite_wr_rsp_ch.bready <= 1'b1;
         wait(sauria_axi4_lite_cfg_if.axi4_lite_wr_rsp_ch.bvalid);
           

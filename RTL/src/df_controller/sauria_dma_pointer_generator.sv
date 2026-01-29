@@ -81,7 +81,7 @@ module sauria_dma_pointer_generator (
                 if (p.x_lim != 16'd0 || p.y_lim != 16'd0) begin
                     ifmaps_change <= 1'b1;
                     psums_change <= 1'b1;
-                end
+                end      
                 if (overflow[0]) begin
                     x <= 16'd0;
                     ifmap_xcounter <= '0;

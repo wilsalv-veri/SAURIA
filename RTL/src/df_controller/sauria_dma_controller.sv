@@ -353,12 +353,13 @@ module sauria_dma_controller (
                         WRITER_START_ADDR_OFFSET: begin
                             addr <= CONTROL_OFFSET;
                             
+                            wdata    <= 32'b0;
                             wdata[0] <= 1'b1; //start reader
                             wdata[1] <= 1'b1; //start writer
                             wdata[8] <= 1'b0; //write zero mode
                             
                             //FIXME: wilsalv
-                            wdata[31:9] <= 23'b0; 
+                            //wdata[31:9] <= 23'b0; 
                             state <= SYNC_WRESP;
                         end
                         default: begin
@@ -386,11 +387,11 @@ module sauria_dma_controller (
                 if (!wresp_sync_state) begin
                     
                     //FIXME: wilsalv: 
-                    if (first_dma_iter) begin
+                    //if (first_dma_iter) begin
                         state <= SEND_START_ADDR;
-                    end else begin
-                        state <= WAIT_DMA_INTR_READER;
-                    end
+                    //end else begin
+                    //    state <= WAIT_DMA_INTR_READER;
+                    //end
                 end
             end
 
@@ -408,21 +409,26 @@ module sauria_dma_controller (
             end
 
             WAIT_START_WRESP: begin
+                //FIXME
                 if (dma_axilite.bvalid) begin
                     //FIXME: wilsalv
                     //if (wdata[1] == 1'b1) begin //start writer
                     
-                    state <= CHECK_NEXT_ACTION;
-                    
+                    //state <= CHECK_NEXT_ACTION;
+                    state <= WAIT_DMA_INTR_WRITER;
+                  
                     //FIXME: wilsalv
-                end else begin
-                        state <= WAIT_DMA_INTR_WRITER;
+                end //else begin
+                //
+                //    state <= WAIT_DMA_INTR_WRITER;
                     //end
-                end
+                //end
             end
 
             WAIT_DMA_INTR_READER: begin
                 addr <= INTERRUPT_STATUS_REGISTER_OFFSET;
+                wdata <= 32'b0; //start reader / clear reader interrupt
+                
                 wdata[0] <= 1'b1; //start reader / clear reader interrupt
                 
                 //FIXME: wilsalv
@@ -474,7 +480,10 @@ module sauria_dma_controller (
                     if (goto_sync_sauria) begin
                         state <= SAURIA_SYNC;
                     end else begin
-                        state <= SEND_START_ADDR;
+                        //FIXME: wilsalv
+                        //state <= SEND_START_ADDR;
+                        state <= CHECK_NEXT_ACTION;
+                  
                     end
                 end
             end
@@ -529,6 +538,7 @@ module sauria_dma_controller (
                                 sub_state <= DMA_SEND_C;
                                 next_action <= GOTO_SYNC_WRESP;
                                 goto_sync_sauria <= 1'b1;
+                                
                                 state <= WAIT_DMA_INTR_READER;
                             end
                         end else begin
@@ -560,13 +570,19 @@ module sauria_dma_controller (
                             end
 
                             goto_sync_sauria <= 1'b1;
-                            state <= WAIT_DMA_INTR_READER;
+                            //state <= WAIT_DMA_INTR_READER;
+                            //start_wresp_sync <= 1'b1;
+                            //state <= SEND_CMD;
+                            
+                            //FIXME: wilsalv
+                            //Without this it creates off by 1
+                            state <= SAURIA_SYNC;
 
                             //FIXME: wilsalv
                             /* 
                             if(last_iter_reg)begin
-                                next_action <= GOTO_SYNC_SAURIA;  
-                                goto_sync_sauria <= 1'b1;
+                                //next_action <= GOTO_SYNC_SAURIA;  
+                                //goto_sync_sauria <= 1'b1;
                                 state <= WAIT_DMA_INTR_READER;
 
                             end
@@ -587,12 +603,17 @@ module sauria_dma_controller (
                             if (last_iter_2 || single_tile) begin
                                 next_action <= GOTO_IDLE;
                                 goto_sync_sauria <= 1'b1;
-                                state <= WAIT_DMA_INTR_READER;
+                                //FIXME: wilsalv
+                                //state <= WAIT_DMA_INTR_READER;
+                                state <= SAURIA_SYNC;
                             end else if (last_iter_1) begin
                                 last_iter_2 <= 1'b1;
                                 next_action <= GOTO_SYNC_WRESP;
                                 goto_sync_sauria <= 1'b1;
-                                state <= WAIT_DMA_INTR_READER;
+                                
+                                //FIXME: wilsalv
+                                //state <= WAIT_DMA_INTR_READER;
+                                state <= SAURIA_SYNC;
                             end else begin
                                 if (ifmaps_change) begin
                                     set_A_params();

@@ -1,0 +1,2 @@
+assign sauria_df_controller_if.dma_tile_ptr_advance = sauria_ss.df_controller_i.sauria_interface_I.sauria_dma_controller_I.advance;
+assign sauria_df_controller_if.df_ctrl_substate     = df_ctrl_substate_t'(sauria_ss.df_controller_i.sauria_interface_I.sauria_dma_controller_I.sub_state);
