@@ -155,7 +155,7 @@ module sauria_dma_controller (
     assign dma_axilite.awaddr = {26'd0, addr};
     assign dma_axilite.awprot = 3'd0;
     
-    //FIXME: wilsalv
+    //NOTE: wilsalv :DF_BUGID1
     //assign dma_axilite.wvalid = (state == SEND_CMD && !data_sent) || state == SEND_CLR_INTR_DATA || state == SEND_START_DATA;
     assign dma_axilite.wvalid = (state == SEND_CMD && !data_sent && addr_sent) || state == SEND_CLR_INTR_DATA || state == SEND_START_DATA;
     
@@ -277,7 +277,7 @@ module sauria_dma_controller (
                 addr <= INTERRUPT_MASK_REGISTER_OFFSET;
                 wdata[0] <= 1'b1; //writer interrupt enable
                 wdata[1] <= 1'b1; //reader interrupt enable
-                wdata[31:2] <= 29'b0; //Initialize rest of reg to 0 //FIXME: wilsalv
+                wdata[31:2] <= 29'b0; //Initialize rest of reg to 0 //NOTE: wilsalv :BUGDID3
                 
                 addr_sent <= 1'b0;
                 data_sent <= 1'b0;
@@ -294,13 +294,12 @@ module sauria_dma_controller (
                 end
             end
 
-            //***************************************** */
             SEND_CMD: begin    
                 if ((!addr_sent && !data_sent &&  !dma_axilite.awvalid) ||
                     (addr_sent  &&   data_sent && !dma_axilite.awvalid)
                    )begin
                 
-                //FIXME: wilsalv
+                //NOTE: wilsalv :BUGD2
                 /*((!addr_sent && !data_sent && dma_axilite.awready && dma_axilite.wready) ||
                     (addr_sent && !data_sent && dma_axilite.wready) ||
                      (!addr_sent && data_sent && dma_axilite.awready)) begin
@@ -310,7 +309,7 @@ module sauria_dma_controller (
                     data_sent <= 1'b0;
                     case (addr)
                         INTERRUPT_MASK_REGISTER_OFFSET: begin
-                            //FIXME: wilsalv
+                            //NOTE: wilsalv :DF_BUGID2
                             if(addr_sent && data_sent)begin
                                 wdata <= btt;
                                 addr <= BTT_OFFSET;
@@ -353,20 +352,19 @@ module sauria_dma_controller (
                         WRITER_START_ADDR_OFFSET: begin
                             addr <= CONTROL_OFFSET;
                             
+                            //NOTE: wilsalv :DF_BUGID3
                             wdata    <= 32'b0;
                             wdata[0] <= 1'b1; //start reader
                             wdata[1] <= 1'b1; //start writer
                             wdata[8] <= 1'b0; //write zero mode
                             
-                            //FIXME: wilsalv
-                            //wdata[31:9] <= 23'b0; 
                             state <= SYNC_WRESP;
                         end
                         default: begin
                         end
                     endcase
                 
-                //FIXME: wilsalv: 
+                //NOTE: wilsalv :DF_BUGID1
                 /*
                 end else if (dma_axilite.awready) begin
                     addr_sent <= 1'b1;
@@ -380,13 +378,11 @@ module sauria_dma_controller (
                     data_sent <= 1'b1;
                 end
             end
-            //*************************************** */
-
 
             SYNC_WRESP: begin
                 if (!wresp_sync_state) begin
                     
-                    //FIXME: wilsalv: 
+                    //NOTE: wilsalv :DF_BUGID4
                     //if (first_dma_iter) begin
                         state <= SEND_START_ADDR;
                     //end else begin
@@ -409,15 +405,14 @@ module sauria_dma_controller (
             end
 
             WAIT_START_WRESP: begin
-                //FIXME
+                
                 if (dma_axilite.bvalid) begin
-                    //FIXME: wilsalv
+                    //NOTE: wilsalv :DF_BUGID5
                     //if (wdata[1] == 1'b1) begin //start writer
                     
                     //state <= CHECK_NEXT_ACTION;
                     state <= WAIT_DMA_INTR_WRITER;
                   
-                    //FIXME: wilsalv
                 end //else begin
                 //
                 //    state <= WAIT_DMA_INTR_WRITER;
@@ -431,7 +426,7 @@ module sauria_dma_controller (
                 
                 wdata[0] <= 1'b1; //start reader / clear reader interrupt
                 
-                //FIXME: wilsalv
+                //NOTE: wilsalv :DF_BUGID6
                 wdata[1] <= 1'b1; //start writer / clear writer interrupt
                 //wdata[1] <= 1'b0; //start writer / clear writer interrupt
                 
@@ -447,7 +442,7 @@ module sauria_dma_controller (
 
             WAIT_DMA_INTR_WRITER: begin
                 addr <= INTERRUPT_STATUS_REGISTER_OFFSET;
-                //FIXME: wilsalv
+                //NOTE: wilsalv :DF_BUGID6
                 //wdata[0] <= goto_sync_sauria; //start reader / clear reader interrupt
                 wdata[0] <= 1'b1; //start reader / clear reader interrupt
                 wdata[1] <= 1'b1; //start writer / clear writer interrupt
@@ -469,18 +464,13 @@ module sauria_dma_controller (
                 end
             end
 
-            //At this point DMA has read from DRAM and written 
-            //to local SRAM, we have been notified through
-            //interrupts, and we have now received the response
-            //from DMA
-            //NOTE: whats next?
             WAIT_CLR_INTR_WRESP: begin
                 addr <= CONTROL_OFFSET;
                 if (dma_axilite.bvalid) begin
                     if (goto_sync_sauria) begin
                         state <= SAURIA_SYNC;
                     end else begin
-                        //FIXME: wilsalv
+                        //NOTE: wilsalv :DF_BUGID7
                         //state <= SEND_START_ADDR;
                         state <= CHECK_NEXT_ACTION;
                   
@@ -491,7 +481,6 @@ module sauria_dma_controller (
             CHECK_NEXT_ACTION: begin
                 first_dma_iter <= 1'b0;
                 
-                //FIXME: wilsalv : Needed?
                 wdata[0] <= 1'b1; //reader interrupt enable
                 wdata[1] <= 1'b1; //writer interrupt enable
                 addr <= INTERRUPT_MASK_REGISTER_OFFSET;
@@ -554,15 +543,12 @@ module sauria_dma_controller (
                         end
                         if (y == ylim && z == zlim) begin
                             if (first_tile && !single_tile) begin
-                            //if(!last_iter_reg)begin
                                 set_A_params();
                                 first_tile <= 1'b0;
                                 sub_state <= DMA_BRING_A;
                             end else begin
                                 sub_state <= DMA_SEND_C;
                             end
-
-                           
                             if (single_tile) begin
                                 next_action <= GOTO_SYNC_SAURIA;  
                             end else begin
@@ -570,27 +556,9 @@ module sauria_dma_controller (
                             end
 
                             goto_sync_sauria <= 1'b1;
+                            //NOTE: wilsalv :DF_BUGID8
                             //state <= WAIT_DMA_INTR_READER;
-                            //start_wresp_sync <= 1'b1;
-                            //state <= SEND_CMD;
-                            
-                            //FIXME: wilsalv
-                            //Without this it creates off by 1
                             state <= SAURIA_SYNC;
-
-                            //FIXME: wilsalv
-                            /* 
-                            if(last_iter_reg)begin
-                                //next_action <= GOTO_SYNC_SAURIA;  
-                                //goto_sync_sauria <= 1'b1;
-                                state <= WAIT_DMA_INTR_READER;
-
-                            end
-                            else begin
-                                start_wresp_sync <= 1'b1;
-                                state <= SEND_CMD;
-                            end*/
-                            
                         end else begin
                             start_wresp_sync <= 1'b1;
                             state <= SEND_CMD;
@@ -603,7 +571,7 @@ module sauria_dma_controller (
                             if (last_iter_2 || single_tile) begin
                                 next_action <= GOTO_IDLE;
                                 goto_sync_sauria <= 1'b1;
-                                //FIXME: wilsalv
+                                //NOTE: wilsalv :DF_BUGID9
                                 //state <= WAIT_DMA_INTR_READER;
                                 state <= SAURIA_SYNC;
                             end else if (last_iter_1) begin
@@ -611,7 +579,7 @@ module sauria_dma_controller (
                                 next_action <= GOTO_SYNC_WRESP;
                                 goto_sync_sauria <= 1'b1;
                                 
-                                //FIXME: wilsalv
+                                //NOTE: wilsalv :DF_BUGID9
                                 //state <= WAIT_DMA_INTR_READER;
                                 state <= SAURIA_SYNC;
                             end else begin
