@@ -27,7 +27,9 @@ $SAURIA/tb/common/sauria_imports.sv
 //Include Files under $SAURIA/tb/golden_models
 +incdir+$SAURIA/tb/golden_models
 
-$SAURIA/tb/golden_models/tensor_ptr_model.sv
+$SAURIA/tb/golden_models/sauria_base_model.sv
+$SAURIA/tb/golden_models/sauria_dma_mem_req_len_model.sv
+$SAURIA/tb/golden_models/sauria_tensor_rd_ptr_model.sv
 
 //Include Files under $SAURIA/tb/interfaces
 +incdir+$SAURIA/tb/interfaces
@@ -56,7 +58,6 @@ $SAURIA/tb/interfaces/sauria_axi_ifcs.sv
 +incdir+$SAURIA/tb/scoreboards
 
 $SAURIA/tb/scoreboards/sauria_dma_rd_addr_scbd.sv
-
 $SAURIA/tb/common/sauria_env.sv
 
 //Include Files under $SAURIA/tb/seqs

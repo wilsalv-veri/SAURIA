@@ -1,72 +1,36 @@
-class tensor_ptr_model extends uvm_object;
+class sauria_tensor_rd_ptr_model extends sauria_base_model;
 
-    `uvm_object_utils(tensor_ptr_model)
+    `uvm_object_utils(sauria_tensor_rd_ptr_model)
 
-    string message_id           = "SAURIA_TENSOR_PTR_MODEL";
-
-    sauria_axi4_addr_t               row_addr;
-    
-    sauria_axi4_addr_t               awaddr; 
-    rand sauria_ifmaps_elem_data_t   ifmaps_elem_data;
-    rand sauria_weights_elem_data_t  weights_elem_data;
-    rand sauria_psums_elem_data_t    psums_elem_data;
-    
-    sauria_axi4_lite_data_t          start_SRAMA_addr;
-    sauria_axi4_lite_data_t          start_SRAMB_addr;
-    sauria_axi4_lite_data_t          start_SRAMC_addr;
-
-    sauria_axi4_lite_data_t          tile_offset_SRAMA;
-    sauria_axi4_lite_data_t          tile_offset_SRAMB;
-    sauria_axi4_lite_data_t          tile_offset_SRAMC;
-
-    int                              ifmaps_tile_size;
-    int                              weights_tile_size;
-    int                              psums_tile_size;
-
-    int                              ifmap_addr_offset;
-    int                              weights_addr_offset;
-    int                              psums_addr_offset;
-    
-    int                              ifmaps_y_counter;
-    int                              ifmaps_c_counter;
-    int                              weights_w_counter;
-    int                              psums_y_counter;
-    int                              psums_k_counter;
+    sauria_axi4_lite_data_t ifmaps_y_counter;
+    sauria_axi4_lite_data_t ifmaps_c_counter;
+    sauria_axi4_lite_data_t weights_w_counter;
+    sauria_axi4_lite_data_t psums_y_counter;
+    sauria_axi4_lite_data_t psums_k_counter;
    
-    int                              ifmap_X;
-    int                              ifmap_Y;
-    int                              ifmap_C;
-                                
-    int                              weights_W;
-    int                              weights_K;
+    sauria_axi4_lite_data_t tile_X_counter;
+    sauria_axi4_lite_data_t tile_Y_counter;
+    sauria_axi4_lite_data_t tile_C_counter;
+    sauria_axi4_lite_data_t tile_K_counter;
 
-    int                              psums_X;
-    int                              psums_Y;
-    int                              psums_K;
-    
-    int                              tile_X;
-    int                              tile_Y;
-    int                              tile_C;
-    int                              tile_K;
-
-    int                              tile_weights_C;
-
-    int                              tile_X_counter;
-    int                              tile_Y_counter;
-    int                              tile_C_counter;
-    int                              tile_K_counter;
-    
-    bit                              single_tile;
-    bit                              done;
-
-    bit                              should_get_weights_addresses;
+    sauria_axi4_lite_data_t ifmap_addr_offset;
+    sauria_axi4_lite_data_t weights_addr_offset;
+    sauria_axi4_lite_data_t psums_addr_offset;
    
-    bit                              ifmaps_done   = 1'b0;
-    bit                              weights_done  = 1'b0;
-    bit                              psums_done    = 1'b0;
+    sauria_axi4_lite_data_t tile_offset_SRAMA;
+    sauria_axi4_lite_data_t tile_offset_SRAMB;
+    sauria_axi4_lite_data_t tile_offset_SRAMC;
+
+    bit                     should_get_weights_addresses;
+   
+    bit                     done;
+    bit                     ifmaps_done;
+    bit                     weights_done;
+    bit                     psums_done;
      
-    function new(string name="tensor_ptr_model");
+    function new(string name="sauria_tensor_rd_ptr_model");
         super.new(name);
+        message_id = "SAURIA_TENSOR_RD_PTR_MODEL";
     endfunction
 
     virtual function sauria_axi4_addr_t get_next_exp_address();
@@ -168,6 +132,12 @@ class tensor_ptr_model extends uvm_object;
         end
     endfunction
    
+    virtual function void update_tile_addr_offsets();
+        tile_offset_SRAMA = get_SRAMA_tile_offset();
+        tile_offset_SRAMB = get_SRAMB_tile_offset();
+        tile_offset_SRAMC = get_SRAMC_tile_offset();
+    endfunction
+
     virtual function void clear_done_signals();
         ifmaps_done  = 1'b0;
         weights_done = 1'b0;
@@ -201,77 +171,6 @@ class tensor_ptr_model extends uvm_object;
         else if (tile_X_counter < (tile_X))begin
             tile_X_counter += 1;
         end
-    endfunction
-
-    virtual function void update_tile_addr_offsets();
-        tile_offset_SRAMA = get_SRAMA_tile_offset();
-        tile_offset_SRAMB = get_SRAMB_tile_offset();
-        tile_offset_SRAMC = get_SRAMC_tile_offset();
-    endfunction
-
-    virtual function void configure_model(sauria_computation_params computation_params);
-        set_tensor_start_addr(computation_params);
-        set_tensor_dimensions(computation_params);
-        set_tile_sizes(computation_params);
-    endfunction
-
-    virtual function void set_tensor_start_addr(sauria_computation_params computation_params);
-        start_SRAMA_addr = computation_params.start_SRAMA_addr;
-        start_SRAMB_addr = computation_params.start_SRAMB_addr;
-        start_SRAMC_addr = computation_params.start_SRAMC_addr;
-    endfunction
-
-    virtual function void set_tensor_dimensions(sauria_computation_params computation_params);
-
-        `sauria_info(message_id, "Getting Computation Params")
-        ifmap_X   = computation_params.ifmaps_X;
-        ifmap_Y   = computation_params.ifmaps_Y + 1; //From limit
-        ifmap_C   = computation_params.ifmaps_C + 1; //From limit
-
-        weights_W = computation_params.weights_W;
-        weights_K = computation_params.weights_K;
-
-        psums_X   = computation_params.psums_X;
-        psums_Y   = computation_params.psums_Y + 1; //From limit
-        psums_K   = computation_params.psums_K;
-
-        tile_X    = computation_params.tile_X;
-        tile_Y    = computation_params.tile_Y;
-        tile_C    = computation_params.tile_C;
-        tile_K    = computation_params.tile_K;
-
-        single_tile = is_single_tile();
-        
-        `sauria_info(message_id, $sformatf("Tile Dimensions K: %0d C: %0d Y: %0d X: %0d", tile_K, tile_C, tile_Y, tile_X))
-        `sauria_info(message_id, $sformatf("IFMAPS Dimensions C: %0d Y: %0d X: %0d", ifmap_C, ifmap_Y, ifmap_X))
-        `sauria_info(message_id, $sformatf("WEIGHTS Dimensions W: %0d K: %0d", weights_W, weights_K))
-        `sauria_info(message_id, $sformatf("PSUMS Dimensions K: %0d Y: %0d X: %0d", psums_K, psums_Y, psums_X))
-    endfunction
-
-    virtual function void set_tile_sizes(sauria_computation_params computation_params);
-        ifmaps_tile_size  = computation_params.get_ifmaps_tile_size();
-        weights_tile_size = computation_params.get_weights_tile_size();
-        psums_tile_size   = computation_params.get_psums_tile_size(); 
-    endfunction
-
-    virtual function bit is_single_tile();
-        return (tile_K == 0) && (tile_C == 0) && (tile_Y == 0) && (tile_X == 0);
-    endfunction
-
-    function bit at_K_boundary();
-        return (tile_K_counter != 0) && (tile_C_counter == 0) && (tile_Y_counter == 0) && (tile_X_counter == 0);
-    endfunction
-
-    function bit at_C_boundary();
-        return (tile_C_counter != 0) && (tile_Y_counter == 0) && (tile_X_counter == 0);
-    endfunction
-
-    function bit at_Y_boundary();
-        return (tile_Y_counter != 0) && (tile_X_counter == 0);
-    endfunction
-
-    function bit at_X_boundary();
-        return tile_X_counter != 0;
     endfunction
 
     virtual function sauria_axi4_addr_t get_ifmaps_row_addr(sauria_axi4_addr_t awaddr);
@@ -311,6 +210,22 @@ class tensor_ptr_model extends uvm_object;
 
     virtual function sauria_axi4_addr_t get_psums_elem_aligned_address(int offset);
         return sauria_axi4_addr_t'(offset * df_ctrl_pkg::C_BYTES);
+    endfunction
+
+    function bit at_K_boundary();
+        return (tile_K_counter != 0) && (tile_C_counter == 0) && (tile_Y_counter == 0) && (tile_X_counter == 0);
+    endfunction
+
+    function bit at_C_boundary();
+        return (tile_C_counter != 0) && (tile_Y_counter == 0) && (tile_X_counter == 0);
+    endfunction
+
+    function bit at_Y_boundary();
+        return (tile_Y_counter != 0) && (tile_X_counter == 0);
+    endfunction
+
+    function bit at_X_boundary();
+        return tile_X_counter != 0;
     endfunction
 
 endclass
