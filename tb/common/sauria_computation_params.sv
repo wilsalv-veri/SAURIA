@@ -63,6 +63,13 @@ class sauria_computation_params extends uvm_object;
     sauria_axi4_lite_data_t tile_psums_CK;    
     sauria_axi4_lite_data_t tile_psums_ck_step;
 
+    sauria_axi4_lite_data_t loop_order;
+
+    bit                     Cw_eq;   
+    bit                     Ch_eq;   
+    bit                     Ck_eq;   
+    bit                     WXfer_op;
+
     `uvm_object_utils_begin(sauria_computation_params)
         //IFMAPS
         `uvm_field_int(ifmaps_X,             UVM_ALL_ON)
@@ -89,7 +96,6 @@ class sauria_computation_params extends uvm_object;
         `uvm_field_int(tile_weights_K,      UVM_ALL_ON)
         `uvm_field_int(tile_weights_k_step, UVM_ALL_ON)
        
-
         //PSUMS
         `uvm_field_int(psums_CX,            UVM_ALL_ON)
         `uvm_field_int(psums_cx_step,       UVM_ALL_ON)
@@ -102,6 +108,12 @@ class sauria_computation_params extends uvm_object;
     
         `uvm_field_int(tile_psums_CK,       UVM_ALL_ON)
         `uvm_field_int(tile_psums_ck_step,  UVM_ALL_ON)
+
+        `uvm_field_int(loop_order,          UVM_ALL_ON)
+
+        `uvm_field_int(Cw_eq,               UVM_ALL_ON)
+        `uvm_field_int(Ck_eq,               UVM_ALL_ON)
+        `uvm_field_int(Ch_eq,               UVM_ALL_ON)
     
     `uvm_object_utils_end    
 
@@ -135,6 +147,5 @@ class sauria_computation_params extends uvm_object;
     virtual function sauria_axi4_lite_data_t get_psums_size();
         return get_psums_tile_size() * tile_X * tile_Y * tile_K;
     endfunction
-
 
 endclass

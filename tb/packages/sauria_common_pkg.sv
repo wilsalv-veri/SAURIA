@@ -71,6 +71,8 @@ package sauria_common_pkg;
     `include "sauria_axi4_wr_txn_seq_item.sv"
     `include "sauria_axi4_rd_txn_seq_item.sv"
 
+    `include "sauria_data_generator.sv"
+    
     `include "sauria_cfg_cr_queue.sv"
     `include "sauria_axi_vseqr.sv"
 

@@ -528,7 +528,10 @@ module sauria_dma_controller (
                                 next_action <= GOTO_SYNC_WRESP;
                                 goto_sync_sauria <= 1'b1;
                                 
-                                state <= WAIT_DMA_INTR_READER;
+                                //NOTE: wilsalv :DF_BUGID17
+                                //state <= WAIT_DMA_INTR_READER;
+                                state <= SAURIA_SYNC;
+
                             end
                         end else begin
                             start_wresp_sync <= 1'b1;
@@ -542,10 +545,19 @@ module sauria_dma_controller (
                             send_SRAMC_tile_offset <= SRAMC_tile_offset;
                         end
                         if (y == ylim && z == zlim) begin
+                            
                             if (first_tile && !single_tile) begin
-                                set_A_params();
                                 first_tile <= 1'b0;
-                                sub_state <= DMA_BRING_A;
+                                
+                                //NOTE: wilsalv :DF_BUGID18
+                                if (loop_order == 2'h2)begin
+                                    set_B_params();
+                                    sub_state <= DMA_BRING_B;
+                                end
+                                else begin
+                                    set_A_params();
+                                    sub_state <= DMA_BRING_A;
+                                end
                             end else begin
                                 sub_state <= DMA_SEND_C;
                             end

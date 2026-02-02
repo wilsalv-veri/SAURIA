@@ -8,9 +8,13 @@ class sauria_axi4_monitor extends uvm_monitor;
     virtual sauria_axi4_ifc      sauria_axi4_mem_if;
     
     uvm_analysis_port #(sauria_axi4_rd_addr_seq_item) send_dma_rd_addr;
+    uvm_analysis_port #(sauria_axi4_wr_addr_seq_item) send_dma_wr_addr;
 
     sauria_axi4_rd_addr_seq_item rd_addr_item;
     sauria_axi4_rd_data_seq_item rd_data_item;
+
+    sauria_axi4_wr_addr_seq_item wr_addr_item;
+    sauria_axi4_wr_data_seq_item wr_data_item;
 
     function new(string name="sauria_axi4_monitor", uvm_component parent=null);
         super.new(name, parent);
@@ -20,9 +24,13 @@ class sauria_axi4_monitor extends uvm_monitor;
         super.build_phase(phase);
 
         send_dma_rd_addr = new("SEND_DMA_RD_ADDR", this);
+        send_dma_wr_addr = new("SEND_DMA_WR_ADDR", this);
         
         rd_addr_item = sauria_axi4_rd_addr_seq_item::type_id::create("sauria_axi4_rd_addr_seq_item", this);
         rd_data_item = sauria_axi4_rd_data_seq_item::type_id::create("sauria_axi4_rd_data_seq_item", this);
+
+        wr_addr_item = sauria_axi4_wr_addr_seq_item::type_id::create("sauria_axi4_wr_addr_seq_item", this);
+        wr_data_item = sauria_axi4_wr_data_seq_item::type_id::create("sauria_axi4_wr_data_seq_item", this);
 
         if (!uvm_config_db #(virtual sauria_subsystem_ifc)::get(this, "", "sauria_ss_if", sauria_ss_if))
             `sauria_error(message_id, "Failed to get access to sauria_ss_if")
@@ -36,6 +44,7 @@ class sauria_axi4_monitor extends uvm_monitor;
 
         fork 
             collect_dma_rd_addr_req();
+            collect_dma_wr_addr_req();
         join
     endtask
 
@@ -54,6 +63,24 @@ class sauria_axi4_monitor extends uvm_monitor;
             rd_addr_item.arregion =  sauria_axi4_mem_if.axi4_rd_addr_ch.arregion;
             rd_addr_item.arready  =  sauria_axi4_mem_if.axi4_rd_addr_ch.arready ;
             send_dma_rd_addr.write(rd_addr_item);
+        end
+    endtask
+
+    virtual task collect_dma_wr_addr_req();
+        forever @ (posedge sauria_axi4_mem_if.axi4_wr_addr_ch.awvalid)begin
+            wr_addr_item.awid     =  sauria_axi4_mem_if.axi4_wr_addr_ch.awid;
+            wr_addr_item.awaddr   =  sauria_axi4_mem_if.axi4_wr_addr_ch.awaddr;
+            wr_addr_item.awprot   =  sauria_axi4_mem_if.axi4_wr_addr_ch.awprot;
+            wr_addr_item.awburst  =  sauria_axi4_mem_if.axi4_wr_addr_ch.awburst;
+            wr_addr_item.awlen    =  sauria_axi4_mem_if.axi4_wr_addr_ch.awlen;
+            wr_addr_item.awvalid  =  sauria_axi4_mem_if.axi4_wr_addr_ch.awvalid;
+            wr_addr_item.awsize   =  sauria_axi4_mem_if.axi4_wr_addr_ch.awsize;
+            wr_addr_item.awlock   =  sauria_axi4_mem_if.axi4_wr_addr_ch.awlock;
+            wr_addr_item.awcache  =  sauria_axi4_mem_if.axi4_wr_addr_ch.awcache;
+            wr_addr_item.awqos    =  sauria_axi4_mem_if.axi4_wr_addr_ch.awqos;
+            wr_addr_item.awregion =  sauria_axi4_mem_if.axi4_wr_addr_ch.awregion;
+            wr_addr_item.awready  =  sauria_axi4_mem_if.axi4_wr_addr_ch.awready ;
+            send_dma_wr_addr.write(wr_addr_item);
         end
     endtask
 

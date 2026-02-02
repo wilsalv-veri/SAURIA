@@ -28,8 +28,8 @@ $SAURIA/tb/common/sauria_imports.sv
 +incdir+$SAURIA/tb/golden_models
 
 $SAURIA/tb/golden_models/sauria_base_model.sv
-$SAURIA/tb/golden_models/sauria_dma_mem_req_len_model.sv
-$SAURIA/tb/golden_models/sauria_tensor_rd_ptr_model.sv
+$SAURIA/tb/golden_models/sauria_dma_mem_req_shape_model.sv
+$SAURIA/tb/golden_models/sauria_tensor_ptr_model.sv
 
 //Include Files under $SAURIA/tb/interfaces
 +incdir+$SAURIA/tb/interfaces
@@ -57,7 +57,7 @@ $SAURIA/tb/interfaces/sauria_axi_ifcs.sv
 //Include Files under $SAURIA/tb/scoreboards
 +incdir+$SAURIA/tb/scoreboards
 
-$SAURIA/tb/scoreboards/sauria_dma_rd_addr_scbd.sv
+$SAURIA/tb/scoreboards/sauria_dma_req_addr_scbd.sv
 $SAURIA/tb/common/sauria_env.sv
 
 //Include Files under $SAURIA/tb/seqs
@@ -70,6 +70,7 @@ $SAURIA/tb/common/sauria_env.sv
 //Include Files under $SAURIA/tb/seqs/df_controller_cfg_seqs
 +incdir+$SAURIA/tb/seqs/df_controller_cfg_seqs
 
+$SAURIA/tb/seqs/df_controller_cfg_seqs/sauria_rand_df_controller_cfg_seq.sv
 $SAURIA/tb/seqs/df_controller_cfg_seqs/sauria_stand_alone_OFF_df_controller_cfg_seq.sv
 
 //Include Files under $SAURIA/tb/seqs/dma_controller_cfg_seqs

@@ -66,17 +66,15 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
     endfunction
 
     virtual task body();
-        exchange_computation_params();
-        
-        if(!this.randomize())
-            `sauria_error(message_id, "Failed to randomize sauria_axi4_lite_df_controller_cfg_base_seq")
-        
+        exchange_computation_params(); 
         super.body();
     endtask
 
     virtual task exchange_computation_params();
         get_computation_params_access();
         set_starting_tensors_addr();
+        set_compute_params_loop_order();
+        set_tensor_modifiers();
         get_tensor_sizes();
     endtask
 
@@ -116,12 +114,23 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
         psums_size   = computation_params.get_psums_size();
     endtask
 
-    virtual task set_starting_tensors_addr();
+    virtual function void set_starting_tensors_addr();
         computation_params.start_SRAMA_addr = start_SRAMA_addr;
         computation_params.start_SRAMB_addr = start_SRAMB_addr;
         computation_params.start_SRAMC_addr = start_SRAMC_addr;
         computation_params.tensors_start_addr_shared = 1'b1;
-    endtask
+    endfunction
+
+    virtual function void set_compute_params_loop_order();
+        computation_params.loop_order = loop_order;
+    endfunction
+
+    virtual function void set_tensor_modifiers();
+        computation_params.Cw_eq    = Cw_eq;
+        computation_params.Ch_eq    = Ch_eq;
+        computation_params.Ck_eq    = Ck_eq;
+        computation_params.WXfer_op = WXfer_op;
+    endfunction
     
     virtual function void clear_start();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
@@ -181,44 +190,4 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
         set_cfg_cr_data(wdata);
     endfunction
 
-    virtual function void randomize_without_srams_starting_addrs();
-        turn_off_dependent_constraints();
-
-        if(!this.randomize())
-            `sauria_error(message_id, "Failed to randomize sauria_axi4_lite_df_controller_cfg_base_seq")
-        
-        turn_on_dependent_constraints();
-    endfunction
-
-    virtual function void randomize_with_srams_starting_addrs();
-        turn_off_independent_constraints();
-
-        if(!this.randomize())
-            `sauria_error(message_id, "Failed to randomize sauria_axi4_lite_df_controller_cfg_base_seq")
-        
-        turn_on_independent_constraints();
-    endfunction
-    
-    virtual function void turn_off_dependent_constraints();
-        srams_starting_addrs_c.constraint_mode(0);
-    endfunction
-
-    virtual function void turn_off_independent_constraints();
-        stand_alone_cfg_c.constraint_mode(0);
-        eq_flags_c.constraint_mode(0);
-        loop_order_c.constraint_mode(0); 
-        wxfer_op_c.constraint_mode(0);
-    endfunction
-
-    virtual function void turn_on_dependent_constraints();
-        srams_starting_addrs_c.constraint_mode(1);
-    endfunction
-
-    virtual function void turn_on_independent_constraints();
-        stand_alone_cfg_c.constraint_mode(1);
-        eq_flags_c.constraint_mode(1);
-        loop_order_c.constraint_mode(1); 
-        wxfer_op_c.constraint_mode(1);
-    endfunction
-    
 endclass

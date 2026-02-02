@@ -71,7 +71,7 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
         solve dma_tile_ifmaps_x_step before dma_tile_ifmaps_y_step;
         solve dma_tile_ifmaps_y_step before dma_tile_ifmaps_c_step;
 
-        dma_tile_ifmaps_x_step  == dma_ifmaps_ett * dma_ifmaps_y_lim * dma_ifmaps_c_lim;
+        dma_tile_ifmaps_x_step  == dma_ifmaps_ett * (dma_ifmaps_y_lim + 1) * (dma_ifmaps_c_lim + 1);
         dma_tile_ifmaps_y_step  == dma_tile_ifmaps_x_step * (dma_tile_x_lim + 1);
         dma_tile_ifmaps_c_step  == dma_tile_ifmaps_y_step * (dma_tile_y_lim + 1); 
     }
@@ -85,25 +85,22 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
         dma_weights_w_lim       == C * dma_weights_w_step;
         
         dma_tile_weights_c_step == dma_weights_w_lim + dma_weights_w_step; 
-        //dma_tile_weights_k_step == dma_weights_w_step; //note: what if these two aren't equal?
-        dma_tile_weights_k_step == dma_tile_weights_c_step * dma_tile_k_lim;
+        dma_tile_weights_k_step == dma_tile_weights_c_step * (dma_tile_c_lim + 1);
     }
 
     constraint dma_psums_c {
+        solve dma_psums_y_step      before dma_psums_k_step;
+        solve dma_psums_k_step      before dma_tile_psums_x_step;
         solve dma_tile_psums_x_step before dma_tile_psums_y_step;
-        solve dma_psums_k_step      before dma_tile_psums_y_step;
         solve dma_tile_psums_y_step before dma_tile_psums_k_step;
-        
+       
         dma_psums_y_step        == dma_ifmaps_ett; 
         dma_psums_k_step        == dma_psums_y_step * (dma_ifmaps_y_lim+1);
     
-        //dma_params.tile.psums.y_step - dma_params.dma.psums.y_step = psums_y_lim = dma_ifmaps_y_lim
-        
-        //dma_params.tile.psums.y_step = dma_ifmaps_y_lim + dma_params.dma.psums.y_step
         
 
-        dma_tile_psums_x_step   == dma_psums_k_step; //dma_ifmaps_ett; 
-        dma_tile_psums_y_step   == dma_tile_psums_x_step * (dma_tile_x_lim + 1);//dma_psums_k_step; //(dma_tile_x_lim + 1);
+        dma_tile_psums_x_step   == dma_psums_k_step * dma_weights_w_step; 
+        dma_tile_psums_y_step   == dma_tile_psums_x_step * (dma_tile_x_lim + 1);
         dma_tile_psums_k_step   == dma_tile_psums_y_step * (dma_tile_y_lim + 1); 
     }
     
