@@ -1,6 +1,3 @@
-import sauria_common_pkg::*;
-import uvm_pkg::*;
-
 class sauria_w_dma_base_test extends uvm_test;
 
     `uvm_component_utils(sauria_w_dma_base_test)

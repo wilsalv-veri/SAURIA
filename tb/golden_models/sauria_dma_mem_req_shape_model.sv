@@ -70,7 +70,7 @@ class sauria_dma_mem_req_shape_model extends sauria_base_model;
         case(elem_type)
             IFMAPS: return $bits(sauria_ifmaps_elem_data_t);
             WEIGHTS:return $bits(sauria_weights_elem_data_t);
-            PSUMS: return $bits(sauria_psums_elem_data_t);
+            PSUMS:  return $bits(sauria_psums_elem_data_t);
         endcase
     endfunction
 

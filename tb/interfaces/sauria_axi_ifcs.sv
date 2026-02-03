@@ -1,3 +1,5 @@
+import sauria_common_pkg::*;
+
 interface sauria_axi4_lite_ifc;
 
     sauria_axi4_lite_rd_addr_ch_t axi4_lite_rd_addr_ch;

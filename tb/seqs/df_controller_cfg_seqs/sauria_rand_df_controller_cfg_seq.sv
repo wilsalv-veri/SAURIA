@@ -21,6 +21,8 @@ class sauria_rand_df_controller_cfg_seq extends sauria_axi4_lite_df_controller_c
 
     constraint loop_order_c {
         loop_order dist {0:=50, [1:2]:/50};
+        loop_order  == 2'b0;
+    
     }
     
     constraint wxfer_op_c {

@@ -13,21 +13,21 @@ def generate_filelist(file_name, lines):
     print(f"ABS_PATH_FILE_NAME:{abs_path_file_name}")
     with open(abs_path_file_name, 'w') as f:
         for line in lines:
-            f.write(line  + '\n' )
+            f.write(line)
 
 def generate_top_filelist_lines(filelist_names):
     top_level_lines = []
-    top_level_lines.append("// Set the include path for UVM macros and other files")
-    top_level_lines.append("+incdir+$UVM_HOME/src\n")
-    top_level_lines.append("// Add the UVM package file. It is crucial to compile this before any")
-    top_level_lines.append("// files that depend on it")
+    top_level_lines.append("// Set the include path for UVM macros and other files\n")
+    top_level_lines.append("+incdir+$UVM_HOME/src\n\n")
+    top_level_lines.append("// Add the UVM package file. It is crucial to compile this before any\n")
+    top_level_lines.append("// files that depend on it\n")
     top_level_lines.append("$UVM_HOME/src/uvm_pkg.sv\n")
     
     
-    top_level_lines.append("\n//Reference other filelists")
+    top_level_lines.append("\n//Reference other filelists\n")
     
     for filelist_name in filelist_names:
-        top_level_lines.append(f"-f {project_env_var}/verif/filelists/{filelist_name}")
+        top_level_lines.append(f"-f {project_env_var}/verif/filelists/{filelist_name}\n")
 
     return top_level_lines
 
@@ -40,33 +40,24 @@ def addLinesUnderCurrentDirectory(cwd_path,include_files):
         file_entries = [entry for entry in os.listdir(cwd_path) if os.path.isfile(os.path.join(cwd_path, entry))]
         dir_entries = [entry for entry in os.listdir(cwd_path) if os.path.isdir(os.path.join(cwd_path, entry))]
         
-        if cwd == 'tb':
-            sort_by_match(dir_entries, "seqs")
-            sort_by_match(dir_entries, "scoreboards")
-            sort_by_match(dir_entries, "agents")
-            sort_by_match(dir_entries, "interfaces")
-            sort_by_match(dir_entries, "golden_models")
-            sort_by_match(dir_entries, "common")
+        if cwd == "tb":
             sort_by_match(dir_entries, "packages")
-           
+            sort_by_match(dir_entries, "interfaces")   
         elif cwd == 'packages':
-            sort_by_match(file_entries, "common_pkg")      
-        elif cwd == 'seqs':
-            sort_by_match(dir_entries, "base_seqs", inc_order=False)
-        elif "seqs" in cwd:
-            sort_by_match(file_entries, "seq_lib")
-            sort_by_match(file_entries, "doa_seq_lib")
-            sort_by_match(file_entries, "rtg_seq.sv")
-            sort_by_match(file_entries, "doa_seq.sv")
-            sort_by_match(file_entries, "base_seq")
-            
-        elif cwd == 'tests':
-            sort_by_match(dir_entries, "base_tests")
-        if cwd != 'packages':
-            sort_by_match(file_entries, "_pkg")
-            sort_by_match(file_entries, ".vh")
-            sort_by_match(file_entries, ".svh")
-         
+            sort_by_match(file_entries, "tb_top")
+            sort_by_match(file_entries, "tests")  
+            sort_by_match(file_entries, "base_tests")  
+            sort_by_match(file_entries, "env")  
+            sort_by_match(file_entries, "scbd")  
+            sort_by_match(file_entries, "golden_models")  
+            sort_by_match(file_entries, "sauria_cfg_seqs")  
+            sort_by_match(file_entries, "base_cfg_seqs")  
+            sort_by_match(file_entries, "common")  
+        elif cwd == 'interfaces':
+            sort_by_match(file_entries, "axi")
+            sort_by_match(file_entries, "subsystem")
+            sort_by_match(file_entries, "df_controller")
+             
         entries.extend(file_entries)
         entries.extend(dir_entries)
 
@@ -75,38 +66,25 @@ def addLinesUnderCurrentDirectory(cwd_path,include_files):
             abs_path = os.path.join(cwd_path, entry)
             directory = os.path.isdir(abs_path)
             path = abs_path.replace(entry,"")
-
-            if not directory and "." in entry:
-                format = entry.split(".")[1]
-            else:
-                format = "dir"
-            
+  
             if not len(entry):
                 continue
             
-            skip_list = []
-            skip_list.append(entry[0] == ".") #hidden files
-            skip_list.append(format not in supported_formats) #unsupported_format
-            skip_list.append((cwd == 'common') and (not directory) and (entry != "sauria_imports.sv") and (entry != "sauria_env.sv")) #common_pkg_files
-            skip_list.append(cwd == 'base_seqs')
-            #skip_list.append(cwd == 'scoreboards')
-            skip_list.append(cwd == 'interface_connections')
-            skip_list.append(cwd == 'transaction_items')
-            skip_list.append('seq_items' in cwd and not directory)
-            skip_list.append('_agent' in cwd)
-            
-            if True in skip_list:
-                continue          
-            
+            include_files_under_directories = ["interfaces","packages", "tb"]
             includeLine = filelistIncludeLine(entry, path, directory)
-            includeLine.add_line(include_files)
-
+          
+            if directory or (cwd in include_files_under_directories):
+                includeLine.add_line(include_files)
+            
             if directory:
                 addLinesUnderCurrentDirectory(abs_path, include_files)
                 include_files.append("")
 
-        if cwd == 'tb':
-             sort_by_match(include_files, "tb_top.sv", False)
+        if cwd == "tb":
+            sort_by_match(include_files, "tb_top.sv", False)
+        elif cwd == "packages":
+            sort_by_match(include_files, "common_pkg")
+        
 
 def get_current_dir_name(dir_name):
     
@@ -140,10 +118,7 @@ class filelistIncludeLine:
     def add_line(self, lineList):
         filePath = f"{self.rel_path}{self.name}"
 
-        if self.directory:
-            lineList.append(f"//Include Files under {filePath}")
-        
-        line = [filePath,f"+incdir+{filePath}\n"][int(self.directory)] 
+        line = [filePath + "\n",f"+incdir+{filePath}/\n"][int(self.directory)] 
         lineList.append(line)
     
     def set_rel_path(self):
@@ -159,7 +134,7 @@ if __name__ == "__main__":
     tb_path    = f"{project_path}/tb"
     tests_path = f"{project_path}/tests"
     
-    paths = [tb_path, tests_path]
+    paths = [tests_path, tb_path]
     filelist_names = []
      
     filelist_names.append("hw_version_filelist.f")

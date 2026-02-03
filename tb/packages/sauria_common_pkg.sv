@@ -71,31 +71,10 @@ package sauria_common_pkg;
     `include "sauria_axi4_wr_txn_seq_item.sv"
     `include "sauria_axi4_rd_txn_seq_item.sv"
 
-    `include "sauria_data_generator.sv"
-    
     `include "sauria_cfg_cr_queue.sv"
     `include "sauria_axi_vseqr.sv"
-
-    `include "sauria_axi4_lite_driver.sv"
-    `include "sauria_axi4_lite_agent.sv"
-   
-    `include "sauria_axi4_driver.sv"
-    `include "sauria_axi4_monitor.sv"
-    `include "sauria_axi4_agent.sv"
-
-    `include "sauria_axi4_lite_cfg_base_seq.sv"
-    `include "sauria_axi4_lite_df_controller_cfg_base_seq.sv"
-    `include "sauria_axi4_lite_dma_controller_cfg_base_seq.sv"
-    `include "sauria_axi4_lite_core_main_controller_cfg_base_seq.sv"
-    `include "sauria_axi4_lite_core_ifmaps_cfg_base_seq.sv"
-    `include "sauria_axi4_lite_core_weights_cfg_base_seq.sv"
-    `include "sauria_axi4_lite_core_psums_cfg_base_seq.sv"
-    `include "sauria_axi4_lite_cfg_seq_lib.sv"
-    `include "sauria_axi4_mem_base_seq.sv"
-    `include "sauria_axi4_base_vseq.sv"
-   
+    
 endpackage
 
 `endif //SAURIA_COMMON_PKG
 
-import sauria_common_pkg::*;

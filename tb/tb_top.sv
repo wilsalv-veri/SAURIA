@@ -1,4 +1,5 @@
 import uvm_pkg::*;
+import sauria_cfg_tests_pkg::*;
 
 module SAURIA_tb_top;
    
