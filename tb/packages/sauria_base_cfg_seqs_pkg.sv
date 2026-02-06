@@ -6,6 +6,10 @@ package sauria_base_cfg_seqs_pkg;
     import uvm_pkg::*;
     import sauria_common_pkg::*;
     
+    function sauria_axi4_lite_addr_t get_cfg_addr_from_idx(int cfg_cr_idx);
+        return sauria_axi4_lite_addr_t'('h10 + cfg_cr_idx*4);
+    endfunction
+  
     `include "sauria_axi4_lite_cfg_base_seq.sv"
     `include "sauria_axi4_lite_df_controller_cfg_base_seq.sv"
     `include "sauria_axi4_lite_dma_controller_cfg_base_seq.sv"

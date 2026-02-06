@@ -14,6 +14,10 @@ $SAURIA/tb/packages/sauria_env_pkg.sv
 $SAURIA/tb/packages/sauria_base_tests_pkg.sv
 $SAURIA/tb/packages/sauria_cfg_tests_pkg.sv
 $SAURIA/tb/packages/sauria_tb_top_pkg.sv
++incdir+$SAURIA/tb/coverage/
+$SAURIA/tb/coverage/sauria_ss_cov.sv
++incdir+$SAURIA/tb/assertions/
+$SAURIA/tb/assertions/sauria_ss_assert.sv
 +incdir+$SAURIA/tb/golden_models/
 +incdir+$SAURIA/tb/common/
 +incdir+$SAURIA/tb/common/seq_items/

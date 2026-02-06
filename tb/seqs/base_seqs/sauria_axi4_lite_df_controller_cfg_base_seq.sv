@@ -31,12 +31,9 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
     }
 
     constraint srams_starting_addrs_c {
-        solve start_SRAMA_addr before start_SRAMB_addr;
-        solve start_SRAMB_addr before start_SRAMC_addr;
-
-        start_SRAMA_addr == MEM_BASE_OFFSET;
-        start_SRAMB_addr == start_SRAMA_addr + 'h1000_0000;
-        start_SRAMC_addr == start_SRAMB_addr + 'h1000_0000; 
+        start_SRAMA_addr == START_SRAMA_MEM_ADDR;
+        start_SRAMB_addr == START_SRAMB_MEM_ADDR;
+        start_SRAMC_addr == START_SRAMC_MEM_ADDR; 
     }
     
     constraint eq_flags_c {
@@ -134,7 +131,7 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
     
     virtual function void clear_start();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[22] = 1'b1; //!start
+        wdata[22] = 1'b0; //!start
         set_cfg_cr_data(wdata);
     endfunction
 

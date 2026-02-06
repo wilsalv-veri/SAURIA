@@ -4,8 +4,6 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi_txn_base_s
 
     string message_id = "SAURIA_AXI4_LITE_BASE_CFG_SEQ";
 
-    parameter CFG_BASE_OFFSET = sauria_addr_pkg::CONTROLLER_OFFSET;
-
     sauria_axi4_lite_wr_txn_seq_item   axi4_lite_wr_txn_item;
     sauria_axi4_lite_wr_txn_seq_item   cfg_cr_queue[N_SEQ_REGS];
     int                                queue_running_idx;
@@ -104,8 +102,5 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi_txn_base_s
         return axi4_lite_wr_txn_item.wr_data_item.wdata;
     endfunction
 
-    virtual function sauria_axi4_lite_addr_t get_cfg_addr_from_idx(int cfg_cr_idx);
-        return sauria_axi4_lite_addr_t'('h10 + cfg_cr_idx*4);
-    endfunction
     
 endclass

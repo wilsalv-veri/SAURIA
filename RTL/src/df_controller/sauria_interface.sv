@@ -128,7 +128,7 @@ module sauria_interface #(
     assign fwd_dma_reader_interrupt_out = state == IDLE && !dma_interface_operating && dma_reader_interrupt_in;
     assign fwd_dma_writer_interrupt_out = state == IDLE && !dma_interface_operating && dma_writer_interrupt_in;
 
-    assign sauria_sync = state == DMA_SYNC;
+    assign sauria_sync = state == DMA_SYNC;// && sauria_interrupt_in;//FIXME: wilsalv
 
     sauria_dma_controller sauria_dma_controller_I (
         .clk(clk),
@@ -442,8 +442,11 @@ module sauria_interface #(
 
             DMA_SYNC: begin
                 addr <= CONTROL_OFFSET;
+                //FIXME: wilsalv
                 if (dma_sync) begin
-                   if (last_sync_2) begin
+                //if (dma_sync & sauria_sync) begin
+                
+                    if (last_sync_2) begin
                         // write_finishq <= 1'b1;
                         state <= WAIT_FINISHQ_WRITE;
                     end else if (last_sync_1) begin

@@ -34,6 +34,25 @@ module SAURIA_tb_top;
 
     sauria_subsystem sauria_ss(.*);
 
+    bind sauria_ss sauria_ss_assert #(CFG_AXI_ADDR_WIDTH,
+                                      CFG_AXI_DATA_WIDTH,
+    
+                                      DATA_AXI_ADDR_WIDTH, 
+                                      DATA_AXI_DATA_WIDTH,
+                                      DATA_AXI_ID_WIDTH
+                                    ) ss_assert(.*);
+
+    
+    
+    bind sauria_ss sauria_ss_cov #(CFG_AXI_ADDR_WIDTH,
+                                      CFG_AXI_DATA_WIDTH,
+    
+                                      DATA_AXI_ADDR_WIDTH, 
+                                      DATA_AXI_DATA_WIDTH,
+                                      DATA_AXI_ID_WIDTH
+                                    ) ss_cov(.*);
+
+    
     initial begin
         $display("TB_TOP running at time %0t", $time);     
         run_test();

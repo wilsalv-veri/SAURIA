@@ -70,7 +70,7 @@ def addLinesUnderCurrentDirectory(cwd_path,include_files):
             if not len(entry):
                 continue
             
-            include_files_under_directories = ["interfaces","packages", "tb"]
+            include_files_under_directories = ["assertions","coverage","interfaces","packages", "tb"]
             includeLine = filelistIncludeLine(entry, path, directory)
           
             if directory or (cwd in include_files_under_directories):

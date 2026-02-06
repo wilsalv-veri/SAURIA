@@ -87,8 +87,8 @@ function run_sauria(){
     mv $LAST_CREATED_DIR/cov_reports/assert_*.html      $LAST_CREATED_DIR/cov_reports/assert_reports
     
     #FIXME: wilsalv :Add back once UVM tests have been enabled
-    #mv $LAST_CREATED_DIR/cov_reports/cg_detail_*.html   $LAST_CREATED_DIR/cov_reports/cg_reports
-    #mv $LAST_CREATED_DIR/cov_reports/functional_*.html  $LAST_CREATED_DIR/cov_reports/funct_reports
+    mv $LAST_CREATED_DIR/cov_reports/cg_detail_*.html   $LAST_CREATED_DIR/cov_reports/cg_reports
+    mv $LAST_CREATED_DIR/cov_reports/functional_*.html  $LAST_CREATED_DIR/cov_reports/funct_reports
 
     #Move the waveform file to the test run directory
     mv SAURIA_waves.vcd $LAST_CREATED_DIR/"$DIR_NAME"_waves.vcd
