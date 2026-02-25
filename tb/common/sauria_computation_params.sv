@@ -37,6 +37,8 @@ class sauria_computation_params extends uvm_object;
     sauria_axi4_lite_data_t weights_w_step;
     sauria_axi4_lite_data_t weights_k_step;
 
+    sauria_axi4_lite_data_t weights_w_lim;
+
     //Inter-Tile
     sauria_axi4_lite_data_t tile_weights_c_step;
     sauria_axi4_lite_data_t tile_weights_K;

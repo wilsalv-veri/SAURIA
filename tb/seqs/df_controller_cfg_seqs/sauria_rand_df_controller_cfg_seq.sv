@@ -17,10 +17,15 @@ class sauria_rand_df_controller_cfg_seq extends sauria_axi4_lite_df_controller_c
         Cw_eq dist {0:=70, 1:=30};
         Ch_eq dist {0:=70, 1:=30};
         Ck_eq dist {0:=70, 1:=30};
+
+        Cw_eq == 1'b0;
+        Ch_eq == 1'b0;
+        Ck_eq == 1'b0;
     }
 
     constraint loop_order_c {
         loop_order dist {0:=50, [1:2]:/50};
+        loop_order == 2'b0;
     }
     
     constraint wxfer_op_c {

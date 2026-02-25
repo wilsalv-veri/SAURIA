@@ -528,7 +528,7 @@ module sauria_dma_controller (
                                 next_action <= GOTO_SYNC_WRESP;
                                 goto_sync_sauria <= 1'b1;
                                 
-                                //NOTE: wilsalv :DF_BUGID17
+                                //NOTE: wilsalv :DF_BUGID10
                                 //state <= WAIT_DMA_INTR_READER;
                                 state <= SAURIA_SYNC;
 
@@ -549,7 +549,7 @@ module sauria_dma_controller (
                             if (first_tile && !single_tile) begin
                                 first_tile <= 1'b0;
                                 
-                                //NOTE: wilsalv :DF_BUGID18
+                                //NOTE: wilsalv :DF_BUGID11
                                 if (loop_order == 2'h2)begin
                                     set_B_params();
                                     sub_state <= DMA_BRING_B;

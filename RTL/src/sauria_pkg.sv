@@ -94,7 +94,11 @@ package sauria_pkg;
     parameter DMA_RADDR_OFFSET              = 0;        //offset of the DMA AXI master reader addresses; must be multiple of 4GB
     parameter DMA_WADDR_OFFSET              = 0;        //offset of the DNA AXI master writer addresses; must be multiple of 4GB
     parameter DATA_ELM_BITS                 = 8;        // Width of the axi data bus elements (integer multiple of 8)
-    parameter DMA_SYNC_AW_W                 = 0;        // synchronize AW and W channels; adress is not valid until there is data availbale in the writer FIFO
+    
+    //NOTE: wilsalv :DMA_BUGID6 
+    //parameter DMA_SYNC_AW_W                 = 0;        // synchronize AW and W channels; adress is not valid until there is data availbale in the writer FIFO
+    parameter DMA_SYNC_AW_W                 = 1;
+
     parameter DMA_MAX_OUTSTANDING_READS     = 8;        // Max concurrent reads
     parameter DMA_MAX_OUTSTANDING_WRITES    = 8;        // Max concurrent writes
 
@@ -107,11 +111,8 @@ package sauria_pkg;
     // Register count
     localparam int TOTAL_REGS_CON = $ceil(sauria_pkg::TOTAL_BITS_CON/32);
     
-    //FIXME: wilsalv
-    //localparam int TOTAL_REGS_ACT = $ceil(sauria_pkg::TOTAL_BITS_ACT/32);
-    localparam int TOTAL_REGS_ACT = $ceil(sauria_pkg::TOTAL_BITS_ACT/32) - 1;
-   
-
+    localparam int TOTAL_REGS_ACT = $ceil(sauria_pkg::TOTAL_BITS_ACT/32);
+    
     localparam int TOTAL_REGS_WEI = $ceil(sauria_pkg::TOTAL_BITS_WEI/32);
     localparam int TOTAL_REGS_OUT = $ceil(sauria_pkg::TOTAL_BITS_OUT/32);
 

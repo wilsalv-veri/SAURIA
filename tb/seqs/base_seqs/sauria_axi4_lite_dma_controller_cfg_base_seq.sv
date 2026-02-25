@@ -61,9 +61,9 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
         solve dma_ifmaps_c_lim  before dma_tile_ifmaps_x_step;
         solve dma_ifmaps_y_step before dma_ifmaps_c_step;
         
-        dma_ifmaps_ett          == X; 
-        dma_ifmaps_y_lim        == Y; 
-        dma_ifmaps_c_lim        == C; 
+        dma_ifmaps_ett          == 128;//X; 
+        dma_ifmaps_y_lim        == Y - 1; 
+        dma_ifmaps_c_lim        == C - 1; 
 
         dma_ifmaps_y_step       == dma_ifmaps_ett*df_ctrl_pkg::A_BYTES;
         dma_ifmaps_c_step       == dma_ifmaps_y_step*(dma_ifmaps_y_lim+1);
@@ -82,7 +82,7 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
         solve dma_weights_w_step before dma_tile_weights_k_step, dma_weights_w_lim;
         
         dma_weights_w_step      == K; 
-        dma_weights_w_lim       == C * dma_weights_w_step;
+        dma_weights_w_lim       == (C-1) * dma_weights_w_step;
         
         dma_tile_weights_c_step == dma_weights_w_lim + dma_weights_w_step; 
         dma_tile_weights_k_step == dma_tile_weights_c_step * (dma_tile_c_lim + 1);
@@ -130,7 +130,6 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
     endfunction
 
     virtual function void share_computation_params();
-        `sauria_info(message_id, $sformatf("Sharing Computation Params X: %0d Y: %0d C: %0d",dma_ifmaps_ett, dma_ifmaps_y_lim, dma_ifmaps_c_lim))
         
         if (!uvm_config_db #(sauria_computation_params)::get(p_sequencer, "","computation_params", computation_params))
             `sauria_error(message_id, "Failed to get access to computation params")
@@ -139,6 +138,8 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
         share_ifmaps_params();
         share_weights_params();
         share_psums_params();
+        `sauria_info(message_id, $sformatf("Sharing Computation Params X: %0d Y: %0d C: %0d",computation_params.ifmaps_X, computation_params.ifmaps_Y, computation_params.ifmaps_C))
+        
         computation_params.shared  = 1'b1;
     endfunction
 
@@ -151,18 +152,19 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
 
     virtual function void share_ifmaps_params();
         computation_params.ifmaps_X            = dma_ifmaps_ett;
-        computation_params.ifmaps_Y            = dma_ifmaps_y_lim;
-        computation_params.ifmaps_C            = dma_ifmaps_c_lim;
+        computation_params.ifmaps_Y            = dma_ifmaps_y_lim + 1;
+        computation_params.ifmaps_C            = dma_ifmaps_c_lim + 1;
 
         computation_params.ifmaps_x_step       = df_ctrl_pkg::A_BYTES;
         computation_params.ifmaps_y_step       = dma_ifmaps_y_step;
         computation_params.ifmaps_c_step       = dma_ifmaps_c_step;
 
-        computation_params.tile_ifmaps_X       = dma_tile_x_lim;
-        computation_params.tile_ifmaps_Y       = dma_tile_y_lim;
+        //Single Tile Computation
+        computation_params.tile_ifmaps_X       = dma_tile_ifmaps_x_step; 
+        computation_params.tile_ifmaps_Y       = dma_tile_ifmaps_x_step; 
 
         computation_params.tile_ifmaps_x_step  = dma_tile_ifmaps_x_step;
-        computation_params.tile_ifmaps_y_step  = dma_tile_ifmaps_y_step;
+        computation_params.tile_ifmaps_y_step  = dma_tile_ifmaps_x_step; 
     endfunction
 
     virtual function void share_weights_params();
@@ -172,30 +174,38 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
         computation_params.weights_w_step      = dma_weights_w_step;
         computation_params.weights_k_step      = df_ctrl_pkg::B_BYTES;
        
+        computation_params.weights_w_lim       = dma_tile_weights_c_step;
+        
+        //Single Tile Computation 
         computation_params.tile_weights_c_step = dma_tile_weights_c_step;
-        computation_params.tile_weights_k_step = dma_tile_weights_k_step;
+        computation_params.tile_weights_k_step = dma_tile_weights_c_step;
     
-        computation_params.tile_weights_K      = dma_tile_k_lim; 
+        computation_params.tile_weights_K      = dma_tile_weights_c_step;
     endfunction
 
     virtual function void share_psums_params();
-         
+        
+        //Golden Model Use
         computation_params.psums_K             = dma_weights_w_step;
-        computation_params.psums_Y             = dma_ifmaps_y_lim;
+        computation_params.psums_Y             = dma_ifmaps_y_lim + 1;
         computation_params.psums_X             = dma_ifmaps_ett;
         
         computation_params.tile_psums_x_step   = dma_tile_psums_x_step;
-        //computation_params.psums_CX          = 
-        //computation_params.psums_cx_step     = 
        
-        computation_params.psums_CK            = dma_tile_weights_k_step - 1;
-        computation_params.psums_ck_step       = dma_psums_k_step;
-       
-        //computation_params.tile_psums_CY     = 
-        computation_params.tile_psums_cy_step  = dma_tile_psums_y_step;
+        //Core Use
+        computation_params.psums_cx_step       = SRAMC_N;
+        computation_params.psums_CX            = computation_params.psums_cx_step * X;  
+        
+        computation_params.psums_ck_step       = computation_params.psums_CX; 
+        computation_params.psums_CK            = computation_params.psums_ck_step * computation_params.psums_K;
+        
+        //Single Tile
+        computation_params.tile_psums_cy_step  = computation_params.psums_CK; 
+        computation_params.tile_psums_CY       = computation_params.psums_CK; 
+        
+        computation_params.tile_psums_ck_step  = computation_params.psums_CK; 
+        computation_params.tile_psums_CK       = computation_params.psums_CK; 
     
-        //computation_params.tile_psums_CK     = 
-        computation_params.tile_psums_ck_step  = dma_tile_psums_k_step;
     endfunction
 
     virtual function void add_dma_controller_cfg_CRs(int cfg_cr_idx);

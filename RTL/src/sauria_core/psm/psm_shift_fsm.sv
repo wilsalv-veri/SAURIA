@@ -209,10 +209,14 @@ always_comb begin: state_transitions
 
         // IDLE => Wait for start flag
         IDLE: begin
+            //NOTE: wilsalv :CORE_BUGID5
             if(i_fsm_start && !completion_flag) begin
+            //if(i_fsm_start) begin
                 
                 // If initial section
+                //NOTE: wilsalv :CORE_BUGID5
                 if (ctx_cnt<3) begin
+                //if ((ctx_cnt<3) && (!completion_flag)) begin
                     
                     // If preload is currently needed
                     if (i_preload_en && (i_ncontexts >= ctx_cnt)) begin
@@ -447,6 +451,7 @@ always_comb begin: output_logic
             o_cnt_en = 1;
             o_wr_flag = 0;
             o_cnt_start = 0;
+
             o_rd_feeder_en = 1;
             o_rd_feeder_clear = 0;
             o_wr_feeder_en = 0;
@@ -455,6 +460,7 @@ always_comb begin: output_logic
             o_done = 0;
             o_shift_done = 1;
             o_sramc_wren = 0;
+            
             o_sramc_rden = 1;
             o_cscan_en = 0;
             o_buff_shift = 0;
@@ -473,7 +479,11 @@ always_comb begin: output_logic
             o_cnt_en = 0;
             o_wr_flag = 0;
             o_cnt_start = 0;
-            o_rd_feeder_en = 1;
+            
+            //NOTE: wilsalv :CORE_BUGID6
+            //o_rd_feeder_en = 1;
+            o_rd_feeder_en = 0;
+            
             o_rd_feeder_clear = 0;
             o_wr_feeder_en = 0;
             o_wr_feeder_clear = 1;
@@ -481,7 +491,12 @@ always_comb begin: output_logic
             o_done = 0;
             o_shift_done = 1;
             o_sramc_wren = 0;
-            o_sramc_rden = 1;
+            
+            //NOTE: wilsalv :CORE_BUGID6
+            //o_sramc_rden = 1;
+            o_sramc_rden = 0;
+            
+            
             o_cscan_en = 0;
             o_buff_shift = 0;
 
@@ -584,14 +599,22 @@ always_comb begin: output_logic
             o_cnt_en = 1;
             o_wr_flag = 1;
             o_cnt_start = 0;
+            
             o_rd_feeder_en = 0;
             o_rd_feeder_clear = 1;
-            o_wr_feeder_en = 1;
+            
+            //NOTE: wilsalv :CORE_BUGID6
+            //o_wr_feeder_en = 1;
+            o_wr_feeder_en = !i_done; 
             o_wr_feeder_clear = 0;
 
             o_done = 0;
             o_shift_done = 1;
-            o_sramc_wren = 1;
+            
+            //NOTE: wilsalv :CORE_BUGID6
+            //o_sramc_wren = 1;
+            o_sramc_wren = !i_done;
+            
             o_sramc_rden = 0;
             o_cscan_en = 0;
             o_buff_shift = 0;

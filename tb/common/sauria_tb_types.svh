@@ -217,3 +217,5 @@
         DMA_SEND_C
     } df_ctrl_substate_t;
 
+    typedef enum {RAND, ADDR_AS_DATA, BAD_PATTERN, INCR_PATTERN} data_gen_mode_t;
+

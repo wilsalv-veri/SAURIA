@@ -68,8 +68,9 @@ class sauria_axi4_driver extends uvm_driver #(sauria_tensor_mem_seq_item);
         sauria_axi4_mem_if.axi4_rd_addr_ch.arready <= 1'b0;
         rd_txn_item.rd_addr_item.arlen  <= sauria_axi4_mem_if.axi4_rd_addr_ch.arlen;
         rd_txn_item.rd_addr_item.arsize <= sauria_axi4_mem_if.axi4_rd_addr_ch.arsize;
-        gen_data();
         
+        data_generator.set_tensor_type(sauria_axi4_mem_if.axi4_rd_addr_ch.araddr);
+    
         /*The following fields are ignored for read requests
             sauria_axi4_mem_if.axi4_rd_addr_ch.arprot;
             sauria_axi4_mem_if.axi4_rd_addr_ch.arlock;
@@ -84,13 +85,8 @@ class sauria_axi4_driver extends uvm_driver #(sauria_tensor_mem_seq_item);
             `sauria_error(message_id, "Failed to get access to computation_params")
  
         data_generator.configure_generator(tensor_item, rd_txn_item, computation_params);
+        data_generator.set_data_gen_mode(INCR_PATTERN);
     endfunction
-
-    virtual function void gen_data();
-        data_generator.set_tensor_type(sauria_axi4_mem_if.axi4_rd_addr_ch.araddr);
-        data_generator.gen_read_data();
-    endfunction
-
 
     virtual task set_rd_data();
            
@@ -100,7 +96,7 @@ class sauria_axi4_driver extends uvm_driver #(sauria_tensor_mem_seq_item);
             
             sauria_axi4_mem_if.axi4_rd_data_ch.rvalid <= 1'b1;
             sauria_axi4_mem_if.axi4_rd_data_ch.rresp  <= sauria_axi_resp_t'('h0);            
-            sauria_axi4_mem_if.axi4_rd_data_ch.rdata  <= rd_txn_item.rd_data_item.rdata;
+            sauria_axi4_mem_if.axi4_rd_data_ch.rdata  <= data_generator.gen_read_data(); //rd_txn_item.rd_data_item.rdata;
             sauria_axi4_mem_if.axi4_rd_data_ch.rlast  <= chunk_id == rd_txn_item.rd_addr_item.arlen;
             wait (sauria_axi4_mem_if.axi4_rd_data_ch.rready);
             

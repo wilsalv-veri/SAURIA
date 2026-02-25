@@ -10,17 +10,17 @@ class sauria_ifmaps_eq_array_dma_ctrl_cfg_seq extends sauria_axi4_lite_dma_contr
    //Independent Constraints
    constraint tile_dimensions_c {
         X               == `X;
-        Y               == `Y - 1;
-        W               ==  3 - 1;
-        C               ==  4 - 1;
+        Y               == `Y;
+        W               ==  2;
+        C               ==  3;
         K               ==  7;
     }
 
     constraint tensor_dimensions_c {
-        dma_tile_x_lim  == 2 - 1;
-        dma_tile_y_lim  == 2 - 1;
-        dma_tile_c_lim  == 3 - 1; 
-        dma_tile_k_lim  == 4 - 1; 
+        dma_tile_x_lim  == 1; //2
+        dma_tile_y_lim  == 1; //2
+        dma_tile_c_lim  == 1; //3
+        dma_tile_k_lim  == 1; //4
     }
      
 endclass

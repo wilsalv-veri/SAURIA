@@ -2,30 +2,44 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
 
     `uvm_object_utils(sauria_axi4_lite_core_main_controller_cfg_base_seq)
 
+   
+    parameter INC_CNT_LIM_END_IDX              = ACT_IDX_W - 1;
+    
+    parameter ACT_REPS_START_IDX               = INC_CNT_LIM_END_IDX + 1;
+    parameter ACT_REPS_END_IDX                 = ACT_REPS_START_IDX + OUT_IDX_W - 1;
+    
+    parameter WEIGHT_REPS_LOWER_BITS_START_IDX = ACT_REPS_END_IDX + 1;
+    parameter WEIGHT_REPS_LOWER_BITS_END_IDX   = 31;
+    parameter WEIGHT_REPS_UPPER_BITS_START_IDX = 0;
+    parameter WEIGHT_REPS_UPPER_BITS_END_IDX   = WEIGHT_REPS_UPPER_BITS_START_IDX + OUT_IDX_W - (WEIGHT_REPS_LOWER_BITS_END_IDX - WEIGHT_REPS_LOWER_BITS_START_IDX) - 1;
+    
+    parameter ZERO_NEGLIGENCE_START_IDX        = WEIGHT_REPS_UPPER_BITS_END_IDX + 1;
+    parameter ZERO_NEGLIGENCE_END_IDX          = ZERO_NEGLIGENCE_START_IDX + TH_W - 1;
+    
+    parameter WEIGHT_REPS_LOWER_BITS_LEN       = WEIGHT_REPS_LOWER_BITS_END_IDX - WEIGHT_REPS_LOWER_BITS_START_IDX + 1;
+    parameter WEIGHT_REPS_UPPER_BITS_LEN       = WEIGHT_REPS_UPPER_BITS_END_IDX - WEIGHT_REPS_UPPER_BITS_START_IDX + 1;
+    
     rand sauria_axi4_lite_data_t total_macs;
     rand sauria_axi4_lite_data_t act_reps;
                         
     rand sauria_axi4_lite_data_t weight_reps;
-    rand sauria_axi4_lite_data_t psums_reps;
     
     rand sauria_axi4_lite_data_t zero_negligence_threshold;                
    
     
     constraint total_macs_c {
-        total_macs == sauria_axi4_lite_data_t'('h0);
+        total_macs == sauria_axi4_lite_data_t'('h10);
     }
     
     constraint array_reps_c {
         act_reps    == sauria_axi4_lite_data_t'('h1);                    
         weight_reps == sauria_axi4_lite_data_t'('h1);
-        psums_reps  == sauria_axi4_lite_data_t'('h5);
     }
    
     constraint zero_neg_c{
         zero_negligence_threshold == sauria_axi4_lite_data_t'('h0);                
     }
 
-    
     function new(string name="sauria_axi4_lite_core_main_controller_cfg_base_seq");
         super.new(name);
         message_id = "SAURIA_AXI4_LITE_CORE_MAIN_CONTROLLER_CFG_BASE_SEQ";
@@ -60,31 +74,32 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
    
     virtual function void set_total_macs();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[14:0] = total_macs;
+        wdata[INC_CNT_LIM_END_IDX:0] = total_macs;
         set_cfg_cr_data(wdata);
     endfunction
     
     virtual function void set_act_reps();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[29:15] = act_reps;
+        wdata[ACT_REPS_END_IDX:ACT_REPS_START_IDX] = act_reps;
         set_cfg_cr_data(wdata);
     endfunction
         
     virtual function void set_weight_reps_lower();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:30] = weight_reps[1:0];
+        wdata[WEIGHT_REPS_LOWER_BITS_END_IDX:WEIGHT_REPS_LOWER_BITS_START_IDX] = weight_reps[WEIGHT_REPS_LOWER_BITS_LEN - 1:0];
         set_cfg_cr_data(wdata);
     endfunction
 
     virtual function void set_weight_reps_upper();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[29:0] = weight_reps[14:2];
+        wdata[WEIGHT_REPS_UPPER_BITS_END_IDX:WEIGHT_REPS_UPPER_BITS_START_IDX] = weight_reps[OUT_IDX_W:WEIGHT_REPS_LOWER_BITS_LEN];
         set_cfg_cr_data(wdata);
     endfunction
 
-    //Finish Later
     virtual function void set_zero_negligence_threshold();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[31:13] = zero_negligence_threshold;
+        set_cfg_cr_data(wdata);
     endfunction
     
 endclass

@@ -93,17 +93,45 @@ module sauria_ss_assert #(AXI_LITE_DATA_WIDTH,
     int exp_total_dma_ops;
     int exp_ifmaps_tile_reads;
     int exp_weights_tile_reads;
-    int exp_psums_reads;
-    int exp_psums_writes;
+    int exp_psums_tile_reads;
+    int exp_psums_tile_writes;
     
     bit got_computation_params_access;
+
+    function void debug_print(int count);
+        $display("[%t] DMA Count Trace: %0d", $time, count);
+    endfunction
+
+    function int get_exp_ifmaps_iterations(int loop_order);
+        case(loop_order)
+            0: return exp_total_num_tiles;
+            1: return exp_total_num_tiles;
+            2: return tile_C * tile_X * tile_Y;
+        endcase
+    endfunction
+
+    function int get_exp_weights_iterations(int loop_order);
+        case(loop_order)
+            0: return tile_C * tile_K;
+            1: return exp_total_num_tiles;
+            2: return exp_total_num_tiles;
+        endcase
+    endfunction
+
+    function int get_exp_psums_iterations(int loop_order);
+        case(loop_order)
+            0: return exp_total_num_tiles;
+            1: return tile_K * tile_X * tile_Y;
+            2: return exp_total_num_tiles;
+        endcase
+    endfunction
 
     always @ (posedge i_system_clk) begin
         if (!got_computation_params_access)begin
             if (uvm_config_db #(sauria_computation_params)::get(null, "","computation_params", computation_params))begin
-                `sauria_sva_info("Got Computation Params Access");
                 got_computation_params_access = 1'b1;
                 wait(computation_params.shared);
+                wait(computation_params.tensors_start_addr_shared);
                 tile_X = computation_params.tile_X;
                 tile_Y = computation_params.tile_Y;
                 tile_C = computation_params.tile_C;
@@ -113,13 +141,13 @@ module sauria_ss_assert #(AXI_LITE_DATA_WIDTH,
                 ifmaps_Y = computation_params.ifmaps_Y;
                 ifmaps_C = computation_params.ifmaps_C;
                 
-                weights_W = computation_params.weights_W;
+                weights_W = computation_params.Ck_eq ? 1 : computation_params.weights_W;
                 weights_K = computation_params.weights_K;
                 
-                psums_X = computation_params.psums_X;
-                psums_Y = computation_params.psums_Y + 1;
-                psums_K = computation_params.psums_K;
-                
+                psums_X = computation_params.psums_X; 
+                psums_Y = computation_params.Cw_eq ? 1 : computation_params.psums_Y; //From limit
+                psums_K = computation_params.Cw_eq & computation_params.Ch_eq ? 1 : computation_params.psums_K;
+        
                 exp_reads_set          = 1'b1;
                 
                 ifmaps_dma_iterations  = ifmaps_Y * ifmaps_C;
@@ -127,20 +155,22 @@ module sauria_ss_assert #(AXI_LITE_DATA_WIDTH,
                 psums_dma_iterations   = psums_Y * psums_K;
 
                 exp_total_num_tiles    = tile_X * tile_Y * tile_C * tile_K;
-                exp_ifmaps_tile_reads  = exp_total_num_tiles;
-                exp_weights_tile_reads = tile_C * tile_K;
-                exp_psums_reads   = exp_total_num_tiles;
-                exp_psums_writes  = psums_dma_iterations * exp_total_num_tiles; 
+                
+                exp_ifmaps_tile_reads  = get_exp_ifmaps_iterations(computation_params.loop_order); 
+                exp_weights_tile_reads = get_exp_weights_iterations(computation_params.loop_order); 
+                exp_psums_tile_reads   = get_exp_psums_iterations(computation_params.loop_order); 
+                
+                exp_psums_tile_writes  = get_exp_psums_iterations(computation_params.loop_order); 
+                
+                exp_total_reads   = (ifmaps_dma_iterations*exp_ifmaps_tile_reads) + (weights_dma_iterations*exp_weights_tile_reads) + (psums_dma_iterations*exp_psums_tile_reads);
+                exp_total_writes  = psums_dma_iterations*exp_psums_tile_writes;
+                exp_total_dma_ops = exp_total_reads + exp_psums_tile_writes;
 
-                exp_total_reads   = exp_ifmaps_tile_reads + exp_weights_tile_reads + exp_psums_reads;
-                exp_total_writes  = exp_psums_writes;
-                exp_total_dma_ops = exp_total_reads + exp_psums_writes;
-
-            
             end
 
         end
     end
+
     always @ (posedge (io_cfg_port.aw_valid && io_cfg_port.w_valid)) begin
         if (io_cfg_port.aw_addr == df_start_addr)begin
             df_controller_start <= io_cfg_port.w_data[0];
@@ -199,13 +229,13 @@ module sauria_ss_assert #(AXI_LITE_DATA_WIDTH,
     property count_dma_reads(logic [31:0] total_dma_reads);
         logic [31:0] dma_reads_count;
         
-        ($rose(df_controller_start), dma_reads_count = 0) |-> strong ( (1, dma_reads_count = $rose(dma_mem_sauria.aw_valid) + 1) [*1:$] ##1 $rose(o_intr) ##0 (dma_reads_count == total_dma_reads));
+        ($rose(df_controller_start), dma_reads_count = 0) |-> strong ( (1, dma_reads_count = $rose(dma_mem_sauria.aw_valid) + dma_reads_count) [*1:$] ##1 $rose(o_intr) ##0 (dma_reads_count == total_dma_reads));
     endproperty
     
     property count_dma_writes(logic [31:0] total_dma_writes);
         logic [31:0] dma_writes_count;
 
-        ($rose(df_controller_start), dma_writes_count = 0) |-> strong ( (1, dma_writes_count = $rose(dma_mem_sauria.ar_valid) + 1) [*1:$] ##1 $rose(o_intr) ##0 (dma_writes_count == dma_writes_count));
+        ($rose(df_controller_start), dma_writes_count = 0) |-> strong ( (1, dma_writes_count = $rose(dma_mem_sauria.ar_valid) + dma_writes_count) [*1:$] ##1 $rose(o_intr) ##0 (dma_writes_count == total_dma_writes));
     endproperty
     
     
@@ -220,19 +250,15 @@ module sauria_ss_assert #(AXI_LITE_DATA_WIDTH,
     
     CORE_NEVER_DONE_BEFORE_START: assert property ( @ (posedge i_system_clk) core_start_done_order) else `sauria_sva_error("Sauria Core Done Asserted Before Core Start");
     
-    //FIXME: wilsalv :Enable Later
-    //ALL_TILES_READ        : assert property ( @ (posedge i_system_clk ) disable iff (!exp_reads_set) count_dma_reads(exp_total_reads) ) else `sauria_sva_error("Missing Unread Tiles Or Tile Elements");
-    //ALL_PSUMS_WRITTEN_BACK: assert property ( @ (posedge i_system_clk ) disable iff (!exp_reads_set) count_dma_writes(exp_total_writes) ) else `sauria_sva_error("Missing Writeback Tiles Or Tile Elements");
+    ALL_TILES_READ        : assert property ( @ (posedge i_system_clk ) disable iff (!exp_reads_set) count_dma_reads(exp_total_reads) ) else `sauria_sva_error("Missing Unread Tiles Or Tile Elements");
+    ALL_PSUMS_WRITTEN_BACK: assert property ( @ (posedge i_system_clk ) disable iff (!exp_reads_set) count_dma_writes(exp_total_writes) ) else `sauria_sva_error("Missing Writeback Tiles Or Tile Elements");
     
     //TODO: wilsalv
-    //1) Count DMA Mem Writes and Confirm Total Writes = All PSUMS Written
-    //2) Count DMA Reads and Confirm Total Reads = All Tensors Fully Read (IFMAPS + WEIGHS + PSUMS)
     //3) Check No Change In Config Between DF Controller Start and Interrupt Out Set
 
     assert property ( @ (posedge i_system_clk) $rose(df_controller_start) |-> s_eventually $rose(dma_rd_intr2control)) else `sauria_sva_error("DMA RD Interrupt Never Asserted");
     assert property ( @ (posedge i_system_clk) $rose(df_controller_start) |-> s_eventually $rose(dma_wr_intr2control)) else `sauria_sva_error("DMA WR Interrupt Never Asserted");
     assert property ( @ (posedge i_system_clk) $rose(df_controller_start) |-> s_eventually ($rose(dma_rd_intr2control) ##[0:5] $rose(dma_wr_intr2control))) else `sauria_sva_error("DMA WR Never Happened");
     
-    assert property ( @ (posedge i_system_clk) $rose(df_controller_start) |->  strong ($rose(dma_mem_sauria.ar_valid)[->2688] ##[0:$] $rose(o_intr))) `sauria_sva_info("SUCCESS!!!"); else `sauria_sva_error("FAILURE :(");
     
 endmodule

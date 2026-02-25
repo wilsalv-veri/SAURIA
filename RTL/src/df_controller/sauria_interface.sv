@@ -19,6 +19,8 @@
 // Jordi Fornt <jfornt@bsc.es>
 //
 
+import sauria_cfg_pkg::*;
+
 module sauria_interface #(
     parameter N_REGS = 1
 )(
@@ -128,7 +130,7 @@ module sauria_interface #(
     assign fwd_dma_reader_interrupt_out = state == IDLE && !dma_interface_operating && dma_reader_interrupt_in;
     assign fwd_dma_writer_interrupt_out = state == IDLE && !dma_interface_operating && dma_writer_interrupt_in;
 
-    assign sauria_sync = state == DMA_SYNC;// && sauria_interrupt_in;//FIXME: wilsalv
+    assign sauria_sync = state == DMA_SYNC;
 
     sauria_dma_controller sauria_dma_controller_I (
         .clk(clk),
@@ -220,44 +222,47 @@ module sauria_interface #(
         start_wresp_sync <= 1'b0;
         start_dma_controller <= 1'b0;
 
-        //NOTE: wilsalv :BUGID10
-        //dma_params.dma.psums.k_lim <= (WXfer_op == 1'b1) ? (dma_params.dma.weights.w_step - 12'd1) : (dma_params.tile.weights.k_step - 12'd1);  // ETIL_W_WSTEP = Cout -> Becomes an auxiliary register to not mess up PSUMS
-        dma_params.dma.psums.k_lim <= (dma_params.dma.weights.w_step - 12'd1); 
-        
-        //NOTE: wilsalv :BUGID11
-        //dma_params.dma.psums.y_lim <= dma_params.tile.psums.y_step - {12'd0, dma_params.dma.psums.y_step};
-        dma_params.dma.psums.y_lim <= {12'd0, dma_params.dma.psums.k_step} - {12'd0, dma_params.dma.psums.y_step};
-        
-        //NOTE: wilsalv :DOC1
-        //NOTE: wilsalv :DF_BUGID16
-        //dma_params.dma.weights.w_lim <= (WXfer_op == 1'b1) ? 1 : (dma_params.tile.weights.c_step - {12'd0, dma_params.dma.weights.w_step});     // WHOLE TILE WILL ALWAYS BE SENT IN A SINGLE DMA TRANSACTION!
-        dma_params.dma.weights.w_lim <= (dma_params.tile.weights.c_step - {12'd0, dma_params.dma.weights.w_step});     // WHOLE TILE WILL ALWAYS BE SENT IN A SINGLE DMA TRANSACTION!
-              
-        if (Cw_eq && Ch_eq) begin
-            //NOTE: wilsalv :DF_BUGID15
-            //To transfer an entire partial sum tile, you transfer tile psum xstep number of elements
-            //dma_params.dma.psums.ett <= dma_params.tile.psums.k_step;
-            dma_params.dma.psums.ett <= {12'd0, dma_params.tile.psums.x_step}; //WHOLE PSUMS Tile Per DMA Rd Req
-    
-        //NOTE: wilsalv :DF_BUGID14
-        //The number of elements you transfer per partial sum DMA read request does not change unless both
-        //y lim and k lim are 0. In that case then you can send an entire tile in a single DMA transaction
-        //end else if (Cw_eq) begin
-        //    dma_params.dma.psums.ett <= dma_params.tile.psums.y_step;
-        end else begin
-            //NOTE: wilsalv :DF_BUGID13
-            //dma_params.dma.psums.ett <= {12'd0, dma_params.tile.psums.x_step};
-            dma_params.dma.psums.ett <= dma_params.dma.ifmaps.ett;
-        end
+        if (DV_GEMM_BYPASS)begin
+            dma_params.dma.psums.k_lim <= (dma_params.dma.weights.w_step - 12'd1); 
+            
+            dma_params.dma.psums.y_lim <= {12'd0, dma_params.dma.psums.k_step} - {12'd0, dma_params.dma.psums.y_step};
+            
+            dma_params.dma.weights.w_lim <= (dma_params.tile.weights.c_step - {12'd0, dma_params.dma.weights.w_step});     // WHOLE TILE WILL ALWAYS BE SENT IN A SINGLE DMA TRANSACTION!
 
-        if (Ck_eq) begin
-            dma_params.dma.weights.ett <= dma_params.tile.weights.c_step; //WHOLE WEIGHTS Tile Per DMA Rd Req
-        end else begin
-            //NOTE: wilsalv :BUGID12
-            //dma_params.dma.weights.ett <= {12'd0, dma_params.tile.weights.k_step};
-            dma_params.dma.weights.ett <= {12'd0, dma_params.dma.weights.w_step};
-        end
+            if (Cw_eq && Ch_eq) begin
+                dma_params.dma.psums.ett <= {12'd0, dma_params.tile.psums.x_step}; //WHOLE PSUMS Tile Per DMA Rd Req
+            end else begin
+                dma_params.dma.psums.ett <= dma_params.dma.ifmaps.ett;
+            end
 
+            if (Ck_eq) begin
+                dma_params.dma.weights.ett <= dma_params.tile.weights.c_step; //WHOLE WEIGHTS Tile Per DMA Rd Req
+            end else begin
+                dma_params.dma.weights.ett <= {12'd0, dma_params.dma.weights.w_step};
+            end
+        end
+        else begin
+            dma_params.dma.psums.k_lim <= (WXfer_op == 1'b1) ? (dma_params.dma.weights.w_step - 12'd1) : (dma_params.tile.weights.k_step - 12'd1);  // ETIL_W_WSTEP = Cout -> Becomes an auxiliary register to not mess up PSUMS
+            
+            dma_params.dma.psums.y_lim <= dma_params.tile.psums.y_step - {12'd0, dma_params.dma.psums.y_step};
+            
+            dma_params.dma.weights.w_lim <= (WXfer_op == 1'b1) ? 1 : (dma_params.tile.weights.c_step - {12'd0, dma_params.dma.weights.w_step});     // WHOLE TILE WILL ALWAYS BE SENT IN A SINGLE DMA TRANSACTION!
+            
+            if (Cw_eq && Ch_eq) begin
+                dma_params.dma.psums.ett <= dma_params.tile.psums.k_step;    
+            end else if (Cw_eq) begin
+                dma_params.dma.psums.ett <= dma_params.tile.psums.y_step;
+            end else begin
+                dma_params.dma.psums.ett <= dma_params.dma.ifmaps.ett;
+            end
+
+            if (Ck_eq) begin
+                dma_params.dma.weights.ett <= dma_params.tile.weights.c_step; //WHOLE WEIGHTS Tile Per DMA Rd Req
+            end else begin
+                dma_params.dma.weights.ett <= {12'd0, dma_params.dma.weights.w_step};
+            end
+        end
+        
         case (state)
 
             IDLE: begin
@@ -308,7 +313,7 @@ module sauria_interface #(
                 start_SRAMB_addr                        <= control_regs[19][31:0];
                 start_SRAMC_addr                        <= control_regs[20][31:0];
 
-                // REG N+1 - Control bits
+                // REG N+1 - Control bits    
                 loop_order                              <= control_regs[21][17:16];
                 stand_alone                             <= control_regs[21][18];
                 stand_alone_keep_A                      <= control_regs[21][19];
@@ -442,10 +447,7 @@ module sauria_interface #(
 
             DMA_SYNC: begin
                 addr <= CONTROL_OFFSET;
-                //FIXME: wilsalv
                 if (dma_sync) begin
-                //if (dma_sync & sauria_sync) begin
-                
                     if (last_sync_2) begin
                         // write_finishq <= 1'b1;
                         state <= WAIT_FINISHQ_WRITE;

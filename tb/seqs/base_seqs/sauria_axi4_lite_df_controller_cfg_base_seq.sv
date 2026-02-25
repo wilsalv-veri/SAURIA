@@ -69,8 +69,8 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
 
     virtual task exchange_computation_params();
         get_computation_params_access();
-        set_starting_tensors_addr();
         set_compute_params_loop_order();
+        set_starting_tensors_addr();
         set_tensor_modifiers();
         get_tensor_sizes();
     endtask

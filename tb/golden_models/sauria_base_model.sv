@@ -53,17 +53,17 @@ class sauria_base_model extends uvm_object;
     virtual function void set_tensor_dimensions(sauria_computation_params computation_params);
         `sauria_info(message_id, "Getting Computation Params")
         ifmap_X     = computation_params.ifmaps_X;
-        ifmap_Y     = computation_params.ifmaps_Y + 1; //From limit
-        ifmap_C     = computation_params.ifmaps_C + 1; //From limit
+        ifmap_Y     = computation_params.ifmaps_Y; 
+        ifmap_C     = computation_params.ifmaps_C; 
 
         weights_W   = Ck_eq ? 1 : computation_params.weights_W;
         weights_K   = computation_params.weights_K;
 
         psums_X     = computation_params.psums_X;
-        psums_Y     = Cw_eq ? 1 : computation_params.psums_Y + 1; //From limit
+        psums_Y     = Cw_eq ? 1 : computation_params.psums_Y; 
         psums_K     = Cw_eq & Ch_eq ? 1 : computation_params.psums_K;
-        seq_psums_Y = computation_params.psums_Y + 1;
-        seq_psums_K = computation_params.psums_K + 1;
+        seq_psums_Y = computation_params.psums_Y;
+        seq_psums_K = computation_params.psums_K;
         
         tile_X      = computation_params.tile_X;
         tile_Y      = computation_params.tile_Y;

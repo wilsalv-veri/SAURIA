@@ -21,7 +21,7 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     rand sauria_axi4_lite_data_t psums_preload_en;
   
     constraint psums_reps_c{
-        psums_reps == sauria_axi4_lite_data_t'('h1);
+        psums_reps == sauria_axi4_lite_data_t'('h0);
     }
 
     constraint psums_dimensions_c{
@@ -45,7 +45,7 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     }
          
     constraint psums_preload_en_c{
-        psums_preload_en == sauria_axi4_lite_data_t'('h0);
+        psums_preload_en == sauria_axi4_lite_data_t'('h1);
     }
     
     constraint psums_inactive_cols_c{
@@ -76,29 +76,29 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     virtual function void add_core_psums_cfg_CRs(int cfg_cr_idx);
         
         case(cfg_cr_idx)
-            36: begin
+            37: begin
                 set_psums_reps();
                 set_psums_cx_lim();
                 set_psums_cx_step_lower();
             end
-            37: begin
+            38: begin
                 set_psums_cx_step_upper();
                 set_psums_ck_lim();
-                set_psums_ck_step();
-            end
-            38: begin
-                set_psums_tile_cy_lim();
-                set_psums_tile_cy_step(); 
+                set_psums_ck_step_lower();
             end
             39: begin
-                `sauria_info(message_id, "Got here")
-                set_psums_tile_ck_lim();
-                set_psums_tile_ck_step();
-                `sauria_info(message_id, "Got here2")
-               
+                set_psums_ck_step_upper();
+                set_psums_tile_cy_lim();
+                set_psums_tile_cy_step_lower(); 
             end
             40: begin
-                set_psums_inactive_cols();
+                set_psums_tile_cy_step_upper(); 
+                set_psums_tile_ck_lim();
+                set_psums_tile_ck_step();  
+                set_psums_inactive_cols_lower();
+            end
+            41: begin
+                set_psums_inactive_cols_upper();  
                 set_psums_preload_en();
             end
         endcase
@@ -112,74 +112,113 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
             `sauria_error(message_id, "Failed to get access to computation params")
         
         wait(computation_params.shared);
-     
-        //psums_cx_lim      = computation_params.psums_CX;          
-        //psums_cx_step     = computation_params.psums_cx_step;     
-       
-        psums_ck_lim        = computation_params.psums_CK;        
+        psums_reps        = computation_params.psums_K;
+        
+        psums_cx_step     = computation_params.psums_cx_step;
+        psums_cx_lim      = computation_params.psums_CX;          
+        //psums_reps        = computation_params.psums_X;//(computation_params.psums_Y * computation_params.psums_K); //computation_params.psums_X
+                            //* computation_params.tile_X * computation_params.tile_Y 
+                            //* computation_params.tile_C * computation_params.tile_K;
+                            
         psums_ck_step       = computation_params.psums_ck_step;  
-       
-        //psums_tile_cy_lim = computation_params.tile_psums_CY; 
+        psums_ck_lim        = computation_params.psums_CK;        
+        
         psums_tile_cy_step  = computation_params.tile_psums_cy_step;
-    
-        //psums_tile_ck_lim = computation_params.tile_psums_CK; 
+        psums_tile_cy_lim   = computation_params.tile_psums_CY; 
+        
         psums_tile_ck_step  = computation_params.tile_psums_ck_step;
+        psums_tile_ck_lim   = computation_params.tile_psums_CK; 
     endtask
   
     virtual function void set_psums_reps();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[14:0] = psums_reps;
+        wdata[13:0] = psums_reps;
         set_cfg_cr_data(wdata);
     endfunction
 
     virtual function void set_psums_cx_lim();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[29:15] = psums_cx_lim;
+        wdata[27:14] = psums_cx_lim;
         set_cfg_cr_data(wdata);
     endfunction
 
     virtual function void set_psums_cx_step_lower();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:30] = psums_cx_step[1:0];
+        wdata[31:28] = psums_cx_step[3:0];
         set_cfg_cr_data(wdata);
     endfunction
            
     virtual function void set_psums_cx_step_upper();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[12:0] = psums_cx_step[14:2];
+        wdata[9:0] = psums_cx_step[13:4];
         set_cfg_cr_data(wdata);
     endfunction
     
     virtual function void set_psums_ck_lim();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[23:10] = psums_ck_lim;
+        set_cfg_cr_data(wdata);
     endfunction
 
-    virtual function void set_psums_ck_step();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+    virtual function void set_psums_ck_step_lower();
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[31:24] = psums_ck_step[7:0];
+        set_cfg_cr_data(wdata);
+    endfunction
+
+    virtual function void set_psums_ck_step_upper();
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[5:0] = psums_ck_step[13:8];
+        set_cfg_cr_data(wdata);
     endfunction
                 
     virtual function void set_psums_tile_cy_lim();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[19:6] = psums_tile_cy_lim;
+        set_cfg_cr_data(wdata);
     endfunction
 
-    virtual function void set_psums_tile_cy_step(); 
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+    virtual function void set_psums_tile_cy_step_lower(); 
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[31:20] = psums_tile_cy_step[11:0];
+        set_cfg_cr_data(wdata);
     endfunction
+
+    virtual function void set_psums_tile_cy_step_upper(); 
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[1:0] = psums_tile_cy_step[13:12];
+        set_cfg_cr_data(wdata);
+    endfunction
+    
                 
     virtual function void set_psums_tile_ck_lim();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[15:2] = psums_tile_ck_lim;
+        set_cfg_cr_data(wdata);
     endfunction 
 
     virtual function void set_psums_tile_ck_step();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[29:16] = psums_tile_ck_step;
+        set_cfg_cr_data(wdata);
     endfunction
-                
-    virtual function void set_psums_inactive_cols();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+    
+    virtual function void set_psums_inactive_cols_lower();
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[31:30] = psums_inactive_cols[1:0];
+        set_cfg_cr_data(wdata);
+    endfunction
+
+    virtual function void set_psums_inactive_cols_upper();
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[5:0] = psums_inactive_cols[7:2];
+        set_cfg_cr_data(wdata);
     endfunction
 
     virtual function void set_psums_preload_en();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[6] = psums_preload_en;
+        set_cfg_cr_data(wdata);
     endfunction
 
 endclass

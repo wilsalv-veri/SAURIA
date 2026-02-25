@@ -108,14 +108,14 @@ class sauria_axi4_mem_base_seq extends uvm_sequence #(sauria_tensor_mem_seq_item
         `sauria_info(message_id, "Getting Computation Params")
         wait(computation_params.shared);
         ifmap_X   = computation_params.ifmaps_X;
-        ifmap_Y   = computation_params.ifmaps_Y + 1; //From limit
-        ifmap_C   = computation_params.ifmaps_C + 1; //From limit
+        ifmap_Y   = computation_params.ifmaps_Y; 
+        ifmap_C   = computation_params.ifmaps_C; 
 
         weights_W = computation_params.weights_W;
         weights_K = computation_params.weights_K;
 
         psums_X   = computation_params.psums_X;
-        psums_Y   = computation_params.psums_Y + 1; //From limit
+        psums_Y   = computation_params.psums_Y; 
         psums_K   = computation_params.psums_K;
 
         tile_X    = computation_params.tile_X;
@@ -156,9 +156,9 @@ class sauria_axi4_mem_base_seq extends uvm_sequence #(sauria_tensor_mem_seq_item
     virtual task send_tensors();
             
         while(!done)begin
-            should_send_ifmaps  =  1'b1;//tile_K_counter == 0;
+            should_send_ifmaps  =  1'b1; //tile_K_counter == 0; FIXME: wilsalv : For loop_order = 0
             should_send_weights = (tile_X_counter == 0) && (tile_Y_counter == 0);
-            should_send_psums   =  1'b1;// tile_C_counter == 0;
+            should_send_psums   =  1'b1; // tile_C_counter == 0;
 
             `sauria_info(message_id, $sformatf("Tile Counters K: %0d C: %0d Y: %0d X: %0d", tile_K_counter, tile_C_counter, tile_Y_counter, tile_X_counter))
             done = is_done_sending_tensors();

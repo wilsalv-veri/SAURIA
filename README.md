@@ -112,52 +112,6 @@ Refer to project documentation for detailed microarchitectural information as it
 
 Detailed setup and usage instructions will be added as the project progresses.
 
----
-**Output accumulation for one tile:**
-
-C<sub>tile</sub>[x,y,k] =
-∑<sub>c_tile</sub> ( I<sub>tile</sub>[x,y,c_tile] · W<sub>tile</sub>[c_tile,k] )
-
----
-Δ<sub>t</sub>[x,y,k] = I<sub>tile</sub>[x,y,c<sub>t</sub>] · W<sub>tile</sub>[c<sub>t</sub>,k]
-
----
-P<sub>t+1</sub>[x,y,k] = P<sub>t</sub>[x,y,k] + Δ<sub>t</sub>[x,y,k]
-
----
-P<sub>final</sub>[x<sub>tile</sub>,y<sub>tile</sub>,k<sub>tile</sub>] =
-∑<sub>c_tile</sub> ( I<sub>tile</sub>[x<sub>tile</sub>,y<sub>tile</sub>,c<sub>tile</sub>] ·
-W<sub>tile</sub>[c<sub>tile</sub>,k<sub>tile</sub>] )
-
----
-P[x,y,k] = ∑<sub>c_tile</sub> ( ∑<sub>c∈c_tile</sub> I[x,y,c] · W[c,k] )
-
----
-Generic GEMM:     C[m,n] = ∑<sub>k</sub> A[m,k] · B[k,n]
-
-Sauria view:      P[x,y,k] = ∑<sub>c</sub> I[x,y,c] · W[c,k]
-
-
-Generic (tiled): C[m,n] = ∑<sub>k_tile</sub> ( ∑<sub>k∈k_tile</sub> A[m,k]·B[k,n] )
-
-Sauria (tiled):  P[x,y,k] = ∑<sub>c_tile</sub> ( ∑<sub>c∈c_tile</sub> I[x,y,c]·W[c,k] )
-
-Generic dimension  →  Sauria dimension
--------------------   ----------------
-m (rows of A)       →  (x, y) spatial tile index  
-k (reduction dim)   →  c  (channel / reduction dimension)  
-n (columns of B)    →  k  (output feature dimension)
-C[m,n]              →  P[x,y,k]
-
-
-Conceptually, Sauria is performing a GEMM where the row index m is split into 2D spatial tiles (x,y), the reduction dimension k becomes the channel dimension c, and the output dimension n maps directly to Sauria’s output feature dimension k.
-
-[A]        × [B]        = [C]
-[m × k]      [k × n]      [m × n]
-
-[I]        × [W]        = [P]
-[x,y × c]    [c × k]      [x,y × k]
-
 --
 ## Sauria Repository
 

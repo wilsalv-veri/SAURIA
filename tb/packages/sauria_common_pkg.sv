@@ -24,7 +24,7 @@ package sauria_common_pkg;
     parameter N_DMA_CTRL_REGS        = 22;
     parameter N_SAURIA_CORE_REGS     = sauria_pkg::TOTAL_REGS_CON + sauria_pkg::TOTAL_REGS_ACT + sauria_pkg::TOTAL_REGS_WEI + sauria_pkg::TOTAL_REGS_OUT;
     parameter N_SAURIA_SS_REGS       = N_DMA_CTRL_REGS + N_SAURIA_CORE_REGS;
-    parameter N_SEQ_REGS             = N_SAURIA_SS_REGS + 2;
+    parameter N_SEQ_REGS             = N_SAURIA_SS_REGS + 1;
     parameter DMA_CTRL_REGS_OFFSET   = 0;
     parameter SAURIA_SS_REGS_OFFSET  = N_DMA_CTRL_REGS;
 
@@ -46,13 +46,13 @@ package sauria_common_pkg;
     parameter CORE_MAIN_CONTROLLER_CFG_CRs_END_IDX   = 23;
     
     parameter CORE_IFMAPS_CFG_CRs_START_IDX          = 24;
-    parameter CORE_IFMAPS_CFG_CRs_END_IDX            = 31;
+    parameter CORE_IFMAPS_CFG_CRs_END_IDX            = 32;
     
-    parameter CORE_WEIGHTS_CFG_CRs_START_IDX         = 32;
-    parameter CORE_WEIGHTS_CFG_CRs_END_IDX           = 35;
+    parameter CORE_WEIGHTS_CFG_CRs_START_IDX         = 33;
+    parameter CORE_WEIGHTS_CFG_CRs_END_IDX           = 36;
     
-    parameter CORE_PSUMS_CFG_CRs_START_IDX           = 36;
-    parameter CORE_PSUMS_CFG_CRs_END_IDX             = 40;
+    parameter CORE_PSUMS_CFG_CRs_START_IDX           = 37;
+    parameter CORE_PSUMS_CFG_CRs_END_IDX             = 41;
     
     import uvm_pkg::*;
     `include "uvm_macros.svh"

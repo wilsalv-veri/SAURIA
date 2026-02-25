@@ -103,7 +103,9 @@ assign til_xyk_flag = x_ov_flag & k_ov_flag & til_xy_ov_flag & til_k_ov_flag;
 // --------------------------
 
 // X counter
-cnt_generic #(
+//NOTE: wilsalv :CORE_BUGID3
+//cnt_generic 
+cnt_dualctx #(
         .CNT_W(IDX_W)
     ) x_counter_i
        (.i_clk  (i_clk),
@@ -111,13 +113,20 @@ cnt_generic #(
         .i_lim	(i_cxlim),
         .i_step	(i_cxstep),
         .i_en	(i_cnt_en),
-        .i_clear(i_cnt_clear || (!i_cnt_en)),   // Clear when disabled to clean the value between RD and WR
+        
+        //NOTE: wilsalv : CORE_BUGID2
+        //.i_clear(i_cnt_clear || (!i_cnt_en)),   // Clear when disabled to clean the value between RD and WR
+        .i_clear(i_cnt_clear),   // Clear when disabled to clean the value between RD and WR
+        
+        .i_sel(i_wr_flag), //NOTE: wilsalv : CORE_BUGID3
 
         .o_flag (x_ov_flag),
         .o_cnt  (x_idx));
 
 // K counter
-cnt_generic #(
+//NOTE: wilsalv : CORE_BUGID3
+//cnt_generic 
+cnt_dualctx #(
         .CNT_W(IDX_W)
     ) k_counter_i
        (.i_clk  (i_clk),
@@ -125,7 +134,13 @@ cnt_generic #(
         .i_lim	(i_cklim),
         .i_step	(i_ckstep),
         .i_en	(i_cnt_en && x_flag),
-        .i_clear(i_cnt_clear || (!i_cnt_en)),   // Clear when disabled to clean the value between RD and WR
+        
+        //NOTE: wilsalv :CORE_BUGID2
+        //.i_clear(i_cnt_clear || (!i_cnt_en)),   // Clear when disabled to clean the value between RD and WR
+        .i_clear(i_cnt_clear),   // Clear when disabled to clean the value between RD and WR
+       
+        .i_sel(i_wr_flag), //NOTE: wilsalv :CORE_BUGID3
+
 
         .o_flag (k_ov_flag),
         .o_cnt  (k_idx));
@@ -166,7 +181,10 @@ cnt_dualctx #(
 
 assign til_idx =    til_xy_idx + til_k_idx;
 assign kk_idx =     til_idx + k_idx;
-assign sram_idx_d = x_idx + kk_idx;
+
+//NOTE: wilsalv : CORE_BUGID4
+//assign sram_idx_d = x_idx + kk_idx;
+assign sram_idx_d = x_idx + kk_idx + til_idx;
 
 // Address & Word Offset
 assign sram_addr_d =        sram_idx_d[IDX_W:WOFS_W];
@@ -263,7 +281,10 @@ end
 // Registers
 // ------------------------
 
-assign done_d = xk_flag;
+//FIXME: wilsalv
+//assign done_d = xk_flag;
+assign done_d = x_flag;
+
 assign til_done_d = til_xyk_flag;
 
 always_ff @(posedge i_clk or negedge i_rstn) begin : gen_reg

@@ -21,10 +21,9 @@ def generate_top_filelist_lines(filelist_names):
     top_level_lines.append("+incdir+$UVM_HOME/src\n\n")
     top_level_lines.append("// Add the UVM package file. It is crucial to compile this before any\n")
     top_level_lines.append("// files that depend on it\n")
-    top_level_lines.append("$UVM_HOME/src/uvm_pkg.sv\n")
+    top_level_lines.append("$UVM_HOME/src/uvm_pkg.sv\n\n")
     
-    
-    top_level_lines.append("\n//Reference other filelists\n")
+    top_level_lines.append("\n\n//Reference other filelists\n")
     
     for filelist_name in filelist_names:
         top_level_lines.append(f"-f {project_env_var}/verif/filelists/{filelist_name}\n")
@@ -43,6 +42,9 @@ def addLinesUnderCurrentDirectory(cwd_path,include_files):
         if cwd == "tb":
             sort_by_match(dir_entries, "packages")
             sort_by_match(dir_entries, "interfaces")   
+        elif cwd == "configuration":
+            sort_by_match(file_entries, "cfg_pkg")
+            sort_by_match(file_entries, "cfg_macros")
         elif cwd == 'packages':
             sort_by_match(file_entries, "tb_top")
             sort_by_match(file_entries, "tests")  
@@ -57,9 +59,12 @@ def addLinesUnderCurrentDirectory(cwd_path,include_files):
             sort_by_match(file_entries, "axi")
             sort_by_match(file_entries, "subsystem")
             sort_by_match(file_entries, "df_controller")
-             
+        
         entries.extend(file_entries)
         entries.extend(dir_entries)
+
+        if cwd == "configuration":
+            print(entries)
 
         for entry in entries:
             
@@ -70,15 +75,28 @@ def addLinesUnderCurrentDirectory(cwd_path,include_files):
             if not len(entry):
                 continue
             
-            include_files_under_directories = ["assertions","coverage","interfaces","packages", "tb"]
+           
+            include_files_under_directories = ["configuration","assertions","coverage","interfaces","packages", "tb"]
             includeLine = filelistIncludeLine(entry, path, directory)
-          
-            if directory or (cwd in include_files_under_directories):
-                includeLine.add_line(include_files)
+
+            if (cwd == 'configuration') and ("macros" in entry):
+                include_files.append("\n//DV Configuration Macros\n")
+                with open(f"{abs_path}", "r") as file:
+                    for macro in file:
+                        include_files.append(f"+define+{macro.replace('\n','')}\n")
+                include_files.append(f"\n")
+            
+            elif directory or (cwd in include_files_under_directories):
+                includeLine.add_filename_line(include_files)
             
             if directory:
                 addLinesUnderCurrentDirectory(abs_path, include_files)
                 include_files.append("")
+
+            if cwd == "configuration":
+                print(f"Entry: {entry} Lines:{include_files}")
+                print(f"\n")
+
 
         if cwd == "tb":
             sort_by_match(include_files, "tb_top.sv", False)
@@ -115,11 +133,18 @@ class filelistIncludeLine:
         self.set_rel_path()
         self.directory = directory
         
+    def add_filename_line(self, lineList):
+        filePath = f"{self.rel_path}{self.name}"
+
+        line = [filePath + "\n",f"+incdir+{filePath}/\n"][int(self.directory)] 
+        lineList.append(line)
+
     def add_line(self, lineList):
         filePath = f"{self.rel_path}{self.name}"
 
         line = [filePath + "\n",f"+incdir+{filePath}/\n"][int(self.directory)] 
         lineList.append(line)
+        
     
     def set_rel_path(self):
         
@@ -131,15 +156,17 @@ class filelistIncludeLine:
 
 if __name__ == "__main__":
     
+    cfg_path = f"{project_path}/configuration"    
+    tests_path = f"{project_path}/tests"    
     tb_path    = f"{project_path}/tb"
-    tests_path = f"{project_path}/tests"
-    
-    paths = [tests_path, tb_path]
+
+    paths = [cfg_path, tests_path, tb_path]
     filelist_names = []
      
     filelist_names.append("hw_version_filelist.f")
+    filelist_names.append("configuration_filelist.f")
     filelist_names.append("rtl_filelist.f")
-
+    
     for path in paths:
         include_files = []
 
@@ -147,13 +174,16 @@ if __name__ == "__main__":
         dir_name = get_current_dir_name(dir_name)
         
         includeLine = filelistIncludeLine(dir_name, path.replace(dir_name,""), True)
-        includeLine.add_line(include_files)    
+        includeLine.add_filename_line(include_files)    
         
         addLinesUnderCurrentDirectory(path,include_files)
         filelist_name = f"{dir_name}_filelist.f"
-        filelist_names.append(filelist_name)
+        
+        if dir_name != "configuration":
+            filelist_names.append(filelist_name)
+        
         generate_filelist(filelist_name, include_files)
 
-
+    
     top_filelist_lines = generate_top_filelist_lines(filelist_names)
     generate_filelist("top_filelist.f",top_filelist_lines)

@@ -65,20 +65,20 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
     virtual function void add_core_weights_cfg_CRs(int cfg_cr_idx);
             
         case(cfg_cr_idx)
-            32: begin
+            33: begin
                 set_weights_w_lim();
                 set_weights_w_step();
-                set_weights_k_lim();
-            end
-            33: begin
-                set_weights_k_step();
-                set_weights_tile_k_lim();
             end
             34: begin
-                set_weights_tile_k_step();
-                set_weights_cols_active();
+                set_weights_k_lim();
+                set_weights_k_step();
             end
             35: begin
+                set_weights_tile_k_lim();
+                set_weights_tile_k_step();
+            end
+            36: begin
+                set_weights_cols_active();
                 set_weights_aligned_flag();
             end
         endcase
@@ -93,46 +93,65 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
         
         wait(computation_params.shared);
        
-        weights_w_lim       = computation_params.weights_W;        
+        weights_w_lim       = computation_params.weights_w_lim;        
         weights_k_lim       = computation_params.weights_K;         
        
         weights_w_step      = computation_params.weights_w_step; 
-        //weights_k_step    = computation_params.weights_k_step;  
+        weights_k_step      = computation_params.weights_k_step;  
        
         weights_tile_k_lim  = computation_params.tile_weights_K;     
         weights_tile_k_step = computation_params.tile_weights_k_step; 
+
+        `sauria_info(message_id, $sformatf("K_Step: 0x%0h K_Lim: 0x%0h Tile_K_Step: 0x%0h Tile_K_Lim: 0x%0h ", 
+                    weights_k_step, weights_k_lim, weights_tile_k_step, weights_tile_k_lim))
     endtask
                 
     virtual function void set_weights_w_lim();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[15:0] = weights_w_lim;
+        set_cfg_cr_data(wdata);
     endfunction
 
     virtual function void set_weights_w_step();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[31:16] = weights_w_step;
+        set_cfg_cr_data(wdata);
     endfunction
 
     virtual function void set_weights_k_lim();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[15:0] = weights_k_lim;
+        set_cfg_cr_data(wdata);
     endfunction
                 
     virtual function void set_weights_k_step();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[31:16] = weights_k_step;
+        set_cfg_cr_data(wdata);
     endfunction
 
     virtual function void set_weights_tile_k_lim();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[15:0] = weights_tile_k_lim;
+        set_cfg_cr_data(wdata);
     endfunction
                 
     virtual function void set_weights_tile_k_step();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[31:16] = weights_tile_k_step;
+        set_cfg_cr_data(wdata);
     endfunction
 
     virtual function void set_weights_cols_active();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[15:0] = weights_cols_active;
+        set_cfg_cr_data(wdata);
     endfunction
                 
     virtual function void set_weights_aligned_flag();
-        set_cfg_cr_data(sauria_axi4_lite_data_t'('h0));
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[16] = weights_aligned_flag;
+        set_cfg_cr_data(wdata);
     endfunction
     
 endclass

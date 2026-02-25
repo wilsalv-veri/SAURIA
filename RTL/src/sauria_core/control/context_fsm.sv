@@ -76,6 +76,8 @@ module context_fsm (
 enum logic [4:0] {
 
     IDLE,
+
+    //Loop Once
     START_FLAGS,
     ARRAY_PREP,
     FIRST_SHIFT,
@@ -89,11 +91,15 @@ enum logic [4:0] {
     ALL_BUSY_SHIFT,
     ALL_BUSY,
     ARRAY_BUSY,
+    
+    //Loop For programmed n_contexts from psums
     ARRAY_CSWITCH,
     ARRAY_CSWITCH_STALL,
     OBUF_BUSY_SHIFT,
     FORCE_STALL,
     OBUF_BUSY,
+
+    //Only on last n_contexts iteration
     LAST_SHIFT,
     LAST_WAIT,
     DONE
@@ -382,37 +388,7 @@ always_comb begin: state_transitions
                 end
             end
 
-            // OBUF_BUSY_SHIFT => Output Buffer fetching data, Array shifting zeros (soft-stall)
-            OBUF_BUSY_SHIFT: begin
-                // If output buffer finishes completely, go to cswitch
-                if (outbuf_done_hold) begin
-                    main_state_d = ARRAY_CSWITCH;
-
-                // If only shift part finishes, stall and wait
-                end else if (i_shift_done) begin
-                    main_state_d = FORCE_STALL;
-                end
-            end
-
-            // FORCE_STALL => 1 cycle to force a stall in secondary FSM
-            FORCE_STALL: begin
-                // If output buffer finishes completely, go to cswitch
-                if (outbuf_done_hold) begin
-                    main_state_d = ARRAY_CSWITCH;
-
-                // Otherwise wait for output buffer
-                end else begin
-                    main_state_d = OBUF_BUSY;
-                end
-            end
-
-            // OBUF_BUSY => Output Buffer fetching data, Array waiting (stall)
-            OBUF_BUSY: begin
-                if (outbuf_done_hold) begin
-                    main_state_d = ARRAY_CSWITCH;
-                end
-            end
-
+            //////////////////////LOOP START///////////////////////////////
             // ARRAY_CSWITCH => Array computing while context switch takes place
             ARRAY_CSWITCH: begin
 
@@ -449,7 +425,10 @@ always_comb begin: state_transitions
                 // When Context Switch Done flag arrives, decide:
                 if (i_cswitch_done) begin
                     // If Feeders & Output Buffer have finished, advance to last section
-                    if (i_feeders_done && i_finalwrite) begin
+                    //NOTE: wilsalv :CORE_BUGID1
+                    //if (i_feeders_done && i_finalwrite) begin
+                    if (i_finalwrite) begin
+                    
                         main_state_d = LAST_SHIFT;
 
                     // Otherwise jump directly to OBUF_BUSY_SHIFT
@@ -458,6 +437,42 @@ always_comb begin: state_transitions
                     end
                 end
             end
+            /////////////////////////////////////////////////////
+
+            // OBUF_BUSY_SHIFT => Output Buffer fetching data, Array shifting zeros (soft-stall)
+            OBUF_BUSY_SHIFT: begin
+                // If output buffer finishes completely, go to cswitch
+                if (outbuf_done_hold) begin
+                    main_state_d = ARRAY_CSWITCH;
+
+                // If only shift part finishes, stall and wait
+                end else if (i_shift_done) begin
+                    main_state_d = FORCE_STALL;
+                end
+            end
+
+            // FORCE_STALL => 1 cycle to force a stall in secondary FSM
+            FORCE_STALL: begin
+                // If output buffer finishes completely, go to cswitch
+                if (outbuf_done_hold) begin
+                    main_state_d = ARRAY_CSWITCH;
+
+                // Otherwise wait for output buffer
+                end else begin
+                    main_state_d = OBUF_BUSY;
+                end
+            end
+
+            // OBUF_BUSY => Output Buffer fetching data, Array waiting (stall)
+            OBUF_BUSY: begin
+                if (outbuf_done_hold) begin
+                    main_state_d = ARRAY_CSWITCH;
+                end
+            end
+
+            
+            
+            ////////////////////////////END LOOP/////////////////////////
 
             // LAST_SHIFT => Instruct Output Buffer to shift last output data
             LAST_SHIFT: begin

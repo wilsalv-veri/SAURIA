@@ -4,6 +4,7 @@
 package sauria_base_cfg_seqs_pkg;
 
     import uvm_pkg::*;
+    import sauria_pkg::*;
     import sauria_common_pkg::*;
     
     function sauria_axi4_lite_addr_t get_cfg_addr_from_idx(int cfg_cr_idx);
