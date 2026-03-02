@@ -219,3 +219,10 @@
 
     typedef enum {RAND, ADDR_AS_DATA, BAD_PATTERN, INCR_PATTERN} data_gen_mode_t;
 
+    typedef bit [sauria_pkg::ADRC_W-1:0]                  sramc_addr_t;
+    typedef bit [sauria_pkg::SRAMC_W-1:0]                 sramc_data_t;
+    typedef bit [0:sauria_pkg::SRAMC_N-1]                 sramc_data_mask_t;
+    typedef bit [0:sauria_pkg::Y-1][sauria_pkg::OC_W-1:0] scan_chain_data_t;
+    typedef bit [sauria_pkg::Y-1:0][sauria_pkg::OC_W-1:0] scan_chain_data_rev_t;
+
+

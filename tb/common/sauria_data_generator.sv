@@ -39,8 +39,6 @@ class sauria_data_generator extends uvm_object;
             PSUMS:   last_data_idx = num_bytes / ($bits(sauria_psums_elem_data_t)   / BYTE);
         endcase
         
-        `sauria_info(message_id, $sformatf("ARSIZE: %0d Last_Data_Idx: %0d",rd_txn_item.rd_addr_item.arsize, last_data_idx))
-
         for(int data_idx=0; data_idx < last_data_idx; data_idx++)begin
             
             case(tensor_item.tensor_type)

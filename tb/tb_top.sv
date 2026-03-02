@@ -5,15 +5,20 @@ module SAURIA_tb_top;
    
     import sauria_tb_top_pkg::*;
 
-    sauria_subsystem_ifc     sauria_subsystem_if();
-    sauria_df_controller_ifc sauria_df_controller_if();
-    sauria_axi4_lite_ifc     axi4_lite_cfg_if();
-    sauria_axi4_ifc          axi4_mem_if();
+    sauria_subsystem_ifc           sauria_subsystem_if();
+    sauria_df_controller_ifc       sauria_df_controller_if();
+    sauria_axi4_lite_ifc           axi4_lite_cfg_if();
+    sauria_axi4_ifc                axi4_mem_if();
+
+    sauria_psums_mgr_ifc           sauria_psums_mgr_if();
+    sauria_psums_mgr_shift_reg_ifc sauria_psums_mgr_shift_reg_if();
 
     virtual sauria_subsystem_ifc     sauria_subsystem_if_v;
     
     `include "sauria_subsystem_ifc_connections.sv"
     `include "sauria_df_controller_ifc_connections.sv"
+    `include "sauria_psums_mgr_ifc_connections.sv"
+    `include "sauria_psums_mgr_shift_reg_ifc_connections.sv"
 
     always #SAURIA_CLK_HALF_PERIOD sauria_subsystem_if.i_sauria_clk = ~sauria_subsystem_if.i_sauria_clk;
     always #SYSTEM_CLK_HALF_PERIOD sauria_subsystem_if.i_system_clk = ~sauria_subsystem_if.i_system_clk;
@@ -25,11 +30,14 @@ module SAURIA_tb_top;
     end 
 
     initial begin
-        uvm_config_db #(virtual sauria_subsystem_ifc)::set(null, "*", "sauria_ss_if",            sauria_subsystem_if);
-        uvm_config_db #(virtual sauria_df_controller_ifc)::set(null, "*", "sauria_df_ctrl_if",   sauria_df_controller_if);
+        uvm_config_db #(virtual sauria_subsystem_ifc)::set(          null, "*", "sauria_ss_if",                  sauria_subsystem_if);
+        uvm_config_db #(virtual sauria_df_controller_ifc)::set(      null, "*", "sauria_df_ctrl_if",             sauria_df_controller_if);
         
-        uvm_config_db #(virtual sauria_axi4_lite_ifc)::set(null, "*", "sauria_axi4_lite_cfg_if", axi4_lite_cfg_if);
-        uvm_config_db #(virtual sauria_axi4_ifc     )::set(null, "*", "sauria_axi4_mem_if",      axi4_mem_if);
+        uvm_config_db #(virtual sauria_axi4_lite_ifc)::set(          null, "*", "sauria_axi4_lite_cfg_if",       axi4_lite_cfg_if);
+        uvm_config_db #(virtual sauria_axi4_ifc     )::set(          null, "*", "sauria_axi4_mem_if",            axi4_mem_if);
+    
+        uvm_config_db #(virtual sauria_psums_mgr_ifc)::set(          null, "*", "sauria_psums_mgr_if",           sauria_psums_mgr_if);
+        uvm_config_db #(virtual sauria_psums_mgr_shift_reg_ifc)::set(null, "*", "sauria_psums_mgr_shift_reg_if", sauria_psums_mgr_shift_reg_if);
     end
 
     sauria_subsystem sauria_ss(.*);

@@ -100,7 +100,7 @@ class sauria_dma_req_addr_scbd extends uvm_scoreboard;
             `sauria_error(message_id, $sformatf("DMA Write Req Len Mismatch Exp: 0x%0h Act: 0x%0h", dma_wr_req_exp_len, dma_wr_addr.awlen))
 
         if(dma_wr_req_exp_size != dma_wr_addr.awsize)
-            `sauria_error(message_id, $sformatf("DMA Read Req Size Mismatch Exp: 0x%0h Act: 0x%0h", dma_wr_req_exp_size, dma_wr_addr.awsize))
+            `sauria_error(message_id, $sformatf("DMA Write Req Size Mismatch Exp: 0x%0h Act: 0x%0h", dma_wr_req_exp_size, dma_wr_addr.awsize))
 
         if (dma_wr_addr.awburst != INCR)
             `sauria_error(message_id, "Got Non INCR Burst Mode ")

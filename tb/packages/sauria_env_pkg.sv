@@ -16,6 +16,9 @@ package sauria_env_pkg;
     `include "sauria_axi4_monitor.sv"
     `include "sauria_axi4_agent.sv"
     
+    `include "sauria_psums_mgr_monitor.sv"
+    `include "sauria_psums_mgr_agent.sv"
+
     `include "sauria_env.sv"
 
 endpackage

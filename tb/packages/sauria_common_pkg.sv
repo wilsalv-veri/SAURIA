@@ -4,8 +4,12 @@
     
 package sauria_common_pkg;
  
+    import sauria_pkg::*;
+    import uvm_pkg::*;
+    `include "uvm_macros.svh"
+
     parameter SAURIA_CLK_HALF_PERIOD = 1000; // in picoseconds (based on timescale)
-    parameter SYSTEM_CLK_HALF_PERIOD = 333;
+    parameter SYSTEM_CLK_HALF_PERIOD = SAURIA_CLK_HALF_PERIOD / 3;
     
     parameter CFG_AXI_DATA_WIDTH     = 32;   // Configuration AXI4-Lite Slave data width
     parameter CFG_AXI_ADDR_WIDTH     = 32;   // Configuration AXI4-Lite Slave address width
@@ -54,9 +58,9 @@ package sauria_common_pkg;
     parameter CORE_PSUMS_CFG_CRs_START_IDX           = 37;
     parameter CORE_PSUMS_CFG_CRs_END_IDX             = 41;
     
-    import uvm_pkg::*;
-    `include "uvm_macros.svh"
+    parameter PSUMS_SHIFT_REG_BUFF_W = OC_W * Y;
 
+   
     `include "sauria_tb_defines.svh"
     `include "sauria_tb_types.svh"
     
@@ -83,6 +87,9 @@ package sauria_common_pkg;
 
     `include "sauria_cfg_cr_queue.sv"
     `include "sauria_axi_vseqr.sv"
+
+    //CORE_SEQ_ITEMS
+    `include "sauria_psums_mgr_seq_item.sv"
     
 endpackage
 

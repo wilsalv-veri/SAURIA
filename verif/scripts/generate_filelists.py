@@ -63,9 +63,6 @@ def addLinesUnderCurrentDirectory(cwd_path,include_files):
         entries.extend(file_entries)
         entries.extend(dir_entries)
 
-        if cwd == "configuration":
-            print(entries)
-
         for entry in entries:
             
             abs_path = os.path.join(cwd_path, entry)
@@ -92,10 +89,6 @@ def addLinesUnderCurrentDirectory(cwd_path,include_files):
             if directory:
                 addLinesUnderCurrentDirectory(abs_path, include_files)
                 include_files.append("")
-
-            if cwd == "configuration":
-                print(f"Entry: {entry} Lines:{include_files}")
-                print(f"\n")
 
 
         if cwd == "tb":

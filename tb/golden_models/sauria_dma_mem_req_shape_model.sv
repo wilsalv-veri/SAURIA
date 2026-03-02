@@ -14,12 +14,12 @@ class sauria_dma_mem_req_shape_model extends sauria_base_model;
         return get_num_beats();
     endfunction
 
-    virtual function sauria_axi_len_t get_exp_size(sauria_axi4_addr_t mem_req_rd_addr);
+    virtual function sauria_axi_size_t get_exp_size(sauria_axi4_addr_t mem_req_rd_addr);
         int ett, btt;
         set_elem_type(mem_req_rd_addr);
         ett = get_ett();
         btt = get_btt(ett);
-        return $clog2(btt);
+        return ($clog2(btt) > 7) ? 7 : $clog2(btt);
     endfunction
     
     virtual function void set_elem_type(sauria_axi4_addr_t mem_req_rd_addr);

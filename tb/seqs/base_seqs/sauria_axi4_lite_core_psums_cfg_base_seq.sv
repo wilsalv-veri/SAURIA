@@ -21,7 +21,7 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     rand sauria_axi4_lite_data_t psums_preload_en;
   
     constraint psums_reps_c{
-        psums_reps == sauria_axi4_lite_data_t'('h0);
+        psums_reps == sauria_axi4_lite_data_t'('h4);
     }
 
     constraint psums_dimensions_c{
@@ -112,13 +112,8 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
             `sauria_error(message_id, "Failed to get access to computation params")
         
         wait(computation_params.shared);
-        psums_reps        = computation_params.psums_K;
-        
-        psums_cx_step     = computation_params.psums_cx_step;
-        psums_cx_lim      = computation_params.psums_CX;          
-        //psums_reps        = computation_params.psums_X;//(computation_params.psums_Y * computation_params.psums_K); //computation_params.psums_X
-                            //* computation_params.tile_X * computation_params.tile_Y 
-                            //* computation_params.tile_C * computation_params.tile_K;
+        psums_cx_step       = computation_params.psums_cx_step;
+        psums_cx_lim        = computation_params.psums_CX;          
                             
         psums_ck_step       = computation_params.psums_ck_step;  
         psums_ck_lim        = computation_params.psums_CK;        

@@ -1,0 +1,2 @@
+
+assign sauria_psums_mgr_shift_reg_if.psums_shift_reg = sauria_ss.sauria_core_i.sauria_logic_top_i.psm_top_i.psm_shift_register_i.reg_q;

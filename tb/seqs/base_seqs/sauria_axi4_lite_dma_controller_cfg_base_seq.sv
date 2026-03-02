@@ -194,10 +194,10 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
        
         //Core Use
         computation_params.psums_cx_step       = SRAMC_N;
-        computation_params.psums_CX            = computation_params.psums_cx_step * X;  
+        computation_params.psums_CX            = computation_params.psums_cx_step;
         
         computation_params.psums_ck_step       = computation_params.psums_CX; 
-        computation_params.psums_CK            = computation_params.psums_ck_step * computation_params.psums_K;
+        computation_params.psums_CK            = computation_params.psums_ck_step * X; //* computation_params.psums_K;
         
         //Single Tile
         computation_params.tile_psums_cy_step  = computation_params.psums_CK; 

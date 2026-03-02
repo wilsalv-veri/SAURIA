@@ -4,6 +4,8 @@ $SAURIA/tb/packages/sauria_common_pkg.sv
 $SAURIA/tb/interfaces/sauria_df_controller_ifc.sv
 $SAURIA/tb/interfaces/sauria_subsystem_ifc.sv
 $SAURIA/tb/interfaces/sauria_axi_ifcs.sv
+$SAURIA/tb/interfaces/sauria_psums_mgr_shift_reg_ifc.sv
+$SAURIA/tb/interfaces/sauria_psums_mgr_ifc.sv
 +incdir+$SAURIA/tb/interfaces/interface_connections/
 +incdir+$SAURIA/tb/packages/
 $SAURIA/tb/packages/sauria_base_cfg_seqs_pkg.sv
@@ -18,11 +20,13 @@ $SAURIA/tb/packages/sauria_tb_top_pkg.sv
 $SAURIA/tb/coverage/sauria_ss_cov.sv
 +incdir+$SAURIA/tb/assertions/
 $SAURIA/tb/assertions/sauria_ss_assert.sv
+$SAURIA/tb/assertions/sauria_psums_assert.sv
 +incdir+$SAURIA/tb/golden_models/
 +incdir+$SAURIA/tb/common/
 +incdir+$SAURIA/tb/common/seq_items/
 +incdir+$SAURIA/tb/common/seq_items/sauria_axi4_seq_items/
 +incdir+$SAURIA/tb/common/seq_items/sauria_axi4_lite_seq_items/
++incdir+$SAURIA/tb/common/seq_items/sauria_core_seq_items/
 +incdir+$SAURIA/tb/seqs/
 +incdir+$SAURIA/tb/seqs/core_weights_cfg_seqs/
 +incdir+$SAURIA/tb/seqs/df_controller_cfg_seqs/
@@ -34,5 +38,6 @@ $SAURIA/tb/assertions/sauria_ss_assert.sv
 +incdir+$SAURIA/tb/agents/
 +incdir+$SAURIA/tb/agents/sauria_axi4_lite_agent/
 +incdir+$SAURIA/tb/agents/sauria_axi4_agent/
++incdir+$SAURIA/tb/agents/sauria_psums_mgr_agent/
 +incdir+$SAURIA/tb/scoreboards/
 $SAURIA/tb/tb_top.sv
