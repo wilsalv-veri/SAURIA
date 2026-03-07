@@ -151,35 +151,36 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
     endfunction
 
     virtual function void share_ifmaps_params();
+        computation_params.ifmaps_x_step       = df_ctrl_pkg::A_BYTES;
         computation_params.ifmaps_X            = dma_ifmaps_ett;
+        
+        computation_params.ifmaps_y_step       = dma_ifmaps_y_step;
         computation_params.ifmaps_Y            = dma_ifmaps_y_lim + 1;
+        
+        computation_params.ifmaps_c_step       = dma_ifmaps_c_step;
         computation_params.ifmaps_C            = dma_ifmaps_c_lim + 1;
 
-        computation_params.ifmaps_x_step       = df_ctrl_pkg::A_BYTES;
-        computation_params.ifmaps_y_step       = dma_ifmaps_y_step;
-        computation_params.ifmaps_c_step       = dma_ifmaps_c_step;
-
         //Single Tile Computation
-        computation_params.tile_ifmaps_X       = dma_tile_ifmaps_x_step; 
-        computation_params.tile_ifmaps_Y       = dma_tile_ifmaps_x_step; 
-
         computation_params.tile_ifmaps_x_step  = dma_tile_ifmaps_x_step;
+        computation_params.tile_ifmaps_X       = dma_tile_ifmaps_x_step; 
+    
         computation_params.tile_ifmaps_y_step  = dma_tile_ifmaps_x_step; 
+        computation_params.tile_ifmaps_Y       = dma_tile_ifmaps_x_step; 
     endfunction
 
     virtual function void share_weights_params();
-        computation_params.weights_W           = dma_tile_weights_c_step / dma_weights_w_step; 
+
+        computation_params.weights_k_step      = df_ctrl_pkg::B_BYTES;
         computation_params.weights_K           = dma_weights_w_step;           
        
         computation_params.weights_w_step      = dma_weights_w_step;
-        computation_params.weights_k_step      = df_ctrl_pkg::B_BYTES;
-       
         computation_params.weights_w_lim       = dma_tile_weights_c_step;
+        computation_params.weights_W           = dma_tile_weights_c_step / dma_weights_w_step; 
         
         //Single Tile Computation 
         computation_params.tile_weights_c_step = dma_tile_weights_c_step;
+        
         computation_params.tile_weights_k_step = dma_tile_weights_c_step;
-    
         computation_params.tile_weights_K      = dma_tile_weights_c_step;
     endfunction
 
@@ -197,7 +198,7 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
         computation_params.psums_CX            = computation_params.psums_cx_step;
         
         computation_params.psums_ck_step       = computation_params.psums_CX; 
-        computation_params.psums_CK            = computation_params.psums_ck_step * X; //* computation_params.psums_K;
+        computation_params.psums_CK            = computation_params.psums_ck_step * X; 
         
         //Single Tile
         computation_params.tile_psums_cy_step  = computation_params.psums_CK; 

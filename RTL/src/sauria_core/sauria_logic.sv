@@ -20,6 +20,7 @@
 // --------------------
 // MODULE DECLARATION
 // --------------------
+import sauria_cfg_pkg::*;
 
 module sauria_logic #(
     parameter IF_W = 32,                        // Accelerator config interface data width
@@ -332,6 +333,7 @@ main_controller #(
         .o_feed_status      (cg_feed_status),
         .o_done             (cg_done));
 
+  
 // Activation Feeder
 ifmap_feeder #(
         .Y              (sauria_pkg::Y),
@@ -342,7 +344,7 @@ ifmap_feeder #(
         .ADRA_W         (ADRA_W),
         .DILP_W         (sauria_pkg::DILP_W),
         .PARAMS_W       (sauria_pkg::PARAMS_W),
-        .M              (sauria_pkg::M)
+        .M              (DV_GEMM_BYPASS ? 1 : sauria_pkg::M) //NOTE: wilsalv
     ) ifmap_feeder_i
        (.i_clk          (i_clk),
         .i_rstn         (i_rstn),

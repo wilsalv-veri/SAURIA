@@ -8,6 +8,9 @@ package sauria_scbd_pkg;
     import sauria_golden_model_pkg::*;
     
     `include "sauria_dma_req_addr_scbd.sv"
+    `include "sauria_ifmaps_feeder_scbd.sv"
+    `include "sauria_weights_feeder_scbd.sv"
+    `include "sauria_systolic_array_scbd.sv"
     `include "sauria_psums_mgr_scbd.sv"
     
 endpackage

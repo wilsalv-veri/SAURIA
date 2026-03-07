@@ -10,13 +10,19 @@ module SAURIA_tb_top;
     sauria_axi4_lite_ifc           axi4_lite_cfg_if();
     sauria_axi4_ifc                axi4_mem_if();
 
+    sauria_ifmaps_feeder_ifc       sauria_ifmaps_feeder_if();
+    sauria_weights_feeder_ifc      sauria_weights_feeder_if();
+    sauria_systolic_array_ifc      sauria_systolic_array_if();
     sauria_psums_mgr_ifc           sauria_psums_mgr_if();
     sauria_psums_mgr_shift_reg_ifc sauria_psums_mgr_shift_reg_if();
 
-    virtual sauria_subsystem_ifc     sauria_subsystem_if_v;
+    virtual sauria_subsystem_ifc   sauria_subsystem_if_v;
     
     `include "sauria_subsystem_ifc_connections.sv"
     `include "sauria_df_controller_ifc_connections.sv"
+    `include "sauria_ifmaps_feeder_ifc_connections.sv"
+    `include "sauria_weights_feeder_ifc_connections.sv"
+    `include "sauria_systolic_array_ifc_connections.sv"
     `include "sauria_psums_mgr_ifc_connections.sv"
     `include "sauria_psums_mgr_shift_reg_ifc_connections.sv"
 
@@ -36,6 +42,9 @@ module SAURIA_tb_top;
         uvm_config_db #(virtual sauria_axi4_lite_ifc)::set(          null, "*", "sauria_axi4_lite_cfg_if",       axi4_lite_cfg_if);
         uvm_config_db #(virtual sauria_axi4_ifc     )::set(          null, "*", "sauria_axi4_mem_if",            axi4_mem_if);
     
+        uvm_config_db #(virtual sauria_ifmaps_feeder_ifc)::set(      null, "*", "sauria_ifmaps_feeder_if",       sauria_ifmaps_feeder_if);
+        uvm_config_db #(virtual sauria_weights_feeder_ifc)::set(     null, "*", "sauria_weights_feeder_if",      sauria_weights_feeder_if);
+        uvm_config_db #(virtual sauria_systolic_array_ifc)::set(     null, "*", "sauria_systolic_array_if",      sauria_systolic_array_if);
         uvm_config_db #(virtual sauria_psums_mgr_ifc)::set(          null, "*", "sauria_psums_mgr_if",           sauria_psums_mgr_if);
         uvm_config_db #(virtual sauria_psums_mgr_shift_reg_ifc)::set(null, "*", "sauria_psums_mgr_shift_reg_if", sauria_psums_mgr_shift_reg_if);
     end

@@ -32,8 +32,8 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
     }
     
     constraint array_reps_c {
-        act_reps    == sauria_axi4_lite_data_t'('h1);                    
-        weight_reps == sauria_axi4_lite_data_t'('h1);
+        act_reps    == sauria_axi4_lite_data_t'('h2);                    
+        weight_reps == sauria_axi4_lite_data_t'('h2);
     }
    
     constraint zero_neg_c{

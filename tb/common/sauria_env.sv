@@ -2,14 +2,23 @@ class sauria_env extends uvm_env;
 
     `uvm_component_utils(sauria_env)
 
-    sauria_axi4_lite_agent   axi4_lite_agent;
-    sauria_axi4_agent        axi4_agent;
+    sauria_axi4_lite_agent      axi4_lite_agent;
+    sauria_axi4_agent           axi4_agent;
 
-    sauria_axi_vseqr         vseqr;
-    sauria_dma_req_addr_scbd dma_req_addr_scbd;
+    sauria_axi_vseqr            vseqr;
+    sauria_dma_req_addr_scbd    dma_req_addr_scbd;
 
-    sauria_psums_mgr_agent   psums_mgr_agent;
-    sauria_psums_mgr_scbd    psums_mgr_scbd;
+    sauria_ifmaps_feeder_agent  ifmaps_feeder_agent;
+    sauria_ifmaps_feeder_scbd   ifmaps_feeder_scbd;
+
+    sauria_weights_feeder_agent weights_feeder_agent;
+    sauria_weights_feeder_scbd  weights_feeder_scbd;
+
+    sauria_systolic_array_agent systolic_array_agent;
+    sauria_systolic_array_scbd  systolic_array_scbd;
+
+    sauria_psums_mgr_agent      psums_mgr_agent;
+    sauria_psums_mgr_scbd       psums_mgr_scbd;
 
     function new(string name="sauria_env", uvm_component parent=null);
         super.new(name, parent);
@@ -18,13 +27,22 @@ class sauria_env extends uvm_env;
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
 
-        vseqr             = sauria_axi_vseqr::type_id::create("sauria_axi_vseqr", this);
-        axi4_lite_agent   = sauria_axi4_lite_agent::type_id::create("sauria_axi4_lite_agent", this);
-        axi4_agent        = sauria_axi4_agent::type_id::create("sauria_axi4_agent", this);
-        dma_req_addr_scbd = sauria_dma_req_addr_scbd::type_id::create("sauria_dma_req_addr_scbd", this);
+        vseqr               = sauria_axi_vseqr::type_id::create("sauria_axi_vseqr", this);
+        axi4_lite_agent     = sauria_axi4_lite_agent::type_id::create("sauria_axi4_lite_agent", this);
+        axi4_agent          = sauria_axi4_agent::type_id::create("sauria_axi4_agent", this);
+        dma_req_addr_scbd   = sauria_dma_req_addr_scbd::type_id::create("sauria_dma_req_addr_scbd", this);
         
-        psums_mgr_agent   = sauria_psums_mgr_agent::type_id::create("sauria_psums_mgr_agent", this);
-        psums_mgr_scbd    = sauria_psums_mgr_scbd::type_id::create("sauria_psums_mgr_scbd", this);
+        ifmaps_feeder_agent = sauria_ifmaps_feeder_agent::type_id::create("sauria_ifmaps_feeder_agent", this);
+        ifmaps_feeder_scbd  = sauria_ifmaps_feeder_scbd::type_id::create("sauria_ifmaps_feeder_scbd", this);
+
+        weights_feeder_agent = sauria_weights_feeder_agent::type_id::create("sauria_weights_feeder_agent", this);
+        weights_feeder_scbd  = sauria_weights_feeder_scbd::type_id::create("sauria_weights_feeder_scbd", this);
+
+        systolic_array_agent = sauria_systolic_array_agent::type_id::create("sauria_systolic_array", this);
+        systolic_array_scbd  = sauria_systolic_array_scbd::type_id::create("sauria_systolic_array_scbd", this);
+
+        psums_mgr_agent     = sauria_psums_mgr_agent::type_id::create("sauria_psums_mgr_agent", this);
+        psums_mgr_scbd      = sauria_psums_mgr_scbd::type_id::create("sauria_psums_mgr_scbd", this);
     endfunction
 
     virtual function void connect_phase(uvm_phase phase);
@@ -35,6 +53,14 @@ class sauria_env extends uvm_env;
         axi4_agent.axi4_mon.send_dma_rd_addr.connect(dma_req_addr_scbd.receive_dma_rd_addr);
         axi4_agent.axi4_mon.send_dma_wr_addr.connect(dma_req_addr_scbd.receive_dma_wr_addr);
     
+        ifmaps_feeder_agent.ifmaps_feeder_mon.send_ifmaps_feeder_info.connect(ifmaps_feeder_scbd.receive_ifmaps_feeder_info);
+        ifmaps_feeder_agent.ifmaps_feeder_mon.send_ifmaps_feeder_srama_access_info.connect(ifmaps_feeder_scbd.receive_ifmaps_feeder_srama_access_info);
+        ifmaps_feeder_agent.ifmaps_feeder_mon.send_ifmaps_feeder_arr_info.connect(ifmaps_feeder_scbd.receive_ifmaps_feeder_arr_info);
+
+        weights_feeder_agent.weights_feeder_mon.send_weights_feeder_info.connect(weights_feeder_scbd.receive_weights_feeder_info);
+
+        systolic_array_agent.systolic_array_mon.send_systolic_array_info.connect(systolic_array_scbd.receive_systolic_array_info);
+
         psums_mgr_agent.psums_mgr_mon.send_psums_mgr_sramc_read_info.connect(psums_mgr_scbd.receive_psums_mgr_sramc_read_info);
         psums_mgr_agent.psums_mgr_mon.send_psums_mgr_sramc_write_info.connect(psums_mgr_scbd.receive_psums_mgr_sramc_write_info);
         psums_mgr_agent.psums_mgr_mon.send_psums_mgr_preload_vals_info.connect(psums_mgr_scbd.receive_psums_mgr_preload_values_info);

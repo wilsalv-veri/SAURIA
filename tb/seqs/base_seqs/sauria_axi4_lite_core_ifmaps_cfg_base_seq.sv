@@ -1,3 +1,5 @@
+import sauria_cfg_pkg::*;
+
 class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_base_seq;
 
     `uvm_object_utils(sauria_axi4_lite_core_ifmaps_cfg_base_seq)
@@ -55,18 +57,24 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
     }
 
     constraint dilation_pattern_c{
-        dilation_pattern == 64'h0101010101010101;
+        if(DV_GEMM_BYPASS){
+            dilation_pattern == 64'h8000000000000000;
+        }
+        else {
+            dilation_pattern == 64'h0;
+        }
+        
     }
         
     constraint ifmaps_loc_woffs_c{
         ifmaps_loc_woffs_0 == sauria_axi4_lite_data_t'('h0);                         
-        ifmaps_loc_woffs_1 == sauria_axi4_lite_data_t'('h0);
-        ifmaps_loc_woffs_2 == sauria_axi4_lite_data_t'('h0);
-        ifmaps_loc_woffs_3 == sauria_axi4_lite_data_t'('h0);
-        ifmaps_loc_woffs_4 == sauria_axi4_lite_data_t'('h0);          
-        ifmaps_loc_woffs_5 == sauria_axi4_lite_data_t'('h0);
-        ifmaps_loc_woffs_6 == sauria_axi4_lite_data_t'('h0);
-        ifmaps_loc_woffs_7 == sauria_axi4_lite_data_t'('h0);
+        ifmaps_loc_woffs_1 == sauria_axi4_lite_data_t'('h1);
+        ifmaps_loc_woffs_2 == sauria_axi4_lite_data_t'('h2);
+        ifmaps_loc_woffs_3 == sauria_axi4_lite_data_t'('h3);
+        ifmaps_loc_woffs_4 == sauria_axi4_lite_data_t'('h4);          
+        ifmaps_loc_woffs_5 == sauria_axi4_lite_data_t'('h5);
+        ifmaps_loc_woffs_6 == sauria_axi4_lite_data_t'('h6);
+        ifmaps_loc_woffs_7 == sauria_axi4_lite_data_t'('h7);
     }
 
     constraint ifmpas_active_inactive_rows_c{
@@ -137,7 +145,7 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
                 set_ifmaps_loc_woffs_4_lower();
             end
             32:begin
-                set_ifmaps_loc_woffs_0_upper();
+                set_ifmaps_loc_woffs_4_upper();
                 set_ifmaps_loc_woffs_5();
                 set_ifmaps_loc_woffs_6();
                 set_ifmaps_loc_woffs_7();
@@ -154,20 +162,22 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
         
         wait(computation_params.shared);
        
-        ifmaps_x_step = computation_params.ifmaps_x_step;
-        ifmaps_y_step = computation_params.ifmaps_y_step;
-        ifmaps_ch_step = computation_params.ifmaps_c_step;
-
-        ifmaps_x_lim  = computation_params.ifmaps_X;       
-        ifmaps_y_lim  = computation_params.ifmaps_Y * ifmaps_y_step;         
-        ifmaps_ch_lim = computation_params.ifmaps_C * ifmaps_ch_step;         
-
+        ifmaps_x_step  = SRAMA_N;                       //computation_params.ifmaps_x_step;
+        ifmaps_x_lim   = ifmaps_x_step;                 //computation_params.ifmaps_X;       
         
-        ifmaps_tile_x_lim = computation_params.tile_ifmaps_X;
-        ifmaps_tile_y_lim = computation_params.tile_ifmaps_Y;
+        ifmaps_y_step  = ifmaps_x_lim;                 //computation_params.ifmaps_y_step;
+        ifmaps_y_lim   = ifmaps_y_step * sauria_pkg::X; //computation_params.ifmaps_Y * ifmaps_y_step;         
+        
+        ifmaps_ch_step = ifmaps_y_lim;                  //computation_params.ifmaps_c_step;
+        ifmaps_ch_lim  = ifmaps_ch_step * computation_params.ifmaps_C;         
+
+        //Single Tile
+        ifmaps_tile_x_lim  = ifmaps_ch_lim;             //computation_params.tile_ifmaps_X;
+        ifmaps_tile_x_step = ifmaps_ch_lim;             //computation_params.tile_ifmaps_x_step;
+        
+        ifmaps_tile_y_step = ifmaps_ch_lim;             //computation_params.tile_ifmaps_y_step;
+        ifmaps_tile_y_lim  = ifmaps_ch_lim;             //computation_params.tile_ifmaps_Y;
     
-        ifmaps_tile_x_step = computation_params.tile_ifmaps_x_step;
-        ifmaps_tile_y_step = computation_params.tile_ifmaps_y_step;
     endtask
 
     virtual function void set_ifmaps_x_lim();

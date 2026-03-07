@@ -25,8 +25,6 @@
 // MODULE DECLARATION
 // --------------------
 
-import sauria_cfg_pkg::*;
-
 module feed_xy_lane #(
     parameter FIFO_POSITIONS = 8,
     parameter I_W = 16,
@@ -92,19 +90,13 @@ logic               fifo_full_shim;
 // ------------------------------------------------------------
 // Submodule instantiation
 // ------------------------------------------------------------
-/*if (DV_GEMM_BYPASS) begin
-    assign fifo_din  = i_sram_data;
-    assign fifo_push = i_feeder_en & i_valid_data & !fifo_full;
-    assign o_stall   = 1'b0;
-end
-else begin*/
 feed_data_manager #(
         .I_W(I_W),
         .WOFS_W(WOFS_W),
         .SRAM_W(SRAM_W),
         .DILP_W(DILP_W),
         .PARAMS_W(PARAMS_W),
-        .M(M)
+        .M(M)            
     ) feed_data_manager_i
        (.i_clk      (i_clk),
         .i_rstn     (i_rstn),
@@ -119,12 +111,12 @@ feed_data_manager #(
         .i_glob_woffs   (i_glob_woffs),
         .i_loc_woffs    (i_loc_woffs),
         .i_Dil_pat      (i_Dil_pat),
+                   
         .i_finalpush    (i_finalpush),
 
         .o_stall	    (o_stall),
         .o_fifo_push	(fifo_push),
         .o_fifo_din		(fifo_din));
-//end
         
 // FF-based FIFO
 fifo_memory_ff #(
