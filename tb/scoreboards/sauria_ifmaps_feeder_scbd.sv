@@ -25,7 +25,6 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
     ifmaps_feeder_data_t       feeder_data[$];
     ifmaps_feeder_data_t       feeder_data_inst;
 
-    
     string message_id = "SAURIA_IFMAPS_FEEDER_SCBD";
 
     function new(string name="sauria_ifmaps_feeder_scbd", uvm_component parent=null);
@@ -85,15 +84,15 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
         int last_valid_queue_elem = (feeder_data.size() < sauria_pkg::Y) ? feeder_data.size() : sauria_pkg::Y;
         
         for(int i=0; i < last_valid_queue_elem; i++)begin 
-            for(int row=0; row < sauria_pkg::Y; row++)begin
+            for(int col=0; col < sauria_pkg::Y; col++)begin
                 //Find first invalid element
-                if(!feeder_data[i].arr_byte_valid[row]) begin
-                    feeder_data[i].arr_byte_valid[row] = 1'b1; //Set To Valid
-                    feeder_data[i].a_arr[row]          = a_arr[row];
+                if(!feeder_data[i].arr_byte_valid[col]) begin
+                    feeder_data[i].arr_byte_valid[col] = 1'b1; //Set To Valid
+                    feeder_data[i].a_arr[col]          = a_arr[col];
                     
-                    if (i == 0) last_valid_queue_elem  = row + 1;
-                    `sauria_info(message_id, $sformatf("Valid a_arr_row[%0d]: 0x%0h Entry_Val: 0x%0h",
-                    row, a_arr[row], a_arr))
+                    if (i == 0) last_valid_queue_elem  = col + 1;
+                    `sauria_info(message_id, $sformatf("Valid a_arr_col[%0d]: 0x%0h Entry_Val: 0x%0h",
+                    col, a_arr[col], a_arr))
                     break;    
                 end
             end
@@ -115,16 +114,16 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
     virtual function void clear_arr_byte_valids();
         int last_valid_queue_elem = (feeder_data.size() < sauria_pkg::Y) ? feeder_data.size() : sauria_pkg::Y;
         for(int i=0; i < last_valid_queue_elem; i++)begin 
-            for(int row=0; row < sauria_pkg::Y; row++)begin
-                feeder_data[i].arr_byte_valid[row] = 1'b0;
+            for(int col=0; col < sauria_pkg::Y; col++)begin
+                feeder_data[i].arr_byte_valid[col] = 1'b0;
             end
         end
     endfunction
 
     virtual function a_arr_data_t get_reversed_array_bus(a_arr_data_t a_arr);
         a_arr_data_t reversed_bus;
-        for(int row=0; row < sauria_pkg::Y; row++)begin
-            reversed_bus[row] = a_arr[sauria_pkg::Y - 1 - row];
+        for(int col=0; col < sauria_pkg::Y; col++)begin
+            reversed_bus[col] = a_arr[sauria_pkg::Y - 1 - col];
         end
         return reversed_bus;
     endfunction

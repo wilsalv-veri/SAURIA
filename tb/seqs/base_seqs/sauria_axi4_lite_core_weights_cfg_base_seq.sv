@@ -39,7 +39,7 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
     }
 
     constraint weights_active_cols_c{
-        weights_cols_active == sauria_axi4_lite_data_t'('h0);
+        weights_cols_active == sauria_axi4_lite_data_t'('hffff);
     }
 
     function new(string name="sauria_axi4_lite_core_weights_cfg_base_seq");

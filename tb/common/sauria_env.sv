@@ -58,6 +58,8 @@ class sauria_env extends uvm_env;
         ifmaps_feeder_agent.ifmaps_feeder_mon.send_ifmaps_feeder_arr_info.connect(ifmaps_feeder_scbd.receive_ifmaps_feeder_arr_info);
 
         weights_feeder_agent.weights_feeder_mon.send_weights_feeder_info.connect(weights_feeder_scbd.receive_weights_feeder_info);
+        weights_feeder_agent.weights_feeder_mon.send_weights_feeder_sramb_access_info.connect(weights_feeder_scbd.receive_weights_feeder_sramb_access_info);
+        weights_feeder_agent.weights_feeder_mon.send_weights_feeder_arr_info.connect(weights_feeder_scbd.receive_weights_feeder_arr_info);
 
         systolic_array_agent.systolic_array_mon.send_systolic_array_info.connect(systolic_array_scbd.receive_systolic_array_info);
 

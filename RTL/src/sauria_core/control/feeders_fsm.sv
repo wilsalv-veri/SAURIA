@@ -848,7 +848,9 @@ always_comb begin: output_logic
             b_cnt_en = 0;
             b_cnt_clear = 1;
 
-            pre_feeding_flag = 0;
+            //FIXME: wilsalv
+            //pre_feeding_flag = 0; 
+            pre_feeding_flag = 1; 
 
             o_feed_status = 6;
         end
@@ -883,7 +885,7 @@ always_comb begin: output_logic
             b_cnt_en = 0;
             b_cnt_clear = 1;
 
-            pre_feeding_flag = 0;
+            pre_feeding_flag = 0; 
 
             o_feed_status = 7;
         end

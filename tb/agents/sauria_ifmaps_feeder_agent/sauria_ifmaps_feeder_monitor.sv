@@ -7,7 +7,7 @@ class sauria_ifmaps_feeder_monitor extends uvm_monitor;
     parameter POP_LAT = 1;
 
     virtual sauria_ifmaps_feeder_ifc sauria_ifmaps_feeder_if;
-    sauria_ifmaps_feeder_seq_item ifmaps_feeder_seq_item; 
+    sauria_ifmaps_feeder_seq_item ifmaps_feeder_info; 
 
     uvm_analysis_port #(sauria_ifmaps_feeder_seq_item) send_ifmaps_feeder_info;
     uvm_analysis_port #(sauria_ifmaps_feeder_seq_item) send_ifmaps_feeder_srama_access_info;
@@ -35,7 +35,7 @@ class sauria_ifmaps_feeder_monitor extends uvm_monitor;
         send_ifmaps_feeder_srama_access_info = new("SAURIA_IFMAPS_FEEDER_SRAMA_ACCESS_INFO_ANALYSIS_PORT", this);
         send_ifmaps_feeder_arr_info          = new("SAURIA_IFMAPS_FEEDER_ARR_INFO_ANALYSIS_PORT", this);
 
-        ifmaps_feeder_seq_item = sauria_ifmaps_feeder_seq_item::type_id::create("sauria_ifmaps_feeder_seq_item", this);
+        ifmaps_feeder_info = sauria_ifmaps_feeder_seq_item::type_id::create("sauria_ifmaps_feeder_seq_item", this);
 
         if (!uvm_config_db #(virtual sauria_ifmaps_feeder_ifc)::get (this, "", "sauria_ifmaps_feeder_if", sauria_ifmaps_feeder_if))
             `sauria_error(message_id, "Failed to get access to sauria_ifmaps_feeder_if")
@@ -56,20 +56,20 @@ class sauria_ifmaps_feeder_monitor extends uvm_monitor;
 
         forever @ (posedge sauria_ifmaps_feeder_if.clk)begin
 
-            ifmaps_feeder_seq_item.clearfifo    = sauria_ifmaps_feeder_if.clearfifo;  
-            ifmaps_feeder_seq_item.feeder_clear = sauria_ifmaps_feeder_if.feeder_clear;  
+            ifmaps_feeder_info.clearfifo    = sauria_ifmaps_feeder_if.clearfifo;  
+            ifmaps_feeder_info.feeder_clear = sauria_ifmaps_feeder_if.feeder_clear;  
             
-            ifmaps_feeder_seq_item.pipeline_en  = sauria_ifmaps_feeder_if.pipeline_en;
-            ifmaps_feeder_seq_item.pop_en       = sauria_ifmaps_feeder_if.pop_en; 
+            ifmaps_feeder_info.pipeline_en  = sauria_ifmaps_feeder_if.pipeline_en;
+            ifmaps_feeder_info.pop_en       = sauria_ifmaps_feeder_if.pop_en; 
 
-            ifmaps_feeder_seq_item.done         =  sauria_ifmaps_feeder_if.done; 	        
-            ifmaps_feeder_seq_item.til_done     =  sauria_ifmaps_feeder_if.til_done; 	    
-            ifmaps_feeder_seq_item.fifo_empty   =  sauria_ifmaps_feeder_if.fifo_empty; 	
-            ifmaps_feeder_seq_item.fifo_full    =  sauria_ifmaps_feeder_if.fifo_full; 	
-            ifmaps_feeder_seq_item.feeder_stall =  sauria_ifmaps_feeder_if.feeder_stall;   
-            ifmaps_feeder_seq_item.act_deadlock =  sauria_ifmaps_feeder_if.act_deadlock;    
-	        ifmaps_feeder_seq_item.a_arr        =  sauria_ifmaps_feeder_if.a_arr;   
-            send_ifmaps_feeder_info.write(ifmaps_feeder_seq_item);     
+            ifmaps_feeder_info.done         =  sauria_ifmaps_feeder_if.done; 	        
+            ifmaps_feeder_info.til_done     =  sauria_ifmaps_feeder_if.til_done; 	    
+            ifmaps_feeder_info.fifo_empty   =  sauria_ifmaps_feeder_if.fifo_empty; 	
+            ifmaps_feeder_info.fifo_full    =  sauria_ifmaps_feeder_if.fifo_full; 	
+            ifmaps_feeder_info.feeder_stall =  sauria_ifmaps_feeder_if.feeder_stall;   
+            ifmaps_feeder_info.act_deadlock =  sauria_ifmaps_feeder_if.act_deadlock;    
+	        ifmaps_feeder_info.a_arr        =  sauria_ifmaps_feeder_if.a_arr;   
+            send_ifmaps_feeder_info.write(ifmaps_feeder_info);     
         end
     endtask
 
@@ -96,10 +96,10 @@ class sauria_ifmaps_feeder_monitor extends uvm_monitor;
                 srama_addr_q <= srama_addr_d;
                 
                 if (act_valid)begin
-                    ifmaps_feeder_seq_item.til_done     =  til_done_q;
-                    ifmaps_feeder_seq_item.srama_addr   =  srama_addr_q;   
-                    ifmaps_feeder_seq_item.srama_data   =  sauria_ifmaps_feeder_if.srama_data;     
-                    send_ifmaps_feeder_srama_access_info.write(ifmaps_feeder_seq_item);
+                    ifmaps_feeder_info.til_done     =  til_done_q;
+                    ifmaps_feeder_info.srama_addr   =  srama_addr_q;   
+                    ifmaps_feeder_info.srama_data   =  sauria_ifmaps_feeder_if.srama_data;     
+                    send_ifmaps_feeder_srama_access_info.write(ifmaps_feeder_info);
                 end
             end
         end
@@ -117,9 +117,9 @@ class sauria_ifmaps_feeder_monitor extends uvm_monitor;
                     lat_wait <= 1'b0;
                 end
                 else begin
-                    ifmaps_feeder_seq_item.pop_en = pop_done_count != sauria_pkg::Y;
-                    ifmaps_feeder_seq_item.a_arr = sauria_ifmaps_feeder_if.a_arr;
-                    send_ifmaps_feeder_arr_info.write(ifmaps_feeder_seq_item);
+                    ifmaps_feeder_info.pop_en = pop_done_count != sauria_pkg::Y;
+                    ifmaps_feeder_info.a_arr = sauria_ifmaps_feeder_if.a_arr;
+                    send_ifmaps_feeder_arr_info.write(ifmaps_feeder_info);
                 end
             end
         end
