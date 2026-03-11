@@ -21,7 +21,7 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     rand sauria_axi4_lite_data_t psums_preload_en;
   
     constraint psums_reps_c{
-        psums_reps == sauria_axi4_lite_data_t'('h4);
+        psums_reps == sauria_axi4_lite_data_t'('h3);
     }
 
     constraint psums_dimensions_c{
@@ -119,7 +119,7 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
         psums_ck_lim        = computation_params.psums_CK;        
         
         psums_tile_cy_step  = computation_params.tile_psums_cy_step;
-        psums_tile_cy_lim   = computation_params.tile_psums_CY; 
+        psums_tile_cy_lim   = computation_params.tile_psums_CY * 3; 
         
         psums_tile_ck_step  = computation_params.tile_psums_ck_step;
         psums_tile_ck_lim   = computation_params.tile_psums_CK; 

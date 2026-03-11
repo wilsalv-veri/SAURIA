@@ -39,6 +39,9 @@ The validation effort targets correctness of **control-driven tiled execution**,
 - Proper initiation, execution, and completion of array-level compute operations
 - Correct handling of tile boundaries and completion signaling
 - Control-path interactions between the dataflow controller and compute-core controller
+- Delivery of activation tiles from SRAM to the systolic array through the data feeder
+- Delivery of weight tiles from SRAM to the systolic array through the weight fetcher
+- Partial sum management including SRAM preload, array collection, and writeback
 - Array-visible execution behavior (e.g., expected compute results for provided inputs)
 - Forward progress and completion guarantees for valid configurations
 
@@ -48,9 +51,7 @@ The following areas are intentionally excluded to maintain a focused and achieva
 
 - DMA engine implementation, correctness, or performance
 - Memory hierarchy behavior or protocol-level correctness
-- Data feeder functionality, including convolution lowering or input data transformation
-- Weight fetcher behavior and weight buffering semantics
-- Partial sums manager behavior outside the systolic array datapath
+- Convolution lowering or input data transformation
 - Local SRAM internal behavior or arbitration logic
 - Performance characterization or power modeling
 - Software stack, compiler, or runtime integration
@@ -83,6 +84,9 @@ The following areas are considered high risk and receive focused validation atte
 - Incorrect handling of tile completion and handshaking between control blocks
 - Boundary conditions involving minimal or degenerate tile configurations
 - Silent failures where compute appears to complete but produces incorrect array-level results
+- Incorrect ordering or timing of activation and weight delivery into the systolic array
+- Errors in partial sum preload or writeback that corrupt intermediate accumulation results
+- Mismatches between array-generated partial sums and values written back to SRAM
 
 These risks are informed by the architectural complexity of control-driven execution rather than datapath arithmetic.
 
@@ -97,6 +101,11 @@ Verification is implemented using a UVM-based functional verification environmen
 **Stimulus**  
 Directed and constrained-random sequences generate valid tensor configurations and tile parameters. Configuration transactions are delivered through the AXI4-Lite control interface to program the dataflow controller and initiate execution. Stimulus emphasizes tile geometry variation, control transitions, and compute sequencing scenarios.
 
+**Architectural Modeling**  
+Lightweight architectural models are used to predict expected execution behavior at the tile level. These models capture tensor tile progression, compute sequencing, and expected array-visible outputs based on programmed configuration parameters.
+
+The models operate at an architectural abstraction level rather than replicating RTL implementation details. This allows validation to focus on correctness of execution semantics while remaining robust to internal microarchitectural differences.
+
 **Checking**  
 Domain-specific scoreboards track expected tile execution behavior, control sequencing, and array-visible compute results. Checking focuses on validating that each tile executes as intended, completes correctly, and produces expected outputs given the provided inputs. Assertion-based checks enforce control-path invariants, handshakes, and completion conditions.
 
@@ -109,7 +118,7 @@ The environment is modular by construction, allowing incremental expansion or in
 
 ## 7. Coverage Intent
 
-Coverage is used as a qualitative feedback mechanism rather than a sign-off metric.
+Functional coverage is used as a qualitative feedback mechanism rather than a sign-off metric.
 
 Coverage intent includes:
 
@@ -118,6 +127,7 @@ Coverage intent includes:
 - Observing control-state transitions across execution phases
 - Exercising minimal, maximal, and degenerate tile cases
 - Stressing forward progress and completion behavior
+- Exercising activation, weight, and partial-sum dataflow scenarios across compute tiles
 
 Coverage results are reviewed alongside functional outcomes to guide stimulus refinement rather than to enforce absolute completeness.
 
@@ -128,7 +138,7 @@ Coverage results are reviewed alongside functional outcomes to guide stimulus re
 This validation effort assumes:
 
 - Configuration and control registers are programmed with architecturally valid values
-- Data feeder, weight fetcher, DMA engine, PSUM manager, and local SRAMs behave correctly by construction
+- DMA engine and local SRAMs behave correctly by construction
 - Reset and configuration sequences place the accelerator into a known-good state
 - External system components are not required for correctness validation at this level
 

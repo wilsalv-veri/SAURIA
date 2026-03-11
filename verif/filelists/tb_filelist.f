@@ -8,6 +8,7 @@ $SAURIA/tb/interfaces/sauria_psums_mgr_shift_reg_ifc.sv
 $SAURIA/tb/interfaces/sauria_psums_mgr_ifc.sv
 $SAURIA/tb/interfaces/sauria_systolic_array_ifc.sv
 $SAURIA/tb/interfaces/sauria_weights_feeder_ifc.sv
+$SAURIA/tb/interfaces/sauria_main_controller_ifc.sv
 $SAURIA/tb/interfaces/sauria_ifmaps_feeder_ifc.sv
 +incdir+$SAURIA/tb/interfaces/interface_connections/
 +incdir+$SAURIA/tb/packages/
@@ -44,6 +45,7 @@ $SAURIA/tb/assertions/sauria_psums_assert.sv
 +incdir+$SAURIA/tb/agents/sauria_axi4_lite_agent/
 +incdir+$SAURIA/tb/agents/sauria_axi4_agent/
 +incdir+$SAURIA/tb/agents/sauria_ifmaps_feeder_agent/
++incdir+$SAURIA/tb/agents/sauria_main_controller_agent/
 +incdir+$SAURIA/tb/agents/sauria_psums_mgr_agent/
 +incdir+$SAURIA/tb/scoreboards/
 $SAURIA/tb/tb_top.sv

@@ -94,7 +94,7 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
         wait(computation_params.shared);
        
         weights_k_step      = SRAMB_N;                                       //computation_params.weights_k_step;  
-        weights_k_lim       = weights_k_step * sauria_pkg::Y;                //computation_params.weights_K;         
+        weights_k_lim       = weights_k_step * sauria_pkg::X; //Y                //computation_params.weights_K;         
        
         weights_w_step      = weights_k_lim;                                 //computation_params.weights_w_step; 
         weights_w_lim       = weights_w_step * computation_params.weights_W; //computation_params.weights_w_lim;  

@@ -848,7 +848,7 @@ always_comb begin: output_logic
             b_cnt_en = 0;
             b_cnt_clear = 1;
 
-            //FIXME: wilsalv
+            //NOTE: wilsalv :CORE_BUGID4
             //pre_feeding_flag = 0; 
             pre_feeding_flag = 1; 
 

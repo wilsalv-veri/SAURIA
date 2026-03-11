@@ -168,10 +168,7 @@ cnt_dualctx #(
 
 assign til_idx =    til_xy_idx + til_k_idx;
 assign kk_idx =     til_idx + k_idx;
-
-//NOTE: wilsalv : CORE_BUGID2
-//assign sram_idx_d = x_idx + kk_idx;
-assign sram_idx_d = x_idx + kk_idx + til_idx;
+assign sram_idx_d = x_idx + kk_idx;
 
 // Address & Word Offset
 assign sram_addr_d =        sram_idx_d[IDX_W:WOFS_W];
@@ -207,7 +204,7 @@ always_comb begin
     idx_zero_current = sram_addr_d << WOFS_W;
 
     // Index End: points to the very last element needed    
-    //NOTE: wilsalv :CORE_BUGID4
+    //NOTE: wilsalv :CORE_BUGID3
     //idx_end = kk_idx + i_cxlim - (SRAMC_N + 1);
     idx_end = kk_idx + i_cxlim - 1;
 

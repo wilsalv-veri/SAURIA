@@ -8,6 +8,9 @@ class sauria_env extends uvm_env;
     sauria_axi_vseqr            vseqr;
     sauria_dma_req_addr_scbd    dma_req_addr_scbd;
 
+    sauria_main_controller_agent main_controller_agent;
+    sauria_main_controller_scbd  main_controller_scbd;
+
     sauria_ifmaps_feeder_agent  ifmaps_feeder_agent;
     sauria_ifmaps_feeder_scbd   ifmaps_feeder_scbd;
 
@@ -32,6 +35,9 @@ class sauria_env extends uvm_env;
         axi4_agent          = sauria_axi4_agent::type_id::create("sauria_axi4_agent", this);
         dma_req_addr_scbd   = sauria_dma_req_addr_scbd::type_id::create("sauria_dma_req_addr_scbd", this);
         
+        main_controller_agent = sauria_main_controller_agent::type_id::create("sauria_main_controller_agent", this);
+        main_controller_scbd  = sauria_main_controller_scbd::type_id::create("sauria_main_controller_scbd", this);
+
         ifmaps_feeder_agent = sauria_ifmaps_feeder_agent::type_id::create("sauria_ifmaps_feeder_agent", this);
         ifmaps_feeder_scbd  = sauria_ifmaps_feeder_scbd::type_id::create("sauria_ifmaps_feeder_scbd", this);
 
@@ -53,6 +59,8 @@ class sauria_env extends uvm_env;
         axi4_agent.axi4_mon.send_dma_rd_addr.connect(dma_req_addr_scbd.receive_dma_rd_addr);
         axi4_agent.axi4_mon.send_dma_wr_addr.connect(dma_req_addr_scbd.receive_dma_wr_addr);
     
+        main_controller_agent.main_controller_mon.send_main_controller_info.connect(main_controller_scbd.receive_main_controller_info);
+        
         ifmaps_feeder_agent.ifmaps_feeder_mon.send_ifmaps_feeder_info.connect(ifmaps_feeder_scbd.receive_ifmaps_feeder_info);
         ifmaps_feeder_agent.ifmaps_feeder_mon.send_ifmaps_feeder_srama_access_info.connect(ifmaps_feeder_scbd.receive_ifmaps_feeder_srama_access_info);
         ifmaps_feeder_agent.ifmaps_feeder_mon.send_ifmaps_feeder_arr_info.connect(ifmaps_feeder_scbd.receive_ifmaps_feeder_arr_info);
@@ -62,7 +70,7 @@ class sauria_env extends uvm_env;
         weights_feeder_agent.weights_feeder_mon.send_weights_feeder_arr_info.connect(weights_feeder_scbd.receive_weights_feeder_arr_info);
 
         systolic_array_agent.systolic_array_mon.send_systolic_array_info.connect(systolic_array_scbd.receive_systolic_array_info);
-
+        
         psums_mgr_agent.psums_mgr_mon.send_psums_mgr_sramc_read_info.connect(psums_mgr_scbd.receive_psums_mgr_sramc_read_info);
         psums_mgr_agent.psums_mgr_mon.send_psums_mgr_sramc_write_info.connect(psums_mgr_scbd.receive_psums_mgr_sramc_write_info);
         psums_mgr_agent.psums_mgr_mon.send_psums_mgr_preload_vals_info.connect(psums_mgr_scbd.receive_psums_mgr_preload_values_info);

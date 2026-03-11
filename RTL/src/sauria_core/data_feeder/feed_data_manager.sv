@@ -458,7 +458,7 @@ always_comb begin
 
     // Target location is obtained by adding regs_used_idx to active positions of elm_idx_array
     for (integer i=0; i<SRAM_N; i++) begin
-        //FIXME
+        
         // If position is active AND read pointer is smaller or equal, select target
         if (final_dil_pat[i]) begin
             target_array[i] = elm_idx_array[i] + regs_used_idx + 1;     // +1 to distinguish from zeros (unused)
@@ -497,7 +497,6 @@ generate
 
         // Input multiplexors
         always_comb begin
-            //FIXME: wilsalv Use loc_woff here?
             regs_d[jj] = sram_elements[0];          // Default to first SRAM position
 
             // Check all other positions and select acc. to control

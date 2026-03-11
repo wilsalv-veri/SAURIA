@@ -16,6 +16,9 @@ package sauria_env_pkg;
     `include "sauria_axi4_monitor.sv"
     `include "sauria_axi4_agent.sv"
     
+    `include "sauria_main_controller_monitor.sv"
+    `include "sauria_main_controller_agent.sv"
+    
     `include "sauria_ifmaps_feeder_monitor.sv"
     `include "sauria_ifmaps_feeder_agent.sv"
 

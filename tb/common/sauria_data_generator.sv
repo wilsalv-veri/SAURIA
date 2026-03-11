@@ -6,6 +6,8 @@ class sauria_data_generator extends uvm_object;
     
     sauria_computation_params    computation_params;
     sauria_tensor_mem_seq_item   tensor_item;
+    sauria_tensor_type_t         prev_tensor_type;
+
     sauria_axi4_rd_txn_seq_item  rd_txn_item;
 
     sauria_axi4_data_t           rdata;
@@ -29,30 +31,36 @@ class sauria_data_generator extends uvm_object;
 
     virtual function sauria_axi4_data_t gen_read_data();
         int num_bytes    = 2**rd_txn_item.rd_addr_item.arsize;
-        int last_data_idx;
-        int elem_start_idx;
+        int last_elem_idx;
+        int elem_base_offset;
         rdata = sauria_axi4_data_t'(0);
 
+        if (tensor_item.tensor_type.name != prev_tensor_type.name) byte_idx = 0;
+        prev_tensor_type = tensor_item.tensor_type;
+        
         case(tensor_item.tensor_type)
-            IFMAPS:  last_data_idx = num_bytes / ($bits(sauria_ifmaps_elem_data_t)  / BYTE);
-            WEIGHTS: last_data_idx = num_bytes / ($bits(sauria_weights_elem_data_t) / BYTE);
-            PSUMS:   last_data_idx = num_bytes / ($bits(sauria_psums_elem_data_t)   / BYTE);
+            IFMAPS:  last_elem_idx = num_bytes / ($bits(sauria_ifmaps_elem_data_t)  / BYTE);
+            WEIGHTS: last_elem_idx = num_bytes / ($bits(sauria_weights_elem_data_t) / BYTE);
+            PSUMS:   last_elem_idx = num_bytes / ($bits(sauria_psums_elem_data_t)   / BYTE);
         endcase
         
-        for(int data_idx=0; data_idx < last_data_idx; data_idx++)begin
+        for(int elem_idx=0; elem_idx < last_elem_idx; elem_idx++)begin
             
             case(tensor_item.tensor_type)
                 IFMAPS: begin
-                    elem_start_idx = data_idx*$bits(sauria_ifmaps_elem_data_t);
-                    rdata[elem_start_idx +: $bits(sauria_ifmaps_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data();
+                    if ((elem_idx % sauria_pkg::SRAMA_N == 0) && (elem_idx > 0)) byte_idx++; 
+                    elem_base_offset = elem_idx*$bits(sauria_ifmaps_elem_data_t);
+                    rdata[elem_base_offset +: $bits(sauria_ifmaps_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data();
                 end
                 WEIGHTS: begin
-                    elem_start_idx = data_idx*$bits(sauria_weights_elem_data_t);
-                    rdata[elem_start_idx +: $bits(sauria_weights_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data();
+                    if ((elem_idx % sauria_pkg::SRAMB_N == 0) && (elem_idx > 0)) byte_idx++; 
+                    elem_base_offset = elem_idx*$bits(sauria_weights_elem_data_t);
+                    rdata[elem_base_offset +: $bits(sauria_weights_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data();
                 end
                 PSUMS: begin
-                    elem_start_idx = data_idx*$bits(sauria_psums_elem_data_t);
-                    rdata[elem_start_idx +: $bits(sauria_psums_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data();
+                    if ((elem_idx % sauria_pkg::SRAMC_N == 0) && (elem_idx > 0)) byte_idx++; 
+                    elem_base_offset = elem_idx*$bits(sauria_psums_elem_data_t);
+                    rdata[elem_base_offset +: $bits(sauria_psums_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data();
                 end
             endcase
         end

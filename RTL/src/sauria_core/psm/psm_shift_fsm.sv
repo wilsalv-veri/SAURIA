@@ -209,12 +209,12 @@ always_comb begin: state_transitions
 
         // IDLE => Wait for start flag
         IDLE: begin
-            //NOTE: wilsalv :CORE_BUGID3
+            //NOTE: wilsalv :CORE_BUGID2
             if(i_fsm_start && !completion_flag) begin
             //if(i_fsm_start) begin
                 
                 // If initial section
-                //NOTE: wilsalv :CORE_BUGID3
+                //NOTE: wilsalv :CORE_BUGID2
                 if (ctx_cnt<3) begin
                 //if ((ctx_cnt<3) && (!completion_flag)) begin
                     

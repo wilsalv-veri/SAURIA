@@ -81,7 +81,7 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
         solve dma_weights_w_lim before dma_tile_weights_c_step;
         solve dma_weights_w_step before dma_tile_weights_k_step, dma_weights_w_lim;
         
-        dma_weights_w_step      == 128; //K; 
+        dma_weights_w_step      == 256; //K; 
         dma_weights_w_lim       == (C-1) * dma_weights_w_step;
         
         dma_tile_weights_c_step == dma_weights_w_lim + dma_weights_w_step; 
@@ -202,10 +202,10 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
         
         //Single Tile
         computation_params.tile_psums_cy_step  = computation_params.psums_CK; 
-        computation_params.tile_psums_CY       = computation_params.psums_CK; 
+        computation_params.tile_psums_CY       = computation_params.psums_CK * 3; 
         
-        computation_params.tile_psums_ck_step  = computation_params.psums_CK; 
-        computation_params.tile_psums_CK       = computation_params.psums_CK; 
+        computation_params.tile_psums_ck_step  = computation_params.tile_psums_CY; 
+        computation_params.tile_psums_CK       = computation_params.tile_psums_CY; 
     
     endfunction
 

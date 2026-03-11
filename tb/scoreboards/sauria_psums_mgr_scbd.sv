@@ -40,6 +40,9 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
     bit                       pending_scan_chain_bus_check;
     bit                       pending_sramc_bus_check;
 
+    int                       read_tile_idx;
+    int                       write_tile_idx;
+    int                       num_tiles;
     int                       sramc_acceses_per_tile;
     int                       rd_done_count;
     int                       addr_zero_count;
@@ -68,6 +71,9 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
         super.run_phase(phase);
         wait(computation_params.shared);
         sramc_acceses_per_tile =  computation_params.psums_CK / computation_params.psums_ck_step;
+        num_tiles              =  (computation_params.tile_psums_CY / computation_params.tile_psums_cy_step) 
+                                * (computation_params.tile_psums_CK / computation_params.tile_psums_ck_step);
+
     endtask
 
     function write_psums_mgr_sramc_read_info(sauria_psums_mgr_seq_item psums_mgr_info);
@@ -168,23 +174,28 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
     endfunction
     
     virtual function void update_exp_read_addr();
-        if( ((sramc_read_addr == (sramc_acceses_per_tile - 1)) || (rd_done_count > 0)) && (rd_done_count <= RD_LAT) )begin
+        if( (((sramc_read_addr % sramc_acceses_per_tile) == (sramc_acceses_per_tile - 1)) || (rd_done_count > 0)) && (rd_done_count <= RD_LAT) )begin      
             rd_done_count++;
-            sramc_read_addr = 0;
         end
         else if (rd_done_count == (RD_LAT + 1)) begin
+            sramc_read_addr = 0;
             rd_done_count   = 0;
+            read_tile_idx   = (read_tile_idx == num_tiles - 1) ? 0 : read_tile_idx + 1;
         end
         else begin
             sramc_read_addr++;
         end
         
-        sramc_read_addr = sramc_read_addr % sramc_acceses_per_tile;
+        sramc_read_addr = (rd_done_count > 1) ? 0 : (read_tile_idx*sramc_acceses_per_tile) + (sramc_read_addr % sramc_acceses_per_tile);
     endfunction
 
     virtual function void update_exp_write_addr();
         sramc_write_addr++;
-        sramc_write_addr = sramc_write_addr % sramc_acceses_per_tile;
+        sramc_write_addr = (write_tile_idx * sramc_acceses_per_tile) + (sramc_write_addr % sramc_acceses_per_tile);
+
+        if((sramc_write_addr % sramc_acceses_per_tile) == sramc_acceses_per_tile - 1) 
+            write_tile_idx   = (write_tile_idx == num_tiles - 1) ? 0 : write_tile_idx + 1;
+        
     endfunction
 
     virtual function void set_shift();

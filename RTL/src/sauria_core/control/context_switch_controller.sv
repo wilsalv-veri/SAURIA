@@ -316,7 +316,12 @@ end
 // ---------------------------------
 
 assign o_cswitch_arr = cswitch_arr_q;
-assign o_cdone = (cdone_q || (cdone_force_q1 && cdone)) & i_pipeline_en & i_wei_pop_en & i_act_pop_en;
+
+//NOTE: wilsalv :CORE_BUGID5
+//assign o_cdone = (cdone_q || (cdone_force_q1 && cdone)) & i_pipeline_en & i_wei_pop_en & i_act_pop_en;
+assign o_cdone = (cdone_q || (cdone_force_q1 && cdone)) & i_pipeline_en;
+
+
 assign o_cswitch_done = cscnt_flag & i_pipeline_en & i_cswitch_en;
 
 endmodule 

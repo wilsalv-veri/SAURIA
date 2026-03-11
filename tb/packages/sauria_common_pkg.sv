@@ -89,6 +89,7 @@ package sauria_common_pkg;
     `include "sauria_axi_vseqr.sv"
 
     //CORE_SEQ_ITEMS
+    `include "sauria_main_controller_seq_item.sv"
     `include "sauria_ifmaps_feeder_seq_item.sv"
     `include "sauria_weights_feeder_seq_item.sv"
     `include "sauria_systolic_array_seq_item.sv"
