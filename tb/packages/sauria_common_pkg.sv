@@ -60,10 +60,12 @@ package sauria_common_pkg;
     
     parameter PSUMS_SHIFT_REG_BUFF_W = OC_W * Y;
 
-   
     `include "sauria_tb_defines.svh"
     `include "sauria_tb_types.svh"
     
+    parameter CS_FIRST_IDX = arr_row_data_t'('h8000);
+    parameter CS_LAST_IDX  = arr_row_data_t'('h0001);
+   
     `include "sauria_computation_params.sv"
     `include "sauria_axi_base_seq_items.sv"
     `include "sauria_tensor_mem_seq_item.sv"

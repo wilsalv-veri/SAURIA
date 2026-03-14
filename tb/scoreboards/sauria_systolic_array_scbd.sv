@@ -4,9 +4,6 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
 
     string message_id = "SAURIA_SYSTOLIC_ARRAY_SCBD";
 
-    parameter CS_FIRST_IDX = arr_row_data_t'('h8000);
-    parameter CS_LAST_IDX  = arr_row_data_t'('h0001);
-    
     `uvm_analysis_imp_decl (_systolic_array_info)
     uvm_analysis_imp_systolic_array_info #(sauria_systolic_array_seq_item, sauria_systolic_array_scbd)                   receive_systolic_array_info;
 
@@ -16,10 +13,10 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
     bit                                     cscan_done;
     bit                                     cscan_last_shift;
     bit                                     cs_last_shift;
-
+   
     scan_chain_data_t                       shift_reg_copy[$];
-    arr_psum_reg_t                          psum_reserve_reg_copy, accum_copy;
-
+    arr_psum_reg_t                          pre_cswitch_arr_psum_reserve_reg;
+    
     function new(string name="sauria_systolic_array_scbd", uvm_component parent=null);
         super.new(name, parent);
     endfunction
@@ -46,15 +43,14 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
     endfunction
 
     virtual function void check_context_switch();
-        if (systolic_array_item.cswitch_arr == CS_FIRST_IDX) begin
-                psum_reserve_reg_copy = systolic_array_item.arr_psum_reserve_reg;
-                accum_copy            = systolic_array_item.arr_psum_accum;
+    
+        if ((systolic_array_item.cswitch_arr != arr_row_data_t'(0)) || (systolic_array_item.cswitch_done_count != 0)) begin
+            
+            if (systolic_array_item.cswitch_arr == CS_FIRST_IDX) begin
+                pre_cswitch_arr_psum_reserve_reg = systolic_array_item.pre_cswitch_arr_psum_reserve_reg;
             end
-        else if (systolic_array_item.cswitch_arr == CS_LAST_IDX) cs_last_shift = 1'b1;
-        else if (cs_last_shift) begin
-            cs_last_shift = 1'b0;
-            check_register_value_swap();
-        end 
+            check_accum_psum_reserve_swap();
+        end
     endfunction
 
     virtual function void add_scan_data();
@@ -80,36 +76,43 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
                 if (col_psum_data[row] != systolic_array_item.arr_psum_reserve_reg[row][col])
                     `sauria_error(message_id, $sformatf("Array PSUM Reserve Register Mismatch Row: %0d Col: %0d Exp: 0x%0h Act: 0x%0h", 
                 row, col, col_psum_data[row], systolic_array_item.arr_psum_reserve_reg[row][col]))
-                else 
-                    `sauria_info(message_id, $sformatf("PSUM Reserve Register Match Row: %0d Col: %0d", row, col))
             end
         end
         shift_reg_copy.delete();
     endfunction
 
-    virtual function void check_register_value_swap();
-        
-        //TODO: wilsalv : Enable Check
-        /* 
+    virtual function void check_accum_psum_reserve_swap();
+        int cswitch_arr_en_idx = get_cswitch_en_idx();
+        int cswitch_done_count = systolic_array_item.cswitch_done_count;
+        int cswitch_idx = (cswitch_done_count > 0) ? sauria_pkg::X - 1 + cswitch_done_count : cswitch_arr_en_idx;
+
         for(int row=0; row < sauria_pkg::Y; row++)begin
             for(int col=0; col < sauria_pkg::X; col++)begin
-                if (accum_copy[row][col] != systolic_array_item.arr_psum_reserve_reg[row][col])
-                    `sauria_error(message_id, $sformatf("PSUM Reserve Register Value Mismatch During Context Switch Row: %0d Col: %0d Exp: 0x%0h Act: 0x%0h", 
-                row, col, accum_copy[row][col], systolic_array_item.arr_psum_reserve_reg[row][col]))
-                else 
-                    `sauria_info(message_id, $sformatf("PSUM Reserve Register Value Match During Context Switch Row: %0d Col: %0d Val: 0x%0h", 
-                row, col, accum_copy[row][col]))
-
-                if (psum_reserve_reg_copy[row][col] != systolic_array_item.arr_psum_accum[row][col])
-                    `sauria_error(message_id, $sformatf("Accumulator Value Mismatch During Context Switch Row: %0d Col: %0d Exp: 0x%0h Act: 0x%0h", 
-                row, col, accum_copy[row][col], systolic_array_item.arr_psum_accum[row][col]))
-                else 
-                    `sauria_info(message_id, $sformatf("Accumulator Value Match During Context Switch Row: %0d Col: %0d Val: 0x%0h", 
-                row, col, accum_copy[row][col]))
+                if ((row + col) == cswitch_idx) begin
+                    `sauria_info(message_id, $sformatf("CSWITCH_ARR_EN ROW: %0d COL: %0d CSWITCH_IDX: %0d CSWITCH_ARR_EN_IDX: %0d CSWITCH_ARR: 0x%0h CSWITCH_DONE_COUNT: %0d ACCUM: 0x%0h", 
+                    row, col, cswitch_idx, cswitch_arr_en_idx, systolic_array_item.cswitch_arr, cswitch_done_count, systolic_array_item.arr_psum_accum_in[row][col] ))
                 
+                    if (pre_cswitch_arr_psum_reserve_reg[row][col] != systolic_array_item.arr_psum_accum_in[row][col])
+                        `sauria_error(message_id, $sformatf("Accumulator Context Switch Mismatch Row: %0d Col: %0d Exp: 0x%0h Act: 0x%0h",
+                        row, col, pre_cswitch_arr_psum_reserve_reg[row][col], systolic_array_item.arr_psum_accum_in[row][col]))
+                
+                    if (systolic_array_item.arr_psum_accum_out[row][col] != systolic_array_item.arr_psum_reserve_reg[row][col])
+                        `sauria_error(message_id, $sformatf("PSUM Reserve Reg Context Switch Mismatch Row: %0d Col: %0d Exp: 0x%0h Act: 0x%0h",
+                        row, col, systolic_array_item.arr_psum_accum_out[row][col], systolic_array_item.arr_psum_reserve_reg[row][col]))
+                      
+                end
             end
         end
-        */
+
+    endfunction
+
+    virtual function int get_cswitch_en_idx();
+        arr_row_data_t cswitch_arr_copy = systolic_array_item.cswitch_arr;
+
+        for(int col=0; col < sauria_pkg::X; col++)begin
+            if (cswitch_arr_copy == CS_LAST_IDX) return sauria_pkg::X - 1 - col;
+            cswitch_arr_copy >>= 1;
+        end
     endfunction
 
 endclass

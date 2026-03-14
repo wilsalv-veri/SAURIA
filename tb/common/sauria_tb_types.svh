@@ -234,6 +234,7 @@
     typedef bit [sauria_pkg::Y-1:0][sauria_pkg::OC_W-1:0]                     scan_chain_data_rev_t;
     
     typedef bit [sauria_pkg::Y-1:0][sauria_pkg::X-1:0][sauria_pkg::OC_W-1:0]  arr_psum_reg_t ;
+    typedef bit [sauria_pkg::Y-1:0][sauria_pkg::X-1:0]                        arr_cswitch_en_t ;
 
     typedef bit [0:sauria_pkg::X-1]                                           arr_row_data_t;
     typedef bit [sauria_pkg::TH_W-1:0]                                        threshold_t;

@@ -10,6 +10,7 @@ class sauria_systolic_array_seq_item extends uvm_sequence_item;
 	
     bit					pipeline_en; // Global pipeline enable (for stalls)
     arr_row_data_t      cswitch_arr; // Accumulator context switches
+    int                 cswitch_done_count;
     bit					cscan_en;    // Output Scanchains Enable
     threshold_t         thres;       // Threshold for bit negligence in zero detection
 
@@ -17,7 +18,10 @@ class sauria_systolic_array_seq_item extends uvm_sequence_item;
 	scan_chain_data_t   o_c_arr;     // MAC outputs (preload / out chain)
 
     arr_psum_reg_t      arr_psum_reserve_reg;
-    arr_psum_reg_t      arr_psum_accum;
+    arr_psum_reg_t      pre_cswitch_arr_psum_reserve_reg;
+    
+    arr_psum_reg_t      arr_psum_accum_in;
+    arr_psum_reg_t      arr_psum_accum_out;
 
     `uvm_object_utils_begin(sauria_systolic_array_seq_item)
         `uvm_field_int(a_arr,       UVM_ALL_ON)
