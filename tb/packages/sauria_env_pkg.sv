@@ -5,6 +5,7 @@ package sauria_env_pkg;
 
     import uvm_pkg::*;
     import sauria_common_pkg::*;
+    import sauria_inv_feeders_pkg::*;
     import sauria_scbd_pkg::*;
 
     `include "sauria_data_generator.sv"

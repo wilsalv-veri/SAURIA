@@ -15,9 +15,20 @@ class sauria_systolic_array_monitor extends uvm_monitor;
     arr_psum_reg_t      arr_psum_accum_in_q; 
     arr_psum_reg_t      arr_psum_accum_out_q;
 
+
     bit                 cswitch_done_d, cswitch_done_q;
     bit                 pipeline_dis;
     bit                 pipeline_en_d, pipeline_en_q;
+    bit                 act_data_valid_d, act_data_valid_q;
+    bit                 wei_data_valid_d, wei_data_valid_q;
+    bit                 act_pop_en_d;
+    bit                 wei_pop_en_d;
+    
+    bit                 act_start_feeding, wei_start_feeding;
+    int                 data_valid_done_count;
+    
+    bit                 data_valid_sel;
+    bit                 feeding_paused, feeding_paused_hold, feeding_unpaused;
 
     bit normal_operation_pipeline_en;
     bit enabling_pipeline, disabling_pipeline; 
@@ -43,6 +54,7 @@ class sauria_systolic_array_monitor extends uvm_monitor;
 
         fork 
             set_pipeline_en_info();
+            set_data_valid_info();
             get_systolic_array_info();
             wait_cswitch_done();
             get_cswitch_info();
@@ -52,14 +64,39 @@ class sauria_systolic_array_monitor extends uvm_monitor;
 
     virtual task get_systolic_array_info();
         forever @(posedge sauria_systolic_array_if.clk)begin
-            if (normal_operation_pipeline_en || enabling_pipeline) begin
+            if (normal_operation_pipeline_en || enabling_pipeline || feeding_unpaused
+                || sauria_systolic_array_if.reg_clear) begin
             
                 systolic_array_info.a_arr       =  sauria_systolic_array_if.a_arr;    
                 systolic_array_info.b_arr       =  sauria_systolic_array_if.b_arr;     
                 systolic_array_info.i_c_arr     =  sauria_systolic_array_if.i_c_arr;   
                 systolic_array_info.reg_clear   =  sauria_systolic_array_if.reg_clear;  
+                
+                systolic_array_info.act_data_valid =  sauria_systolic_array_if.act_data_valid;
+                systolic_array_info.wei_data_valid =  sauria_systolic_array_if.wei_data_valid;
+                
                 systolic_array_info.pipeline_en =  sauria_systolic_array_if.pipeline_en;
                 
+                systolic_array_info.act_start_feeding = act_start_feeding;
+                systolic_array_info.wei_start_feeding = wei_start_feeding;
+
+                systolic_array_info.scan_cswitch_valid = !feeding_unpaused;
+
+                systolic_array_info.act_data_valid = ((data_valid_done_count != 0) || (feeding_unpaused == 1'b1)) ? 1'b1 : 
+                                                     ((feeding_paused == 1'b1) || (feeding_paused_hold)) ? 1'b0 : ((data_valid_sel == 1'b1) ? act_data_valid_q : act_data_valid_d); 
+                                                     
+                
+                systolic_array_info.wei_data_valid = ((data_valid_done_count != 0) || (feeding_unpaused == 1'b1)) ? 1'b1 : 
+                                                     ((feeding_paused == 1'b1) || (feeding_paused_hold))  ? 1'b0 : ((data_valid_sel == 1'b1) ? wei_data_valid_q : wei_data_valid_d);
+                                                    
+                
+                if(feeding_paused_hold == 1'b1)  
+                    `sauria_info(message_id, "FEEDING_PAUSED_HOLD")
+                else if (feeding_paused == 1'b1)
+                    `sauria_info(message_id, "FEEDING_PAUSED")
+                
+                `sauria_info(message_id, $sformatf("Data_Valid_Done_Count: %0d", data_valid_done_count))
+
                 systolic_array_info.cswitch_arr =  cswitch_arr_q;
                 systolic_array_info.cswitch_done_count = cswitch_done_count;
                 
@@ -140,6 +177,56 @@ class sauria_systolic_array_monitor extends uvm_monitor;
             sync_pipeline_after_dis      = (sauria_systolic_array_if.pipeline_en && pipeline_dis);
         end
 
+    endtask
+
+    virtual task set_data_valid_info();
+        forever @ (posedge sauria_systolic_array_if.clk)begin
+            
+            act_data_valid_d <= sauria_systolic_array_if.act_data_valid;
+            wei_data_valid_d <= sauria_systolic_array_if.wei_data_valid;
+  
+            act_data_valid_q <=  act_data_valid_d;
+            wei_data_valid_q <=  wei_data_valid_d;
+
+            act_start_feeding = act_data_valid_d && !act_data_valid_q;
+            wei_start_feeding = wei_data_valid_d && !wei_data_valid_q;
+
+            act_pop_en_d <= sauria_systolic_array_if.act_pop_en;
+            wei_pop_en_d <= sauria_systolic_array_if.wei_pop_en;
+            
+            feeding_paused = (pipeline_en_d && !sauria_systolic_array_if.pipeline_en) && 
+                            ((act_pop_en_d && sauria_systolic_array_if.act_pop_en) 
+                            || (wei_pop_en_d && sauria_systolic_array_if.wei_pop_en));
+
+            
+            feeding_unpaused = (!pipeline_en_d && sauria_systolic_array_if.pipeline_en) && 
+                            ((act_pop_en_d && sauria_systolic_array_if.act_pop_en) 
+                            || (wei_pop_en_d && sauria_systolic_array_if.wei_pop_en)) 
+                            && feeding_paused_hold;
+
+            
+            //feeding_unpaused = !feeding_paused && feeding_paused_hold;
+
+            if (feeding_paused)
+                feeding_paused_hold <= 1'b1;
+            else if (feeding_unpaused)
+                feeding_paused_hold <= 1'b0;
+            
+            
+            if (sauria_systolic_array_if.reg_clear) 
+                data_valid_sel <= 1'b1;
+            else if ((data_valid_sel == 1'b1) && (act_data_valid_q))
+                data_valid_sel <= 1'b0; 
+
+            if ((act_data_valid_d && !sauria_systolic_array_if.act_data_valid) && 
+               (wei_data_valid_d &&  !sauria_systolic_array_if.wei_data_valid) && (!feeding_paused)) 
+                data_valid_done_count++;
+            else if ((data_valid_done_count > 0) && ( data_valid_done_count < sauria_pkg::X)) //&& (!sauria_systolic_array_if.act_data_valid))
+                data_valid_done_count++;
+            else                                                                              //if (!act_data_valid_d && sauria_systolic_array_if.act_data_valid)
+                data_valid_done_count  = 0;
+            
+        end
     endtask
 
 endclass

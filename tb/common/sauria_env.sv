@@ -11,8 +11,9 @@ class sauria_env extends uvm_env;
     sauria_main_controller_agent main_controller_agent;
     sauria_main_controller_scbd  main_controller_scbd;
 
-    sauria_ifmaps_feeder_agent  ifmaps_feeder_agent;
-    sauria_ifmaps_feeder_scbd   ifmaps_feeder_scbd;
+    sauria_ifmaps_feeder_agent   ifmaps_feeder_agent;
+    sauria_inv_ifmaps_feeder_reg ifmaps_inv_feeder_reg;
+    sauria_ifmaps_feeder_scbd    ifmaps_feeder_scbd;
 
     sauria_weights_feeder_agent weights_feeder_agent;
     sauria_weights_feeder_scbd  weights_feeder_scbd;
@@ -38,8 +39,9 @@ class sauria_env extends uvm_env;
         main_controller_agent = sauria_main_controller_agent::type_id::create("sauria_main_controller_agent", this);
         main_controller_scbd  = sauria_main_controller_scbd::type_id::create("sauria_main_controller_scbd", this);
 
-        ifmaps_feeder_agent = sauria_ifmaps_feeder_agent::type_id::create("sauria_ifmaps_feeder_agent", this);
-        ifmaps_feeder_scbd  = sauria_ifmaps_feeder_scbd::type_id::create("sauria_ifmaps_feeder_scbd", this);
+        ifmaps_feeder_agent   = sauria_ifmaps_feeder_agent::type_id::create("sauria_ifmaps_feeder_agent", this);
+        ifmaps_inv_feeder_reg = sauria_inv_ifmaps_feeder_reg::type_id::create("sauria_inv_ifmaps_feeder_reg", this);
+        ifmaps_feeder_scbd    = sauria_ifmaps_feeder_scbd::type_id::create("sauria_ifmaps_feeder_scbd", this);
 
         weights_feeder_agent = sauria_weights_feeder_agent::type_id::create("sauria_weights_feeder_agent", this);
         weights_feeder_scbd  = sauria_weights_feeder_scbd::type_id::create("sauria_weights_feeder_scbd", this);

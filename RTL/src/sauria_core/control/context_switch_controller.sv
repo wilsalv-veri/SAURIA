@@ -87,6 +87,9 @@ logic                           cscnt_flag;
 // Intermediate CS signal
 logic [0:X-1] cswitch_arr_d, cswitch_arr_q;
 
+//FIXME: wilsalv
+logic first_context;
+
 // -------------------------------------------------
 // Pop signals => Shimming to equalize latency with PEs
 // -------------------------------------------------
@@ -127,7 +130,9 @@ end
 // -------------------------------------------------
 
 // Cdone trigger value is max(i_incntlim-2, 0)
-assign cdone_val = (i_incntlim>1)? (i_incntlim-2) : 0;
+//NOTE: wilsalv :CORE_BUGID6 
+//assign cdone_val = (i_incntlim>1)? (i_incntlim-2) : 0;
+assign cdone_val = (i_incntlim>1)? (first_context ? (i_incntlim - 3) : (i_incntlim - 4)) : 0;
 
 // In two special situations we raise these flags
 assign cdone_force_q1 = (i_incntlim==1)? 1 : 0;
@@ -144,6 +149,7 @@ always_comb begin
     end
 
     if (incnt_q == i_incntlim) begin
+    
         incnt_d = 0;
     end else begin
         incnt_d = incnt_q + 1;
@@ -216,9 +222,16 @@ always_ff @(posedge i_clk or negedge i_rstn) begin : gshim_reg
         if (i_clear) begin
             cdone_q <= 0;
 
+            //FIXME: wilsalv
+            first_context <= 1'b1;
+
         end else if (i_pipeline_en || i_cswitch_force) begin
             cdone_q <= cdone;
         end
+
+        //FIXME: wilsalv
+        if (cdone_q)
+            first_context <= 1'b0;
     end
 end
 

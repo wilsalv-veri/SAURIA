@@ -50,12 +50,12 @@ class sauria_data_generator extends uvm_object;
                 IFMAPS: begin
                     if ((elem_idx % sauria_pkg::SRAMA_N == 0) && (elem_idx > 0)) byte_idx++; 
                     elem_base_offset = elem_idx*$bits(sauria_ifmaps_elem_data_t);
-                    rdata[elem_base_offset +: $bits(sauria_ifmaps_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data();
+                    rdata[elem_base_offset +: $bits(sauria_ifmaps_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_single_nib_incr_count_int_elem_data(); //get_int_elem_data();
                 end
                 WEIGHTS: begin
                     if ((elem_idx % sauria_pkg::SRAMB_N == 0) && (elem_idx > 0)) byte_idx++; 
                     elem_base_offset = elem_idx*$bits(sauria_weights_elem_data_t);
-                    rdata[elem_base_offset +: $bits(sauria_weights_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data();
+                    rdata[elem_base_offset +: $bits(sauria_weights_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_ones_int_elem_data(); //get_int_elem_data();
                 end
                 PSUMS: begin
                     if ((elem_idx % sauria_pkg::SRAMC_N == 0) && (elem_idx > 0)) byte_idx++; 
@@ -104,6 +104,26 @@ class sauria_data_generator extends uvm_object;
         end
         byte_idx++;
         return elem_value;
+    endfunction
+
+    virtual function longint unsigned get_single_nib_incr_count_int_elem_data();
+        longint unsigned elem_value = (byte_idx % 16);
+        byte_idx++;
+        return elem_value;
+    endfunction
+
+    virtual function longint unsigned get_ones_int_elem_data();
+        /* 
+        int byte_idx = 1;
+        int last_idx = (get_elem_size() / BYTE) * 2;
+        longint unsigned elem_value;
+
+        for (int elem_byte_idx=0; elem_byte_idx < last_idx; elem_byte_idx++)begin
+            elem_value |= (byte_idx % 16);
+
+            if(elem_byte_idx != (last_idx - 1)) elem_value <<= 4;
+        end*/
+        return 1;
     endfunction
 
     virtual function real get_fp_elem_data();

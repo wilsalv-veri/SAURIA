@@ -10,6 +10,15 @@ assign sauria_systolic_array_if.cscan_en    = sauria_ss.sauria_core_i.sauria_log
 assign sauria_systolic_array_if.thres       = sauria_ss.sauria_core_i.sauria_logic_top_i.sa_array_i.i_thres;            
 assign sauria_systolic_array_if.o_c_arr     = sauria_ss.sauria_core_i.sauria_logic_top_i.sa_array_i.o_c_arr;            
 
+assign sauria_systolic_array_if.act_data_valid   = sauria_ss.sauria_core_i.sauria_logic_top_i.main_controller_i.o_act_pop_en &
+                                              sauria_ss.sauria_core_i.sauria_logic_top_i.main_controller_i.o_pipeline_en;
+
+assign sauria_systolic_array_if.wei_data_valid   = sauria_ss.sauria_core_i.sauria_logic_top_i.main_controller_i.o_wei_pop_en &
+                                              sauria_ss.sauria_core_i.sauria_logic_top_i.main_controller_i.o_pipeline_en;
+
+assign sauria_systolic_array_if.act_pop_en = sauria_ss.sauria_core_i.sauria_logic_top_i.main_controller_i.o_act_pop_en;
+assign sauria_systolic_array_if.wei_pop_en = sauria_ss.sauria_core_i.sauria_logic_top_i.main_controller_i.o_wei_pop_en;
+
 for(genvar y=0; y < sauria_pkg::Y; y++)begin
     for(genvar x=0; x < sauria_pkg::X; x++)begin
         assign sauria_systolic_array_if.arr_psum_reserve_reg[y][x][sauria_pkg::OC_W-1:0] = sauria_ss.sauria_core_i.sauria_logic_top_i.sa_array_i.y_axis[y].x_axis[x].sa_processing_element_i.mac_sc_q;

@@ -8,6 +8,12 @@ interface sauria_systolic_array_ifc import sauria_pkg::*;();
 	logic [0:X-1][IB_W-1:0]	b_arr;	     // Weight operands
 	logic [0:Y-1][OC_W-1:0] i_c_arr;	 // MAC inputs (preload / out chain)
 	
+    logic                   act_data_valid;
+    logic                   wei_data_valid;
+    
+    logic                   act_pop_en;
+    logic                   wei_pop_en;
+    
 	// Control Inputs
     logic                   reg_clear;   // PE Register clear
 	

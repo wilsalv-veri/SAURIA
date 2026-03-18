@@ -15,14 +15,6 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
     
     string message_id = "SAURIA_WEIGHTS_FEEDER_SCBD";
     
-    typedef struct {
-        sramb_addr_t               sramb_addr;   
-        sramb_data_t               sramb_data;
-        b_arr_data_t               b_arr; 
-        bit [sauria_pkg::Y-1:0]    arr_byte_valid;
-    
-    } weights_feeder_data_t;
-
     sramb_addr_t               exp_next_sramb_addr;   
     weights_feeder_data_t      feeder_data[$];
     weights_feeder_data_t      feeder_data_inst;
@@ -53,8 +45,9 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
         feeder_data_inst.sramb_addr = weights_feeder_sramb_access_info.sramb_addr;
         feeder_data_inst.sramb_data = weights_feeder_sramb_access_info.sramb_data;
         
-        `sauria_info(message_id, $sformatf("Got SRAMB Access Addr: 0x%0h Data: 0x%0h",
-        weights_feeder_sramb_access_info.sramb_addr ,weights_feeder_sramb_access_info.sramb_data))
+        //FIXME
+        //`sauria_info(message_id, $sformatf("Got SRAMB Access Addr: 0x%0h Data: 0x%0h",
+        //feeder_data_inst.sramb_addr ,feeder_data_inst.sramb_data))
         check_sramb_rd_addr();
         update_exp_sramb_rd_addr(weights_feeder_sramb_access_info.til_done);
         feeder_data.push_back(feeder_data_inst);
@@ -92,8 +85,9 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
                     feeder_data[i].b_arr[row]          = b_arr[row];
                     
                     if (i == 0) last_valid_queue_elem  = row + 1;
-                    `sauria_info(message_id, $sformatf("Valid b_arr_row[%0d]: 0x%0h Entry_Val: 0x%0h",
-                    row, b_arr[row], b_arr))
+                    //FIXME
+                    //`sauria_info(message_id, $sformatf("Valid b_arr_row[%0d]: 0x%0h Entry_Val: 0x%0h",
+                    //row, b_arr[row], b_arr))
                     break;    
                 end
             end

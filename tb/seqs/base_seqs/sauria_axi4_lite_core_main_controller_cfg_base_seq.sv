@@ -19,6 +19,8 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
     parameter WEIGHT_REPS_LOWER_BITS_LEN       = WEIGHT_REPS_LOWER_BITS_END_IDX - WEIGHT_REPS_LOWER_BITS_START_IDX + 1;
     parameter WEIGHT_REPS_UPPER_BITS_LEN       = WEIGHT_REPS_UPPER_BITS_END_IDX - WEIGHT_REPS_UPPER_BITS_START_IDX + 1;
     
+    sauria_computation_params    computation_params;
+
     rand sauria_axi4_lite_data_t total_macs;
     rand sauria_axi4_lite_data_t act_reps;
                         
@@ -51,6 +53,20 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
             `sauria_error(message_id, "Failed to randomize sauria_axi4_lite_core_main_controller_cfg_base_seq")
     endfunction
 
+    virtual task body();
+        set_total_macs_params();
+        super.body();
+    endtask
+
+    virtual task set_total_macs_params();
+       
+        if (!uvm_config_db #(sauria_computation_params)::get(m_sequencer, "","computation_params", computation_params))
+            `sauria_error(message_id, "Failed to get access to computation params")
+        
+        computation_params.incntlim = total_macs;
+        computation_params.main_controller_info_shared = 1'b1;
+    endtask
+  
     virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
         add_core_main_controller_cfg_CRs(cfg_cr_idx);
     endfunction

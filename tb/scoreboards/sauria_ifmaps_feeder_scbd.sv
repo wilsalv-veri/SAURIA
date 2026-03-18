@@ -13,14 +13,6 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
     
     sauria_ifmaps_feeder_seq_item ifmaps_feeder_item;
 
-    typedef struct {
-        srama_addr_t               srama_addr;   
-        srama_data_t               srama_data;
-        a_arr_data_t               a_arr; 
-        bit [sauria_pkg::Y-1:0]    arr_byte_valid;
-    
-    } ifmaps_feeder_data_t;
-
     srama_addr_t               exp_next_srama_addr;   
     ifmaps_feeder_data_t       feeder_data[$];
     ifmaps_feeder_data_t       feeder_data_inst;
@@ -52,8 +44,9 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
         feeder_data_inst.srama_addr = ifmaps_feeder_srama_access_info.srama_addr;
         feeder_data_inst.srama_data = ifmaps_feeder_srama_access_info.srama_data;
         
-        `sauria_info(message_id, $sformatf("Got SRAMA Access Addr: 0x%0h Data: 0x%0h",
-        ifmaps_feeder_srama_access_info.srama_addr ,ifmaps_feeder_srama_access_info.srama_data))
+        //FIXME
+        //`sauria_info(message_id, $sformatf("Got SRAMA Access Addr: 0x%0h Data: 0x%0h",
+        //ifmaps_feeder_srama_access_info.srama_addr ,ifmaps_feeder_srama_access_info.srama_data))
         check_srama_rd_addr();
         update_exp_srama_rd_addr(ifmaps_feeder_srama_access_info.til_done);
         feeder_data.push_back(feeder_data_inst);
@@ -70,7 +63,6 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
                     feeder_data[0].srama_addr ,feeder_data[0].srama_data, feeder_data[0].a_arr ))
                 
                 feeder_data.pop_front();
-                
             end
             
             if(!ifmaps_feeder_arr_info.pop_en) clear_arr_byte_valids();
@@ -91,8 +83,10 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
                     feeder_data[i].a_arr[col]          = a_arr[col];
                     
                     if (i == 0) last_valid_queue_elem  = col + 1;
-                    `sauria_info(message_id, $sformatf("Valid a_arr_col[%0d]: 0x%0h Entry_Val: 0x%0h",
-                    col, a_arr[col], a_arr))
+                    
+                    //FIXME
+                    //`sauria_info(message_id, $sformatf("Valid a_arr_col[%0d]: 0x%0h Entry_Val: 0x%0h",
+                    //col, a_arr[col], a_arr))
                     break;    
                 end
             end

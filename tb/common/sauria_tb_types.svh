@@ -239,5 +239,31 @@
     typedef bit [0:sauria_pkg::X-1]                                           arr_row_data_t;
     typedef bit [sauria_pkg::TH_W-1:0]                                        threshold_t;
 
+    typedef struct {
+        srama_addr_t               srama_addr;   
+        srama_data_t               srama_data;
+        a_arr_data_t               a_arr; 
+        bit [sauria_pkg::Y-1:0]    arr_byte_valid;
+    
+    } ifmaps_feeder_data_t;
+
+    typedef struct {
+        sramb_addr_t               sramb_addr;   
+        sramb_data_t               sramb_data;
+        b_arr_data_t               b_arr; 
+        bit [sauria_pkg::X-1:0]    arr_byte_valid;
+    
+    } weights_feeder_data_t;
+
+    typedef struct{
+        sauria_ifmaps_elem_data_t ifmaps_data[$];
+    } ifmaps_feeder_row_data_t;
+
+    typedef struct{
+        sauria_weights_elem_data_t weights_data[$];
+    } weights_feeder_col_data_t;
+
+
+
     
 

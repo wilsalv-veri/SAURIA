@@ -51,6 +51,7 @@ def addLinesUnderCurrentDirectory(cwd_path,include_files):
             sort_by_match(file_entries, "base_tests")  
             sort_by_match(file_entries, "env")  
             sort_by_match(file_entries, "scbd")  
+            sort_by_match(file_entries, "inv_feeders")  
             sort_by_match(file_entries, "golden_models")  
             sort_by_match(file_entries, "sauria_cfg_seqs")  
             sort_by_match(file_entries, "base_cfg_seqs")  

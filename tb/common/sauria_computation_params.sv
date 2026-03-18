@@ -2,6 +2,7 @@ class sauria_computation_params extends uvm_object;
 
     bit shared;
     bit tensors_start_addr_shared;
+    bit main_controller_info_shared;
     
     sauria_axi4_lite_data_t       start_SRAMA_addr;
     sauria_axi4_lite_data_t       start_SRAMB_addr;
@@ -65,6 +66,7 @@ class sauria_computation_params extends uvm_object;
     sauria_axi4_lite_data_t tile_psums_CK;    
     sauria_axi4_lite_data_t tile_psums_ck_step;
 
+    sauria_axi4_lite_data_t incntlim;
     sauria_axi4_lite_data_t loop_order;
 
     bit                     Cw_eq;   
@@ -111,6 +113,7 @@ class sauria_computation_params extends uvm_object;
         `uvm_field_int(tile_psums_CK,       UVM_ALL_ON)
         `uvm_field_int(tile_psums_ck_step,  UVM_ALL_ON)
 
+        `uvm_field_int(incntlim,            UVM_ALL_ON)
         `uvm_field_int(loop_order,          UVM_ALL_ON)
 
         `uvm_field_int(Cw_eq,               UVM_ALL_ON)

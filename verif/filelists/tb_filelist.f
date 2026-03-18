@@ -15,6 +15,7 @@ $SAURIA/tb/interfaces/sauria_ifmaps_feeder_ifc.sv
 $SAURIA/tb/packages/sauria_base_cfg_seqs_pkg.sv
 $SAURIA/tb/packages/sauria_cfg_seqs_pkg.sv
 $SAURIA/tb/packages/sauria_golden_models_pkg.sv
+$SAURIA/tb/packages/sauria_inv_feeders_pkg.sv
 $SAURIA/tb/packages/sauria_scbd_pkg.sv
 $SAURIA/tb/packages/sauria_env_pkg.sv
 $SAURIA/tb/packages/sauria_base_tests_pkg.sv
@@ -31,6 +32,7 @@ $SAURIA/tb/assertions/sauria_psums_assert.sv
 +incdir+$SAURIA/tb/common/seq_items/sauria_axi4_seq_items/
 +incdir+$SAURIA/tb/common/seq_items/sauria_axi4_lite_seq_items/
 +incdir+$SAURIA/tb/common/seq_items/sauria_core_seq_items/
++incdir+$SAURIA/tb/interface_transformers/
 +incdir+$SAURIA/tb/seqs/
 +incdir+$SAURIA/tb/seqs/core_weights_cfg_seqs/
 +incdir+$SAURIA/tb/seqs/df_controller_cfg_seqs/

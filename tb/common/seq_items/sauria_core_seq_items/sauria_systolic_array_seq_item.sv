@@ -8,7 +8,14 @@ class sauria_systolic_array_seq_item extends uvm_sequence_item;
 	// Control Inputs
     bit                 reg_clear;   // PE Register clear
 	
+    bit                 scan_cswitch_valid;
+
+    bit                 act_start_feeding;
+    bit                 wei_start_feeding;
     bit					pipeline_en; // Global pipeline enable (for stalls)
+    bit                 act_data_valid;
+    bit                 wei_data_valid;
+
     arr_row_data_t      cswitch_arr; // Accumulator context switches
     int                 cswitch_done_count;
     bit					cscan_en;    // Output Scanchains Enable
@@ -28,7 +35,11 @@ class sauria_systolic_array_seq_item extends uvm_sequence_item;
         `uvm_field_int(b_arr,       UVM_ALL_ON)
         `uvm_field_int(i_c_arr,     UVM_ALL_ON)
         `uvm_field_int(reg_clear,   UVM_ALL_ON)
+        
         `uvm_field_int(pipeline_en, UVM_ALL_ON)
+        `uvm_field_int(act_data_valid, UVM_ALL_ON)
+        `uvm_field_int(wei_data_valid, UVM_ALL_ON)
+        
         `uvm_field_int(cswitch_arr, UVM_ALL_ON)
         `uvm_field_int(cscan_en,    UVM_ALL_ON)
         `uvm_field_int(thres,       UVM_ALL_ON)
