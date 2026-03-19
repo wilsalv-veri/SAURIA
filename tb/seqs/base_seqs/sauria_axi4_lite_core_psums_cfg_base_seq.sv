@@ -45,7 +45,7 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     }
          
     constraint psums_preload_en_c{
-        psums_preload_en == sauria_axi4_lite_data_t'('h0);
+        psums_preload_en == sauria_axi4_lite_data_t'('h1);
     }
     
     constraint psums_inactive_cols_c{
@@ -66,6 +66,7 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
 
     virtual task body();
         get_psums_params();
+        share_psums_cfg();
         super.body();
     endtask
 
@@ -123,6 +124,14 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
         
         psums_tile_ck_step  = computation_params.tile_psums_ck_step;
         psums_tile_ck_lim   = computation_params.tile_psums_CK; 
+    endtask
+
+    virtual task share_psums_cfg();
+        if (!uvm_config_db #(sauria_computation_params)::get(m_sequencer, "","computation_params", computation_params))
+            `sauria_error(message_id, "Failed to get access to computation params")
+        
+        computation_params.psums_preload_en     = psums_preload_en;
+        computation_params.psums_mgr_cfg_shared = 1;
     endtask
   
     virtual function void set_psums_reps();

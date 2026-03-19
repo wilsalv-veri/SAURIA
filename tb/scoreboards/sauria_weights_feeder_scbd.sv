@@ -45,12 +45,14 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
         feeder_data_inst.sramb_addr = weights_feeder_sramb_access_info.sramb_addr;
         feeder_data_inst.sramb_data = weights_feeder_sramb_access_info.sramb_data;
         
-        //FIXME
-        //`sauria_info(message_id, $sformatf("Got SRAMB Access Addr: 0x%0h Data: 0x%0h",
-        //feeder_data_inst.sramb_addr ,feeder_data_inst.sramb_data))
         check_sramb_rd_addr();
         update_exp_sramb_rd_addr(weights_feeder_sramb_access_info.til_done);
         feeder_data.push_back(feeder_data_inst);
+
+        //FIXME
+        `sauria_info(message_id, $sformatf("Got SRAMB Access Addr: 0x%0h Data: 0x%0h Q_Size: %0d",
+        feeder_data_inst.sramb_addr ,feeder_data_inst.sramb_data, feeder_data.size()))
+        
     endfunction 
 
     function write_weights_feeder_arr_info(sauria_weights_feeder_seq_item weights_feeder_arr_info);
@@ -60,9 +62,10 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
             if ($countones(feeder_data[0].arr_byte_valid) == sauria_pkg::X) begin
                 feeder_data[0].b_arr = get_reversed_array_bus(feeder_data[0].b_arr);
                 if (feeder_data[0].sramb_data != feeder_data[0].b_arr) 
-                    `sauria_error(message_id, $sformatf("Feeder Output Does Not Match SRAMB Read Data Addr: 0x%0h Exp: 0x%0h Act: 0x%0h",
-                    feeder_data[0].sramb_addr ,feeder_data[0].sramb_data, feeder_data[0].b_arr ))
-                
+                    `sauria_error(message_id, $sformatf("Feeder Output Does Not Match SRAMB Read Data Q_Size: %0d Addr: 0x%0h Exp: 0x%0h Act: 0x%0h",
+                    feeder_data.size(), feeder_data[0].sramb_addr ,feeder_data[0].sramb_data, feeder_data[0].b_arr ))
+                else
+                    `sauria_info(message_id, "Popped feeder data")
                 feeder_data.pop_front();
                 
             end

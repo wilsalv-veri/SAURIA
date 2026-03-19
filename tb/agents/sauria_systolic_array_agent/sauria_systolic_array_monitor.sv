@@ -95,7 +95,7 @@ class sauria_systolic_array_monitor extends uvm_monitor;
                 else if (feeding_paused == 1'b1)
                     `sauria_info(message_id, "FEEDING_PAUSED")
                 
-                `sauria_info(message_id, $sformatf("Data_Valid_Done_Count: %0d", data_valid_done_count))
+                //`sauria_info(message_id, $sformatf("Data_Valid_Done_Count: %0d", data_valid_done_count))
 
                 systolic_array_info.cswitch_arr =  cswitch_arr_q;
                 systolic_array_info.cswitch_done_count = cswitch_done_count;
@@ -205,8 +205,6 @@ class sauria_systolic_array_monitor extends uvm_monitor;
                             && feeding_paused_hold;
 
             
-            //feeding_unpaused = !feeding_paused && feeding_paused_hold;
-
             if (feeding_paused)
                 feeding_paused_hold <= 1'b1;
             else if (feeding_unpaused)

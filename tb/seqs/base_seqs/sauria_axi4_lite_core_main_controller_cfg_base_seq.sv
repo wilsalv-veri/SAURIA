@@ -64,7 +64,7 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
             `sauria_error(message_id, "Failed to get access to computation params")
         
         computation_params.incntlim = total_macs;
-        computation_params.main_controller_info_shared = 1'b1;
+        computation_params.main_controller_cfg_shared = 1'b1;
     endtask
   
     virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);

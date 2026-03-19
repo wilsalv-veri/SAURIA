@@ -60,7 +60,7 @@ class sauria_data_generator extends uvm_object;
                 PSUMS: begin
                     if ((elem_idx % sauria_pkg::SRAMC_N == 0) && (elem_idx > 0)) byte_idx++; 
                     elem_base_offset = elem_idx*$bits(sauria_psums_elem_data_t);
-                    rdata[elem_base_offset +: $bits(sauria_psums_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data();
+                    rdata[elem_base_offset +: $bits(sauria_psums_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_twos_int_elem_data(); //get_int_elem_data();
                 end
             endcase
         end
@@ -113,17 +113,11 @@ class sauria_data_generator extends uvm_object;
     endfunction
 
     virtual function longint unsigned get_ones_int_elem_data();
-        /* 
-        int byte_idx = 1;
-        int last_idx = (get_elem_size() / BYTE) * 2;
-        longint unsigned elem_value;
-
-        for (int elem_byte_idx=0; elem_byte_idx < last_idx; elem_byte_idx++)begin
-            elem_value |= (byte_idx % 16);
-
-            if(elem_byte_idx != (last_idx - 1)) elem_value <<= 4;
-        end*/
         return 1;
+    endfunction
+
+    virtual function longint unsigned get_twos_int_elem_data();
+        return 2;
     endfunction
 
     virtual function real get_fp_elem_data();

@@ -80,17 +80,18 @@ class sauria_weights_feeder_monitor extends uvm_monitor;
         end
     endtask
 
+    //FIXME
     virtual task get_weights_feeder_sramb_access_info();
         
         forever @(posedge sauria_weights_feeder_if.clk)begin
             
             if (sauria_weights_feeder_if.feeder_clear) begin
-                sramb_addr_d  <= {sauria_pkg::ADRB_W{1'bx}};
+                sramb_addr_d <= {sauria_pkg::ADRB_W{1'bx}};
                 sramb_addr_q <=  {sauria_pkg::ADRB_W{1'bx}};
             end
             
-            wei_valid   <= sauria_weights_feeder_if.wei_valid;
-
+            wei_valid      <= sauria_weights_feeder_if.wei_valid;
+            
             til_done_d <= sauria_weights_feeder_if.til_done;
             til_done_q <= til_done_d;
                 
@@ -103,10 +104,10 @@ class sauria_weights_feeder_monitor extends uvm_monitor;
                 sramb_addr_q <= sramb_addr_d;
                 
                 if (wei_valid)begin
-                    weights_feeder_info.til_done     =  til_done_q;
-                    weights_feeder_info.sramb_addr   =  sramb_addr_q;   
-                    weights_feeder_info.sramb_data   =  sauria_weights_feeder_if.sramb_data;     
-                    send_weights_feeder_sramb_access_info.write(weights_feeder_info);
+                weights_feeder_info.til_done     =  til_done_q;
+                weights_feeder_info.sramb_addr   =  sramb_addr_q;   
+                weights_feeder_info.sramb_data   =  sauria_weights_feeder_if.sramb_data;     
+                send_weights_feeder_sramb_access_info.write(weights_feeder_info);
                 end
             end
         end

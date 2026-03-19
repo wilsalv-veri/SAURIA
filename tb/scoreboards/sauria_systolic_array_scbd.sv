@@ -12,6 +12,10 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
     a_arr_data_t      a_arr_entries[$];	 // Activation operands
 	b_arr_data_t      b_arr_entries[$];	 // Weight operands
 	
+    bit                                     psums_preload_en;
+    bit                                     first_preload_context;
+    int                                     context_count;
+
     int                                     cscan_idx;
     bit                                     cscan_done;
     bit                                     cscan_last_shift;
@@ -25,6 +29,7 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
     scan_chain_data_t                       psum_col;
 
     arr_psum_reg_t                          pre_cswitch_arr_psum_reserve_reg;
+    arr_psum_reg_t                          preload_psums_reg;
     arr_psum_reg_t                          mac_psum_reg;
 
     sauria_computation_params               computation_params;
@@ -62,8 +67,11 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
 
     virtual task run_phase(uvm_phase phase);
         super.run_phase(phase);
-        wait(computation_params.main_controller_info_shared);
-        incntlim = computation_params.incntlim;
+        wait(computation_params.main_controller_cfg_shared);
+        incntlim         = computation_params.incntlim;
+
+        wait(computation_params.psums_mgr_cfg_shared)
+        psums_preload_en  = computation_params.psums_preload_en;
         comp_feeding_len = incntlim + sauria_pkg::X;
     endtask
 
@@ -72,6 +80,7 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
         
         if (systolic_array_item.reg_clear)begin
             idx_curr_comp = 0;
+            context_count = 0;
             clear_all_queues();
         end
         else begin
@@ -82,16 +91,19 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
             end
             check_mac();
         end
+
+        first_preload_context = (context_count < 2) && psums_preload_en;
     endfunction
 
     virtual function void check_scan_chain();
         if (systolic_array_item.cscan_en | cscan_last_shift) begin
-            if (!cscan_last_shift) 
+            if (!cscan_last_shift && (!psums_preload_en || !first_preload_context)) begin
                 check_scan_chain_out_data();
+            end
             add_scan_chain_in_data();
-            
         end
         else if (cscan_done)begin
+            save_preload_values();
             check_array_psum_reg();
             cscan_idx  = 0;
             cscan_done = 1'b0;
@@ -113,6 +125,9 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
 
         arr_feeding_done = (idx_curr_comp >= incntlim) && (idx_curr_comp <= comp_feeding_len);
 
+        if (idx_curr_comp == incntlim)
+            context_count++;
+        
         if (systolic_array_item.act_start_feeding || systolic_array_item.wei_start_feeding)begin
             count_next_comp = arr_feeding_done;
             idx_next_comp = 0;
@@ -131,11 +146,17 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
 
             idx_next_comp   = 0;
             count_next_comp = 0;
+
             get_ifmaps_rows();
             get_weights_cols();
+            
+            if(psums_preload_en)
+                preload_mac_psums();
+
             calculate_mac();
             clear_feeder_data();
             set_scan_chain_out_cols();
+            
         end
 
         if (systolic_array_item.act_data_valid || systolic_array_item.wei_data_valid)begin
@@ -374,6 +395,21 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
         end
     endfunction
 
+    virtual function void save_preload_values();
+        for(int col=0; col < sauria_pkg::X; col++)begin
+            for(int row=0; row < sauria_pkg::Y; row++)
+                preload_psums_reg[row][col] = systolic_array_item.arr_psum_reserve_reg[row][col];
+        end
+    endfunction
+
+    virtual function void preload_mac_psums();
+        for(int row=0; row < sauria_pkg::Y; row++)begin
+            for(int col=0; col < sauria_pkg::X; col++)
+                mac_psum_reg[row][col] = preload_psums_reg[row][col];
+            
+        end
+    endfunction
+
     virtual function void clear_all_queues();
         ifmaps_feeder_out_data.delete();
         weights_feeder_out_data.delete();
@@ -387,7 +423,6 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
     virtual function void clear_feeder_data();
         clear_ifmaps_feeder_data();
         clear_weights_feeder_data();
-    
     endfunction
     
     virtual function void clear_ifmaps_feeder_data();

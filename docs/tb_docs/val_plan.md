@@ -19,10 +19,15 @@ At a high level, SAURIA consists of:
 - A top-level **dataflow controller** responsible for tensor-level configuration, tile management, and operation launch
 - A **compute-core controller** responsible for sequencing compute phases within the core
 - A **systolic array datapath** that performs array-level multiply–accumulate operations
+- A **data feeder** and **weight fetcher** that stream activation and weight data from local storage into the array
+- A **partial sums manager** that supports partial-sum preload, collection, and writeback across tiled execution
+
 
 SAURIA supports general matrix multiplication (GEMM) and convolutional workloads through control-driven tiling and sequencing. Convolution-specific data transformations (e.g., im2col-style lowering) are performed outside the scope of this validation effort.
 
 The architectural execution model can be summarized as repeated execution of fixed-size compute tiles under control of the dataflow and compute-core controllers, with correctness determined by proper sequencing, completion, and array-visible compute behavior.
+
+For validation purposes, tiled execution is reasoned about using a GEMM-style interpretation of activation, weight, and partial-sum flow across the reduction dimension.
 
 Verification focuses on **tile management, control sequencing, and array-level execution correctness**, rather than data transformation or memory subsystem behavior.
 
@@ -30,7 +35,7 @@ Verification focuses on **tile management, control sequencing, and array-level e
 
 ## 3. Validation Scope
 
-The validation effort targets correctness of **control-driven tiled execution**, with emphasis on behaviors that are architecturally complex, sequencing-sensitive, or prone to silent failure.
+The validation effort targets correctness of **control-driven tiled execution**, with emphasis on behaviors that are architecturally complex, sequencing-sensitive, or prone to deadlock, hang, or incorrect completion under specific configurations.
 
 ### In-Scope Areas
 
@@ -83,8 +88,8 @@ The following areas are considered high risk and receive focused validation atte
 - Mismatches between programmed tile configuration and compute-core execution
 - Incorrect handling of tile completion and handshaking between control blocks
 - Boundary conditions involving minimal or degenerate tile configurations
-- Silent failures where compute appears to complete but produces incorrect array-level results
-- Incorrect ordering or timing of activation and weight delivery into the systolic array
+- Forward-progress failures where execution deadlocks or terminates incorrectly under specific configurations
+- Timing misalignment of streamed activations and weights during array computation
 - Errors in partial sum preload or writeback that corrupt intermediate accumulation results
 - Mismatches between array-generated partial sums and values written back to SRAM
 
@@ -94,7 +99,7 @@ These risks are informed by the architectural complexity of control-driven execu
 
 ## 6. Verification Approach
 
-Verification is implemented using a UVM-based functional verification environment designed around architectural observability and controllability.
+Verification is implemented using a UVM-based functional verification environment designed around architectural observability and controllability. The full subsystem is instantiated to preserve realistic control and dataflow interactions, while validation scope remains centered on correctness of the accelerator IP rather than external interface or system-level behavior.
 
 ### Key aspects of the approach include:
 
@@ -162,7 +167,8 @@ Completion is judged by demonstrated confidence in control-driven tiled executio
 
 This document complements:
 
-- Project README and architectural notes
+- README and execution-model documentation
 - Source code and inline documentation
-- Bug reports and debug analyses
+- Bug reports and root-cause analyses
 - Coverage observations and summaries
+- Setup and usage documentation
