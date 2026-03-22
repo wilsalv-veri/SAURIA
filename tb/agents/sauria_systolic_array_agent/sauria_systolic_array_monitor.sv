@@ -12,8 +12,8 @@ class sauria_systolic_array_monitor extends uvm_monitor;
 
     arr_row_data_t      cswitch_arr_alternate, cswitch_arr_d, cswitch_arr_q; // Accumulator context switches
     arr_psum_reg_t      arr_psum_reserve_reg_d, arr_psum_reserve_reg_q;
-    arr_psum_reg_t      arr_psum_accum_in_q; 
-    arr_psum_reg_t      arr_psum_accum_out_q;
+    arr_psum_reg_t      arr_psum_accum_in_d; 
+    arr_psum_reg_t      arr_psum_accum_out_d;
 
 
     bit                 cswitch_done_d, cswitch_done_q;
@@ -80,7 +80,7 @@ class sauria_systolic_array_monitor extends uvm_monitor;
                 systolic_array_info.act_start_feeding = act_start_feeding;
                 systolic_array_info.wei_start_feeding = wei_start_feeding;
 
-                systolic_array_info.scan_cswitch_valid = !feeding_unpaused;
+                systolic_array_info.scan_cswitch_valid = pipeline_en_q; //!feeding_unpaused;
 
                 systolic_array_info.act_data_valid = ((data_valid_done_count != 0) || (feeding_unpaused == 1'b1)) ? 1'b1 : 
                                                      ((feeding_paused == 1'b1) || (feeding_paused_hold)) ? 1'b0 : ((data_valid_sel == 1'b1) ? act_data_valid_q : act_data_valid_d); 
@@ -89,11 +89,14 @@ class sauria_systolic_array_monitor extends uvm_monitor;
                 systolic_array_info.wei_data_valid = ((data_valid_done_count != 0) || (feeding_unpaused == 1'b1)) ? 1'b1 : 
                                                      ((feeding_paused == 1'b1) || (feeding_paused_hold))  ? 1'b0 : ((data_valid_sel == 1'b1) ? wei_data_valid_q : wei_data_valid_d);
                                                     
-                
+                if (feeding_unpaused)
+                    `sauria_info(message_id, "FEEDING_UNPAUSED")
+
                 if(feeding_paused_hold == 1'b1)  
                     `sauria_info(message_id, "FEEDING_PAUSED_HOLD")
                 else if (feeding_paused == 1'b1)
                     `sauria_info(message_id, "FEEDING_PAUSED")
+                
                 
                 //`sauria_info(message_id, $sformatf("Data_Valid_Done_Count: %0d", data_valid_done_count))
 
@@ -105,10 +108,10 @@ class sauria_systolic_array_monitor extends uvm_monitor;
                 systolic_array_info.o_c_arr     =  sauria_systolic_array_if.o_c_arr;  
                  
                 systolic_array_info.arr_psum_reserve_reg = sauria_systolic_array_if.arr_psum_reserve_reg;
-                systolic_array_info.pre_cswitch_arr_psum_reserve_reg = arr_psum_reserve_reg_q;
+                systolic_array_info.pre_cswitch_arr_psum_reserve_reg = arr_psum_reserve_reg_d; //arr_psum_reserve_reg_q;
 
-                systolic_array_info.arr_psum_accum_in  = arr_psum_accum_in_q; 
-                systolic_array_info.arr_psum_accum_out = arr_psum_accum_out_q;
+                systolic_array_info.arr_psum_accum_in  = arr_psum_accum_in_d; 
+                systolic_array_info.arr_psum_accum_out = arr_psum_accum_out_d;
             
                 send_systolic_array_info.write(systolic_array_info);
             end
@@ -119,17 +122,30 @@ class sauria_systolic_array_monitor extends uvm_monitor;
 
         forever @(posedge sauria_systolic_array_if.clk)begin
             
-            if (normal_operation_pipeline_en || sync_pipeline_after_dis)  begin    
+            //if (normal_operation_pipeline_en || sync_pipeline_after_dis)  begin    
                 cswitch_arr_d          <= sauria_systolic_array_if.cswitch_arr;
                 arr_psum_reserve_reg_d <= sauria_systolic_array_if.arr_psum_reserve_reg;
-                arr_psum_accum_in_q    <= sauria_systolic_array_if.arr_psum_accum_in;
-                arr_psum_accum_out_q   <= sauria_systolic_array_if.arr_psum_accum_out;
-            end
-            
+                arr_psum_accum_in_d    <= sauria_systolic_array_if.arr_psum_accum_in;
+                arr_psum_accum_out_d   <= sauria_systolic_array_if.arr_psum_accum_out;
+            //end
+            cswitch_arr_q         <= cswitch_arr_d;
+
+            /* 
             if (disabling_pipeline || sync_pipeline_after_dis) 
                 cswitch_arr_alternate <= (pipeline_dis == 1'b1) ? cswitch_arr_d : cswitch_arr_q; 
              
-            cswitch_arr_q          <= (normal_operation_pipeline_en || !pipeline_dis) ? cswitch_arr_d:  cswitch_arr_alternate;
+            //cswitch_arr_q          <= (normal_operation_pipeline_en || !pipeline_dis) ? cswitch_arr_d:  cswitch_arr_alternate;
+            cswitch_arr_q          <= (normal_operation_pipeline_en || !pipeline_dis) ? (disabling_pipeline ? cswitch_arr_q : cswitch_arr_d) :  
+                                                                                        cswitch_arr_alternate;
+
+            cswitch_arr_q          <= (normal_operation_pipeline_en || !pipeline_dis) ? (disabling_pipeline ? cswitch_arr_q : cswitch_arr_d) :  
+                                                                                        cswitch_arr_alternate;
+            */
+
+            //`sauria_info(message_id, $sformatf("CSWITCH D: 0x%0h Alternate: 0x%0h Q: 0x%0h", cswitch_arr_d, cswitch_arr_alternate, cswitch_arr_q))
+            //`sauria_info(message_id, $sformatf("Pipeline State Disabling : %0d Sync_After Disabling: %0d_Dis: %0d Normal_Operation: %0d", 
+            //disabling_pipeline, pipeline_dis, sync_pipeline_after_dis, normal_operation_pipeline_en, ))
+            
             arr_psum_reserve_reg_q <= arr_psum_reserve_reg_d;
             
             if (cswitch_done_d)begin

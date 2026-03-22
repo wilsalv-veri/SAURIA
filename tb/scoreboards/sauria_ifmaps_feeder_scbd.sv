@@ -44,9 +44,8 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
         feeder_data_inst.srama_addr = ifmaps_feeder_srama_access_info.srama_addr;
         feeder_data_inst.srama_data = ifmaps_feeder_srama_access_info.srama_data;
         
-        //FIXME
-        //`sauria_info(message_id, $sformatf("Got SRAMA Access Addr: 0x%0h Data: 0x%0h",
-        //ifmaps_feeder_srama_access_info.srama_addr ,ifmaps_feeder_srama_access_info.srama_data))
+        `sauria_info(message_id, $sformatf("Got SRAMA Access Addr: 0x%0h Data: 0x%0h",
+        ifmaps_feeder_srama_access_info.srama_addr ,ifmaps_feeder_srama_access_info.srama_data))
         check_srama_rd_addr();
         update_exp_srama_rd_addr(ifmaps_feeder_srama_access_info.til_done);
         feeder_data.push_back(feeder_data_inst);
@@ -84,9 +83,8 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
                     
                     if (i == 0) last_valid_queue_elem  = col + 1;
                     
-                    //FIXME
-                    //`sauria_info(message_id, $sformatf("Valid a_arr_col[%0d]: 0x%0h Entry_Val: 0x%0h",
-                    //col, a_arr[col], a_arr))
+                    `sauria_info(message_id, $sformatf("Valid a_arr_col[%0d]: 0x%0h Entry_Val: 0x%0h",
+                    col, a_arr[col], a_arr))
                     break;    
                 end
             end

@@ -6,8 +6,10 @@ class sauria_weights_feeder_seq_item extends uvm_sequence_item;
     bit			  feeder_en;        // Enable for counters and Column feeders
     bit           feeder_clear;     // Clear signal for counters and Column feeder buffers
     bit           wei_valid;        // Flag: valid inputs at feeder
+    bit           data_valid;
     
     // FIFO control inputs
+    bit           start_feeding;
     bit           clearfifo;        // Clear signal for FIFO
     bit           pipeline_en;      // Systolic Array pipeline enable
     bit           pop_en;           // FIFO pop enable

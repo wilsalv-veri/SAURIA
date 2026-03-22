@@ -162,21 +162,21 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
         
         wait(computation_params.shared);
        
-        ifmaps_x_step  = SRAMA_N;                       //computation_params.ifmaps_x_step;
-        ifmaps_x_lim   = ifmaps_x_step;                 //computation_params.ifmaps_X;       
+        ifmaps_x_step  = SRAMA_N;                     
+        ifmaps_x_lim   = ifmaps_x_step;                 
         
-        ifmaps_y_step  = ifmaps_x_lim;                 //computation_params.ifmaps_y_step;
-        ifmaps_y_lim   = ifmaps_y_step * sauria_pkg::X; //computation_params.ifmaps_Y * ifmaps_y_step;         
+        ifmaps_y_step  = ifmaps_x_lim;   
+        ifmaps_y_lim   = ifmaps_y_step * sauria_pkg::X;       
         
-        ifmaps_ch_step = ifmaps_y_lim;                  //computation_params.ifmaps_c_step;
-        ifmaps_ch_lim  = ifmaps_ch_step * computation_params.ifmaps_C;         
+        ifmaps_ch_step = ifmaps_y_lim;                  
+        ifmaps_ch_lim  = ifmaps_ch_step * computation_params.ifmaps_C;        
 
         //Single Tile
-        ifmaps_tile_x_lim  = ifmaps_ch_lim;             //computation_params.tile_ifmaps_X;
-        ifmaps_tile_x_step = ifmaps_ch_lim;             //computation_params.tile_ifmaps_x_step;
+        ifmaps_tile_x_lim  = ifmaps_ch_lim;       
+        ifmaps_tile_x_step = ifmaps_ch_lim;             
         
-        ifmaps_tile_y_step = ifmaps_ch_lim;             //computation_params.tile_ifmaps_y_step;
-        ifmaps_tile_y_lim  = ifmaps_ch_lim;             //computation_params.tile_ifmaps_Y;
+        ifmaps_tile_y_step = ifmaps_ch_lim;            
+        ifmaps_tile_y_lim  = ifmaps_ch_lim;             
     
     endtask
 

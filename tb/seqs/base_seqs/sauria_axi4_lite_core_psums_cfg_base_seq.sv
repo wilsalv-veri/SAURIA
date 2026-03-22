@@ -45,7 +45,7 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     }
          
     constraint psums_preload_en_c{
-        psums_preload_en == sauria_axi4_lite_data_t'('h1);
+        psums_preload_en == sauria_axi4_lite_data_t'('h0);
     }
     
     constraint psums_inactive_cols_c{

@@ -19,6 +19,12 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
     weights_feeder_data_t      feeder_data[$];
     weights_feeder_data_t      feeder_data_inst;
 
+    int                        incntlim, comp_feeding_len;
+    int                        idx_curr_comp, idx_next_comp;
+    sauria_computation_params  computation_params;
+    bit                        wei_feeding_not_done;
+    bit                        overlapping_comps;
+   
     function new(string name="sauria_weights_feeder_scbd", uvm_component parent = null);
         super.new(name, parent);
     endfunction
@@ -29,14 +35,27 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
         receive_weights_feeder_info              = new("SAURIA_WEIGHTS_FEEDER_ANALYSIS_IMP", this);
         receive_weights_feeder_sramb_access_info = new("SAURIA_WEIGHTS_FEEDEER_SRAMB_ACCESS_INFO", this);
         receive_weights_feeder_arr_info          = new("SAURIA_WEIGHTS_FEEDER_ARR_INFO_ANALYSIS_IMP", this);
+    
+        if (!uvm_config_db #(sauria_computation_params)::get(this, "", "computation_params", computation_params))
+            `sauria_error(message_id, "Failed to get access to computation params")
+    
     endfunction
 
+    virtual task run_phase(uvm_phase phase);
+        super.run_phase(phase);
+        wait(computation_params.main_controller_cfg_shared);
+        incntlim         = computation_params.incntlim;
+        comp_feeding_len = incntlim + sauria_pkg::X;
+    endtask
     
     function write_weights_feeder_info(sauria_weights_feeder_seq_item weights_feeder_info);
         weights_feeder_item = weights_feeder_info;
 
         if (weights_feeder_info.feeder_clear && weights_feeder_info.clearfifo) begin
             feeder_data.delete();
+            idx_curr_comp       = 0;
+            idx_next_comp       = 0;
+            overlapping_comps   = 0;
             exp_next_sramb_addr = sramb_addr_t'(0);
         end
     endfunction
@@ -45,57 +64,79 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
         feeder_data_inst.sramb_addr = weights_feeder_sramb_access_info.sramb_addr;
         feeder_data_inst.sramb_data = weights_feeder_sramb_access_info.sramb_data;
         
-        check_sramb_rd_addr();
-        update_exp_sramb_rd_addr(weights_feeder_sramb_access_info.til_done);
-        feeder_data.push_back(feeder_data_inst);
-
-        //FIXME
         `sauria_info(message_id, $sformatf("Got SRAMB Access Addr: 0x%0h Data: 0x%0h Q_Size: %0d",
         feeder_data_inst.sramb_addr ,feeder_data_inst.sramb_data, feeder_data.size()))
-        
+
+        if(!weights_feeder_sramb_access_info.til_done)begin
+            feeder_data.push_back(feeder_data_inst);
+            check_sramb_rd_addr();
+            update_exp_sramb_rd_addr(weights_feeder_sramb_access_info.til_done);
+        end
+
     endfunction 
 
     function write_weights_feeder_arr_info(sauria_weights_feeder_seq_item weights_feeder_arr_info);
-        
+        `sauria_info(message_id, $sformatf("Size Coming In %0d", feeder_data.size()))
+
+        wei_feeding_not_done = (idx_curr_comp >= incntlim) && (idx_curr_comp < (comp_feeding_len - 1));
+
+        if (weights_feeder_arr_info.start_feeding) begin
+            overlapping_comps = wei_feeding_not_done;
+            `sauria_info(message_id, $sformatf("Weight Feeding Started Overlapping_Comps: %0d Comp_Idx: %0d", overlapping_comps, idx_curr_comp))
+        end
+    
         if (feeder_data.size() > 0)begin
             update_feeder_data(weights_feeder_arr_info.b_arr);
             if ($countones(feeder_data[0].arr_byte_valid) == sauria_pkg::X) begin
                 feeder_data[0].b_arr = get_reversed_array_bus(feeder_data[0].b_arr);
-                if (feeder_data[0].sramb_data != feeder_data[0].b_arr) 
+                if ((feeder_data[0].sramb_data != feeder_data[0].b_arr) && (!weights_feeder_arr_info.fifo_empty))
                     `sauria_error(message_id, $sformatf("Feeder Output Does Not Match SRAMB Read Data Q_Size: %0d Addr: 0x%0h Exp: 0x%0h Act: 0x%0h",
                     feeder_data.size(), feeder_data[0].sramb_addr ,feeder_data[0].sramb_data, feeder_data[0].b_arr ))
-                else
-                    `sauria_info(message_id, "Popped feeder data")
-                feeder_data.pop_front();
                 
+                feeder_data.pop_front(); 
             end
             
-            if(!weights_feeder_arr_info.pop_en) clear_arr_byte_valids();
+            if(!weights_feeder_arr_info.pop_en && !overlapping_comps) clear_arr_byte_valids();
             
         end
-        else `sauria_error(message_id, "WEIGHTS Feeder Fed Data Without Reading From SRAMA")
-        
+
+        update_comp_indeces();
     endfunction
 
     virtual function void update_feeder_data(b_arr_data_t b_arr);
         int last_valid_queue_elem = (feeder_data.size() < sauria_pkg::X) ? feeder_data.size() : sauria_pkg::X;
         
         for(int i=0; i < last_valid_queue_elem; i++)begin 
-            for(int row=0; row < sauria_pkg::X; row++)begin
+            
+            if ((i == sauria_pkg::X - 1 -  (idx_curr_comp - incntlim)) && (idx_curr_comp >= incntlim)  && (idx_curr_comp != (comp_feeding_len - 1)) && (!overlapping_comps))
+                break;
+
+            for(int col=0; col < sauria_pkg::X; col++)begin
+
                 //Find first invalid element
-                if(!feeder_data[i].arr_byte_valid[row]) begin
-                    feeder_data[i].arr_byte_valid[row] = 1'b1; //Set To Valid
-                    feeder_data[i].b_arr[row]          = b_arr[row];
+                if(!feeder_data[i].arr_byte_valid[col]) begin
+                    feeder_data[i].arr_byte_valid[col] = 1'b1; //Set To Valid
+                    feeder_data[i].b_arr[col]          = b_arr[col];
                     
-                    if (i == 0) last_valid_queue_elem  = row + 1;
-                    //FIXME
-                    //`sauria_info(message_id, $sformatf("Valid b_arr_row[%0d]: 0x%0h Entry_Val: 0x%0h",
-                    //row, b_arr[row], b_arr))
+                    if ((i == 0) && (col < last_valid_queue_elem)) begin
+                        last_valid_queue_elem  = col + 1;
+                    end
+                    else if ((overlapping_comps) && (col == 0)) begin
+                           
+                        `sauria_info(message_id, $sformatf("Overlapping Comps Found Idx: %0d Col: %0d Last_Valid_Elem_Before: %0d Last_Valid_Elem_After: %0d", 
+                        i, col, last_valid_queue_elem, i))
+
+                        last_valid_queue_elem = i;
+                    end
+
+                    `sauria_info(message_id, $sformatf("Elem_Idx: %0d Valid b_arr_col[%0d]: 0x%0h Entry_Val: 0x%0h",
+                    i, col, b_arr[col], b_arr))
                     break;    
                 end
             end
             
         end
+
     endfunction
 
      virtual function void check_sramb_rd_addr();
@@ -109,14 +150,23 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
         else exp_next_sramb_addr++;
     endfunction
    
+    virtual function void update_comp_indeces();
+        idx_curr_comp = ((overlapping_comps == 1'b1) && (idx_curr_comp == (comp_feeding_len - 2))) ? idx_next_comp + 1 : (idx_curr_comp + 1) % comp_feeding_len;
+        idx_next_comp = (overlapping_comps == 1'b1) ? idx_next_comp + 1 : 0;
+
+        if (idx_curr_comp == idx_next_comp) overlapping_comps = 1'b0;
+    endfunction
 
     virtual function void clear_arr_byte_valids();
+
         int last_valid_queue_elem = (feeder_data.size() < sauria_pkg::X) ? feeder_data.size() : sauria_pkg::X;
+        
         for(int i=0; i < last_valid_queue_elem; i++)begin 
             for(int row=0; row < sauria_pkg::X; row++)begin
                 feeder_data[i].arr_byte_valid[row] = 1'b0;
             end
         end
+
     endfunction
 
     virtual function b_arr_data_t get_reversed_array_bus(b_arr_data_t b_arr);
@@ -126,7 +176,6 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
         end
         return reversed_bus;
     endfunction
-
 
 endclass
 

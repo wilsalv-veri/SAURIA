@@ -35,7 +35,7 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
     }
     
     constraint weights_aligned_flag_c{
-        weights_aligned_flag == sauria_axi4_lite_data_t'('h0);
+        weights_aligned_flag == sauria_axi4_lite_data_t'('h1);
     }
 
     constraint weights_active_cols_c{
@@ -93,14 +93,14 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
         
         wait(computation_params.shared);
        
-        weights_k_step      = SRAMB_N;                                       //computation_params.weights_k_step;  
-        weights_k_lim       = weights_k_step * sauria_pkg::X; //Y                //computation_params.weights_K;         
+        weights_k_step      = 1;
+        weights_k_lim       = 1;      
        
-        weights_w_step      = weights_k_lim;                                 //computation_params.weights_w_step; 
-        weights_w_lim       = weights_w_step * computation_params.weights_W; //computation_params.weights_w_lim;  
+        weights_w_step      = SRAMB_N;                              
+        weights_w_lim       = weights_w_step * sauria_pkg::X;           
 
-        weights_tile_k_step = computation_params.tile_weights_k_step; 
-        weights_tile_k_lim  = computation_params.tile_weights_K;     
+        weights_tile_k_step = weights_w_lim; 
+        weights_tile_k_lim  = weights_w_lim * computation_params.weights_W;            
         
         `sauria_info(message_id, $sformatf("K_Step: 0x%0h K_Lim: 0x%0h Tile_K_Step: 0x%0h Tile_K_Lim: 0x%0h ", 
                     weights_k_step, weights_k_lim, weights_tile_k_step, weights_tile_k_lim))

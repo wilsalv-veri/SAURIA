@@ -18,12 +18,18 @@ class sauria_weights_feeder_monitor extends uvm_monitor;
 
     logic [sauria_pkg::ADRB_W-1:0] sramb_addr_d = {sauria_pkg::ADRB_W{1'bx}};
     logic [sauria_pkg::ADRB_W-1:0] sramb_addr_q;
-    logic til_done_d, til_done_q;
+    logic til_done_i, til_done_d, til_done_q;
 
     bit lat_wait = 1'b1;
     bit wei_valid;
+    bit sramb_rden_d, sramb_rden_q;
+    bit start_feeding;
+    bit data_valid_d, data_valid_q;
+    
+    int feed_count     = 0;
     int pop_done_count = 0;
     int pop_lat;
+
 
     function new(string name="sauria_weights_feeder_monitor", uvm_component parent=null);
         super.new(name,parent);
@@ -80,7 +86,6 @@ class sauria_weights_feeder_monitor extends uvm_monitor;
         end
     endtask
 
-    //FIXME
     virtual task get_weights_feeder_sramb_access_info();
         
         forever @(posedge sauria_weights_feeder_if.clk)begin
@@ -89,25 +94,32 @@ class sauria_weights_feeder_monitor extends uvm_monitor;
                 sramb_addr_d <= {sauria_pkg::ADRB_W{1'bx}};
                 sramb_addr_q <=  {sauria_pkg::ADRB_W{1'bx}};
             end
-            
-            wei_valid      <= sauria_weights_feeder_if.wei_valid;
-            
-            til_done_d <= sauria_weights_feeder_if.til_done;
-            til_done_q <= til_done_d;
-                
-            if ( 
-                ((sauria_weights_feeder_if.sramb_rden && 
-                sramb_addr_d !== sauria_weights_feeder_if.sramb_addr) ) &&
-                sauria_weights_feeder_if.feeder_en) begin
-                
+            else if ( 
+                (sramb_rden_d) ) begin 
+
                 sramb_addr_d <= sauria_weights_feeder_if.sramb_addr;
                 sramb_addr_q <= sramb_addr_d;
+            end
+            
+            wei_valid      <= sauria_weights_feeder_if.wei_valid;
+            sramb_rden_d   <= sauria_weights_feeder_if.sramb_rden;
+            sramb_rden_q   <= sramb_rden_d;
+
+            til_done_i <= sauria_weights_feeder_if.til_done;
+            til_done_d <= til_done_i;
+            til_done_q <= til_done_d;
                 
-                if (wei_valid)begin
-                weights_feeder_info.til_done     =  til_done_q;
-                weights_feeder_info.sramb_addr   =  sramb_addr_q;   
-                weights_feeder_info.sramb_data   =  sauria_weights_feeder_if.sramb_data;     
-                send_weights_feeder_sramb_access_info.write(weights_feeder_info);
+            if ( sramb_rden_d && 
+                ((sramb_addr_d !== sauria_weights_feeder_if.sramb_addr) || (sramb_addr_q != sramb_addr_d) ) &&
+                sauria_weights_feeder_if.feeder_en) begin
+                
+                if (wei_valid) begin
+                    weights_feeder_info.start_feeding = start_feeding;
+                    weights_feeder_info.til_done      =  til_done_q;
+                    weights_feeder_info.sramb_addr    =  sramb_addr_q;   
+                    weights_feeder_info.sramb_data    =  sauria_weights_feeder_if.sramb_data; 
+                    weights_feeder_info.fifo_empty    =  sauria_weights_feeder_if.fifo_empty;
+                    send_weights_feeder_sramb_access_info.write(weights_feeder_info);
                 end
             end
         end
@@ -117,16 +129,21 @@ class sauria_weights_feeder_monitor extends uvm_monitor;
     virtual task get_weights_feeder_arr_info();
         forever @ (posedge sauria_weights_feeder_if.clk)begin
 
+            data_valid_d   <= sauria_weights_feeder_if.data_valid;
+            data_valid_q   <= data_valid_d;
+
             if(sauria_weights_feeder_if.pipeline_en && 
-            (sauria_weights_feeder_if.pop_en || pop_done_count > 0))begin
+            ((sauria_weights_feeder_if.pop_en) || pop_done_count > 0))begin
                 
                 if(lat_wait)begin
+                    `sauria_info(message_id, $sformatf("Lat Wait %0d", pop_lat))
                     repeat(pop_lat - 1) @ (posedge sauria_weights_feeder_if.clk);
                     lat_wait <= 1'b0;
                 end
                 else begin
-                    weights_feeder_info.pop_en = pop_done_count != sauria_pkg::X;
-                    weights_feeder_info.b_arr = sauria_weights_feeder_if.b_arr;
+                    weights_feeder_info.start_feeding = (data_valid_d && !data_valid_q) && (feed_count == 0);
+                    weights_feeder_info.pop_en        = pop_done_count != sauria_pkg::X;
+                    weights_feeder_info.b_arr         = sauria_weights_feeder_if.b_arr;
                     send_weights_feeder_arr_info.write(weights_feeder_info);
                 end
             end
@@ -142,7 +159,16 @@ class sauria_weights_feeder_monitor extends uvm_monitor;
                 @(posedge sauria_weights_feeder_if.clk);
             end
             pop_done_count <= 0;
-            lat_wait       <= 1'b1;
+            feed_count     <= 0;
+            lat_wait       <= !sauria_weights_feeder_if.pop_en; 
+        end
+    endtask
+
+    virtual task set_feed_count();
+
+        forever @ (posedge sauria_weights_feeder_if.clk)begin
+            if (sauria_weights_feeder_if.data_valid)
+                feed_count <= feed_count + 1;
         end
     endtask
 

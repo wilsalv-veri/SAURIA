@@ -81,6 +81,8 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
         if (systolic_array_item.reg_clear)begin
             idx_curr_comp = 0;
             context_count = 0;
+            rd_ptr        = 0;
+            wr_ptr        = 0;
             clear_all_queues();
         end
         else begin
@@ -170,7 +172,6 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
             
             weights_feeder_out_data.push_back(weights_feeder_out_data_inst);
             update_weights_feeder_data(systolic_array_item.b_arr);
-
             
             if (idx_curr_comp < comp_feeding_len)begin
             
@@ -181,10 +182,9 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
 
                 if ($countones(weights_feeder_out_data[0].arr_byte_valid) == sauria_pkg::X) begin
                     weights_feeder_out_data_entry = weights_feeder_out_data.pop_front();
-                    `sauria_info(message_id, $sformatf("B_ARR_ENTRY_READY FEEDER_OUT_DATA_SIZE: %0d CURR_Q_SIZE: %0d Ones: %0d IDX_Curr_Comp: %0d", 
-                    weights_feeder_out_data.size() + 1, b_arr_entries.size(), $countones(weights_feeder_out_data_entry.b_arr), idx_curr_comp))
+                    `sauria_info(message_id, $sformatf("B_ARR_ENTRY_READY FEEDER_OUT_DATA_SIZE: %0d CURR_Q_SIZE: %0d Ones: %0d Val: 0x%0h IDX_Curr_Comp: %0d", 
+                    weights_feeder_out_data.size() + 1, b_arr_entries.size(), $countones(weights_feeder_out_data_entry.b_arr), weights_feeder_out_data_entry.b_arr, idx_curr_comp))
                     b_arr_entries.push_back(weights_feeder_out_data_entry.b_arr);
-                    
                 end
 
                 if(count_next_comp) idx_next_comp++;
@@ -227,7 +227,8 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
         int cswitch_done_count = systolic_array_item.cswitch_done_count;
         int cswitch_idx = (cswitch_done_count > 0) ? sauria_pkg::X - 1 + cswitch_done_count : cswitch_arr_en_idx;
 
-    
+        `sauria_info(message_id, $sformatf("CSWITCH_ARR_EN_IDX: 0x%0h CSWITH_ARR_VAL: 0x%0h", cswitch_arr_en_idx, systolic_array_item.cswitch_arr))
+
         for(int row=0; row < sauria_pkg::Y; row++)begin
             for(int col=0; col < sauria_pkg::X; col++)begin
                 if ((row + col) == cswitch_idx) begin
@@ -305,6 +306,10 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
         for(int col=0; col < sauria_pkg::X; col++)begin
             for(int row=0; row < sauria_pkg::Y; row++)begin
                 psum_col[row] = mac_psum_reg[row][col];
+
+                if (col == 0)
+                    `sauria_info(message_id, $sformatf("Col0 Row: %0d PSUM_VAL: 0x%0h", row, psum_col[row]))
+
                 mac_psum_reg[row][col] = 0;
             end
             
@@ -324,14 +329,16 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
         if (q_size > 0)begin
 
             case(rd_ptr)
-                0: psum_col = psum_scan_chain_out_a.pop_back();
-                1: psum_col = psum_scan_chain_out_b.pop_back();
+                0: psum_col = psum_scan_chain_out_a.pop_front();
+                1: psum_col = psum_scan_chain_out_b.pop_front();
             endcase
 
             if (psum_col != systolic_array_item.o_c_arr)begin
                 `sauria_error(message_id, "Mismatch Mac PSUMS and Scan Chain Outputs")
                 for(int row=0; row < sauria_pkg::Y; row++)
-                    `sauria_error(message_id, $sformatf("Row: %0d MAC_PSUMS: 0x%0h  Scan_Chain_Out: 0x%0h",row, psum_col[row],systolic_array_item.o_c_arr[row] ))
+                    `sauria_error(message_id, $sformatf("Col: %0d Row: %0d MAC_PSUMS: 0x%0h  Scan_Chain_Out: 0x%0h",
+                    sauria_pkg::X - q_size, row, psum_col[row],systolic_array_item.o_c_arr[row] ))
+
             end
             else begin
                 if (rd_ptr)
@@ -385,7 +392,11 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
                     weights_feeder_out_data[i].arr_byte_valid[col] = 1'b1; //Set To Valid
                     weights_feeder_out_data[i].b_arr[col]          = b_arr[col];
                     
-                    if (i == 0) last_valid_queue_elem  = col + 1;
+                    if ((i == 0)  && (col < last_valid_queue_elem)) 
+                        last_valid_queue_elem  = col + 1;
+                    else if (count_next_comp)
+                        last_valid_queue_elem = i + col + 1;
+
                     `sauria_info(message_id, $sformatf("Valid elem_idx: %0d b_arr_col[%0d]: 0x%0h Entry_Val: 0x%0h Last_Valid_Elem: %0d",
                     i, col, b_arr[col], b_arr, last_valid_queue_elem))
                     break;    

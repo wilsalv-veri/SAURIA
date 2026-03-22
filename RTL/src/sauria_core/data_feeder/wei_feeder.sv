@@ -254,6 +254,7 @@ genvar jj;
                     .i_glob_woffs   (glob_woffs_mux),
                     .i_loc_woffs    (loc_woffs[jj]),
                     .i_Dil_pat      ( {1'b1, {(SRAMB_N-1){1'b0}}} ),        // Fix to 1 the first position, 0 otherwise (no pattern)
+                    
                     .i_finalpush    (finalpush_q2),                                 
                     .i_clearfifo    (i_clearfifo),
                     .i_pipeline_en  (i_pipeline_en),

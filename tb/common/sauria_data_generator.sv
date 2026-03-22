@@ -12,7 +12,10 @@ class sauria_data_generator extends uvm_object;
 
     sauria_axi4_data_t           rdata;
     
-    data_gen_mode_t              data_gen_mode;
+    data_gen_mode_t              ifmaps_data_mode;
+    data_gen_mode_t              weights_data_mode;
+    data_gen_mode_t              psums_data_mode;
+    
     int                          byte_idx;
 
     function new(string name="sauria_data_generator");
@@ -25,8 +28,10 @@ class sauria_data_generator extends uvm_object;
         this.computation_params = computation_params;
     endfunction
 
-    virtual function void set_data_gen_mode(data_gen_mode_t data_gen_mode);
-        this.data_gen_mode = data_gen_mode;
+    virtual function void set_data_gen_mode(data_gen_mode_t ifmaps_data_mode, data_gen_mode_t weights_data_mode, data_gen_mode_t psums_data_mode);
+        this.ifmaps_data_mode  = ifmaps_data_mode;
+        this.weights_data_mode = weights_data_mode;
+        this.psums_data_mode   = psums_data_mode;
     endfunction
 
     virtual function sauria_axi4_data_t gen_read_data();
@@ -50,17 +55,17 @@ class sauria_data_generator extends uvm_object;
                 IFMAPS: begin
                     if ((elem_idx % sauria_pkg::SRAMA_N == 0) && (elem_idx > 0)) byte_idx++; 
                     elem_base_offset = elem_idx*$bits(sauria_ifmaps_elem_data_t);
-                    rdata[elem_base_offset +: $bits(sauria_ifmaps_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_single_nib_incr_count_int_elem_data(); //get_int_elem_data();
+                    rdata[elem_base_offset +: $bits(sauria_ifmaps_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data(ifmaps_data_mode);
                 end
                 WEIGHTS: begin
                     if ((elem_idx % sauria_pkg::SRAMB_N == 0) && (elem_idx > 0)) byte_idx++; 
                     elem_base_offset = elem_idx*$bits(sauria_weights_elem_data_t);
-                    rdata[elem_base_offset +: $bits(sauria_weights_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_ones_int_elem_data(); //get_int_elem_data();
+                    rdata[elem_base_offset +: $bits(sauria_weights_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data(weights_data_mode);
                 end
                 PSUMS: begin
                     if ((elem_idx % sauria_pkg::SRAMC_N == 0) && (elem_idx > 0)) byte_idx++; 
                     elem_base_offset = elem_idx*$bits(sauria_psums_elem_data_t);
-                    rdata[elem_base_offset +: $bits(sauria_psums_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_twos_int_elem_data(); //get_int_elem_data();
+                    rdata[elem_base_offset +: $bits(sauria_psums_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data(psums_data_mode);
                 end
             endcase
         end
@@ -68,12 +73,15 @@ class sauria_data_generator extends uvm_object;
         return rdata; 
     endfunction
  
-    virtual function longint unsigned get_int_elem_data();
-        case(data_gen_mode)
+    virtual function longint unsigned get_int_elem_data(data_gen_mode_t data_mode);
+        case(data_mode)
             RAND: return get_rand_int_elem_data();
             ADDR_AS_DATA: return get_addr_int_elem_data();
             BAD_PATTERN: return get_bad_pattern_int_elem_data();
             INCR_PATTERN: return get_incr_count_int_elem_data();
+            SING_NIB_INCR_PATTERN: return get_single_nib_incr_count_int_elem_data();
+            ALL_ONES: return get_ones_int_elem_data();
+            ALL_TWOS: return get_twos_int_elem_data();
         endcase
     endfunction
 

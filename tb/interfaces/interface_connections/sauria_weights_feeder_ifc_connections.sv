@@ -21,3 +21,6 @@ assign sauria_weights_feeder_if.feeder_stall = sauria_ss.sauria_core_i.sauria_lo
 
 assign sauria_weights_feeder_if.wei_deadlock = sauria_ss.sauria_core_i.sauria_logic_top_i.weight_feeder_i.o_wei_deadlock; 
 assign sauria_weights_feeder_if.b_arr        = sauria_ss.sauria_core_i.sauria_logic_top_i.weight_feeder_i.o_b_arr;    
+
+assign sauria_weights_feeder_if.data_valid   = sauria_ss.sauria_core_i.sauria_logic_top_i.weight_feeder_i.i_pop_en &
+                                              sauria_ss.sauria_core_i.sauria_logic_top_i.weight_feeder_i.i_pipeline_en;
