@@ -19,6 +19,8 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
     weights_feeder_data_t      feeder_data[$];
     weights_feeder_data_t      feeder_data_inst;
 
+    arr_row_data_t             weights_cols_active;
+
     int                        incntlim, comp_feeding_len;
     int                        idx_curr_comp, idx_next_comp;
     sauria_computation_params  computation_params;
@@ -46,6 +48,9 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
         wait(computation_params.main_controller_cfg_shared);
         incntlim         = computation_params.incntlim;
         comp_feeding_len = incntlim + sauria_pkg::X;
+
+        wait(computation_params.weights_cfg_shared);
+        weights_cols_active = computation_params.weights_cols_active;
     endtask
     
     function write_weights_feeder_info(sauria_weights_feeder_seq_item weights_feeder_info);
@@ -88,7 +93,8 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
         if (feeder_data.size() > 0)begin
             update_feeder_data(weights_feeder_arr_info.b_arr);
             if ($countones(feeder_data[0].arr_byte_valid) == sauria_pkg::X) begin
-                feeder_data[0].b_arr = get_reversed_array_bus(feeder_data[0].b_arr);
+                feeder_data[0].b_arr      = get_reversed_array_bus(feeder_data[0].b_arr);
+                feeder_data[0].sramb_data = get_masked_inactive_cols_data(feeder_data[0].sramb_data);
                 if ((feeder_data[0].sramb_data != feeder_data[0].b_arr) && (!weights_feeder_arr_info.fifo_empty))
                     `sauria_error(message_id, $sformatf("Feeder Output Does Not Match SRAMB Read Data Q_Size: %0d Addr: 0x%0h Exp: 0x%0h Act: 0x%0h",
                     feeder_data.size(), feeder_data[0].sramb_addr ,feeder_data[0].sramb_data, feeder_data[0].b_arr ))
@@ -162,8 +168,8 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
         int last_valid_queue_elem = (feeder_data.size() < sauria_pkg::X) ? feeder_data.size() : sauria_pkg::X;
         
         for(int i=0; i < last_valid_queue_elem; i++)begin 
-            for(int row=0; row < sauria_pkg::X; row++)begin
-                feeder_data[i].arr_byte_valid[row] = 1'b0;
+            for(int col=0; col < sauria_pkg::X; col++)begin
+                feeder_data[i].arr_byte_valid[col] = 1'b0;
             end
         end
 
@@ -175,6 +181,18 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
             reversed_bus[row] = b_arr[sauria_pkg::X - 1 - row];
         end
         return reversed_bus;
+    endfunction
+
+    virtual function b_arr_data_t get_masked_inactive_cols_data(b_arr_data_t b_arr);
+        b_arr_data_t       masked_col_data;
+        arr_row_data_rev_t rev_weights_cols_active  = weights_cols_active;
+
+        for(int col=0; col < sauria_pkg::X; col++)begin
+            masked_col_data[col] = (rev_weights_cols_active[col] == 1'b1) ? b_arr[col] : 0;
+
+            if (weights_cols_active[col] == 1'b1) `sauria_info(message_id, $sformatf("WEIGHTS_COLS_ACTIVE COL: %0d", col))
+        end
+        return masked_col_data;
     endfunction
 
 endclass

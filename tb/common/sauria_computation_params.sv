@@ -3,6 +3,8 @@ class sauria_computation_params extends uvm_object;
     bit shared;
     bit tensors_start_addr_shared;
     bit main_controller_cfg_shared;
+    bit ifmaps_cfg_shared;
+    bit weights_cfg_shared;
     bit psums_mgr_cfg_shared;
     
     sauria_axi4_lite_data_t       start_SRAMA_addr;
@@ -70,8 +72,11 @@ class sauria_computation_params extends uvm_object;
     sauria_axi4_lite_data_t incntlim;
     sauria_axi4_lite_data_t loop_order;
 
+    sauria_axi4_lite_data_t ifmaps_rows_active;
+    sauria_axi4_lite_data_t weights_cols_active;
+    sauria_axi4_lite_data_t psums_inactive_cols;
     sauria_axi4_lite_data_t psums_preload_en;
-    
+
 
     bit                     Cw_eq;   
     bit                     Ch_eq;   

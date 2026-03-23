@@ -78,7 +78,7 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
     }
 
     constraint ifmpas_active_inactive_rows_c{
-        ifmaps_rows_active == sauria_axi4_lite_data_t'('hff);
+        ifmaps_rows_active == sauria_axi4_lite_data_t'('h0f);
     }
 
     function new(string name="sauria_axi4_lite_core_ifmaps_cfg_base_seq");
@@ -94,6 +94,7 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
 
     virtual task body();
         get_ifmaps_params();
+        share_ifmaps_cfg();
         super.body();
     endtask
 
@@ -178,6 +179,14 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
         ifmaps_tile_y_step = ifmaps_ch_lim;            
         ifmaps_tile_y_lim  = ifmaps_ch_lim;             
     
+    endtask
+
+    virtual task share_ifmaps_cfg();
+        if (!uvm_config_db #(sauria_computation_params)::get(m_sequencer, "","computation_params", computation_params))
+            `sauria_error(message_id, "Failed to get access to computation params")
+        
+        computation_params.ifmaps_rows_active = ifmaps_rows_active;
+        computation_params.ifmaps_cfg_shared  = 1'b1;
     endtask
 
     virtual function void set_ifmaps_x_lim();

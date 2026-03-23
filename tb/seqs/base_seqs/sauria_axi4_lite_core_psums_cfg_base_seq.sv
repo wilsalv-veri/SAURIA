@@ -45,11 +45,11 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     }
          
     constraint psums_preload_en_c{
-        psums_preload_en == sauria_axi4_lite_data_t'('h0);
+        psums_preload_en == sauria_axi4_lite_data_t'('h1);
     }
     
     constraint psums_inactive_cols_c{
-        psums_inactive_cols == sauria_axi4_lite_data_t'('h0);
+        psums_inactive_cols == sauria_axi4_lite_data_t'('h8);
     }
 
     function new(string name="sauria_axi4_lite_core_psums_cfg_base_seq");
@@ -131,6 +131,7 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
             `sauria_error(message_id, "Failed to get access to computation params")
         
         computation_params.psums_preload_en     = psums_preload_en;
+        computation_params.psums_inactive_cols  = psums_inactive_cols;
         computation_params.psums_mgr_cfg_shared = 1;
     endtask
   

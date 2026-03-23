@@ -11,9 +11,9 @@
     typedef bit [CFG_AXI_DATA_WIDTH-1:0]  sauria_axi4_lite_data_t;
     typedef bit [DATA_AXI_DATA_WIDTH-1:0] sauria_axi4_data_t;
 
-    typedef bit [`IA_W-1:0]               sauria_ifmaps_elem_data_t;
-    typedef bit [`IB_W-1:0]               sauria_weights_elem_data_t;
-    typedef bit [`OC_W-1:0]               sauria_psums_elem_data_t;
+    typedef bit [sauria_pkg::IA_W-1:0]    sauria_ifmaps_elem_data_t;
+    typedef bit [sauria_pkg::IB_W-1:0]    sauria_weights_elem_data_t;
+    typedef bit [sauria_pkg::OC_W-1:0]    sauria_psums_elem_data_t;
 
     typedef bit [CFG_AXI_BYTE_NUM-1:0]    sauria_axi4_lite_strobe_t;
     typedef bit [DATA_AXI_BYTE_NUM-1:0]   sauria_axi4_strobe_t;
@@ -238,7 +238,12 @@
     typedef bit [sauria_pkg::Y-1:0][sauria_pkg::X-1:0][sauria_pkg::OC_W-1:0]  arr_psum_reg_t ;
     typedef bit [sauria_pkg::Y-1:0][sauria_pkg::X-1:0]                        arr_cswitch_en_t ;
 
+    typedef bit [0:sauria_pkg::Y-1]                                           arr_col_data_t;
+    typedef bit [sauria_pkg::Y-1:0]                                           arr_col_data_rev_t;
+    
     typedef bit [0:sauria_pkg::X-1]                                           arr_row_data_t;
+    typedef bit [sauria_pkg::X-1:0]                                           arr_row_data_rev_t;
+    
     typedef bit [sauria_pkg::TH_W-1:0]                                        threshold_t;
 
     typedef struct {

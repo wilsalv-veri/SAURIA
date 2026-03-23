@@ -39,7 +39,7 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
     }
 
     constraint weights_active_cols_c{
-        weights_cols_active == sauria_axi4_lite_data_t'('hffff);
+        weights_cols_active == sauria_axi4_lite_data_t'('hff);
     }
 
     function new(string name="sauria_axi4_lite_core_weights_cfg_base_seq");
@@ -55,6 +55,7 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
 
     virtual task body();
         get_weights_params();
+        share_weights_cfg();
         super.body();
     endtask
 
@@ -104,6 +105,14 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
         
         `sauria_info(message_id, $sformatf("K_Step: 0x%0h K_Lim: 0x%0h Tile_K_Step: 0x%0h Tile_K_Lim: 0x%0h ", 
                     weights_k_step, weights_k_lim, weights_tile_k_step, weights_tile_k_lim))
+    endtask
+
+    virtual task share_weights_cfg();
+        if (!uvm_config_db #(sauria_computation_params)::get(m_sequencer, "","computation_params", computation_params))
+            `sauria_error(message_id, "Failed to get access to computation params")
+        
+        computation_params.weights_cols_active = weights_cols_active;
+        computation_params.weights_cfg_shared = 1'b1;
     endtask
                 
     virtual function void set_weights_w_lim();

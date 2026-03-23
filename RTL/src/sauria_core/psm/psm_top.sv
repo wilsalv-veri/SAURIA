@@ -118,6 +118,17 @@ logic                   cnt_done, cnt_til_done, fifo_data_flag;
 // Output bus before muxing
 logic [0:Y-1][OC_W-1:0]     buff_dout_arr;
 
+
+//------------NOTE: wilsalv :CORE_BUGID8-----------------------
+localparam SHIFT_FSM_POSTREAD_SHIFT = 5'd5;
+
+logic [4:0]          shift_fsm_status;
+logic [SRAMC_W-1:0]  inactive_col_data;
+
+assign o_out_status = shift_fsm_status;
+assign inactive_col_data = {SRAMC_W{1'b0}};
+//-------------------------------------------------------------
+
 // ------------------------------------------------------------
 // IO Mapping - Wide bus to element array and vice versa
 // ------------------------------------------------------------
@@ -225,7 +236,11 @@ psm_shift_fsm #(
         .o_sramc_rden       (o_sramc_rden),
         .o_buff_shift       (buff_shift_fsm),
         .o_cscan_en         (o_cscan_en),
-        .o_out_status       (o_out_status),
+
+        //FIXME: wilsalv
+        //.o_out_status       (o_out_status),
+        .o_out_status       (shift_fsm_status),
+        
         .o_shift_done       (o_shift_done),
         .o_done             (o_done),
         .o_finalwrite       (o_finalwrite));
@@ -269,7 +284,9 @@ assign buff_shift_en = (o_cscan_en && i_pipeline_en) | buff_shift_fsm | fifo_pus
 // Shift Buffer Input Muxing
 // ---------------------------
 
-assign buff_din = (buff_shift_fsm || o_cscan_en) ? buff_arr_din : buff_sram_din;
+//NOTE: wilsalv : CORE_BUGID8
+//assign buff_din = (buff_shift_fsm || o_cscan_en) ? buff_arr_din : buff_sram_din;
+assign buff_din = (shift_fsm_status == SHIFT_FSM_POSTREAD_SHIFT) ?  inactive_col_data : (buff_shift_fsm || o_cscan_en) ? buff_arr_din : buff_sram_din;
 
 // ----------------------------------------------------------------------------
 // SRAM Data Bus register (latency equalization of SRAM data with Data Manager)

@@ -293,7 +293,7 @@ always_comb begin: state_transitions
         // PREWRITE_SHIFT => Shift array before writing (shift-in previous read + shift-out current write)
         PREWRITE_SHIFT: begin
             if ((i_pipeline_en)&&(scan_cnt == X-1)) begin
-                main_state_d = WR_CNT_START;
+                    main_state_d = WR_CNT_START;
             end
         end
 
