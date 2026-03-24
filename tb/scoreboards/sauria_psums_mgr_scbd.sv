@@ -21,12 +21,13 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
 
     localparam RD_LAT    = 3;
     localparam SHIFT_LAT = 2;
+    localparam PSUM_ELEM_LEN = $bits(sauria_psums_elem_data_t);
+
     sramc_data_t              shift_reg_data[$];     
     sramc_data_t              shift_reg_data_entry;      
      
     scan_chain_data_t         shift_reg_entry;
     scan_chain_data_t         bus_val;
-
 
     sauria_psums_mgr_seq_item psums_mgr_info;
     int                       curr_read_context_num,  next_read_context_num;
@@ -39,6 +40,7 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
     bit                       pending_shift_reg_check;
     bit                       pending_scan_chain_bus_check;
     bit                       pending_sramc_bus_check;
+    bit                       shift_sram_data;
 
     int                       read_tile_idx;
     int                       write_tile_idx;
@@ -47,6 +49,9 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
     int                       rd_done_count;
     int                       addr_zero_count;
     bit                       shift;
+
+    arr_row_data_t             psums_inactive_cols;
+    arr_col_data_t             psums_rows_active;
 
     function new(string name="sauria_psums_mgr_scbd", uvm_component parent=null);
         super.new(name,parent);
@@ -74,6 +79,11 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
         num_tiles              =  (computation_params.tile_psums_CY / computation_params.tile_psums_cy_step) 
                                 * (computation_params.tile_psums_CK / computation_params.tile_psums_ck_step);
 
+        wait(computation_params.ifmaps_cfg_shared);
+        psums_rows_active = computation_params.ifmaps_rows_active;
+        
+        wait(computation_params.psums_mgr_cfg_shared);
+        psums_inactive_cols =  computation_params.psums_inactive_cols;
     endtask
 
     function write_psums_mgr_sramc_read_info(sauria_psums_mgr_seq_item psums_mgr_info);
@@ -85,6 +95,8 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
         if (rd_done_count <= RD_LAT)begin
             pending_shift_reg_check      = 1'b1;
             pending_scan_chain_bus_check = 1'b1;
+            shift_sram_data              = 1'b1;
+
             if(shift) begin
                 if(shift_reg_data.size() == sauria_pkg::X) shift_reg_entry = shift_reg_data.pop_back();
                 shift_reg_data.push_front(psums_mgr_info.sramc_rdata);
@@ -112,6 +124,8 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
         shift_reg_data_entry = get_reversed_scan_chain_bus(psums_mgr_info.i_c_arr);
         shift_reg_data.push_front(shift_reg_data_entry); 
         pending_shift_reg_check = 1'b1;
+        shift_sram_data         = 1'b0;
+            
     endfunction
 
     function write_psums_mgr_shift_reg_info(sauria_psums_mgr_seq_item psums_mgr_shift_reg_info);
@@ -157,19 +171,27 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
     endfunction
 
     virtual function void check_shift_reg_data();
-        for(int col=0; col < sauria_pkg::X; col++ )begin
+        for(int col=0; col < sauria_pkg::X; col++ )begin 
+            
+            mask_shift_reg_cols_rows(col);
             if(shift_reg_data[col] != sauria_psums_mgr_shift_reg_if.psums_shift_reg[col+1]) begin
                 `sauria_error(message_id, $sformatf("Unexpected Data Entry in Partial Sum Shift Register Col: %0d Exp: 0x%0h Act: 0x%0h",
                 col + 1, shift_reg_data[col], sauria_psums_mgr_shift_reg_if.psums_shift_reg[col + 1]))
             end
+            else   `sauria_info(message_id, $sformatf("Data Entry Match in Partial Sum Shift Register Col: %0d Exp: 0x%0h Act: 0x%0h",
+                col + 1, shift_reg_data[col], sauria_psums_mgr_shift_reg_if.psums_shift_reg[col + 1]))
+            
         end
     endfunction
     
     virtual function void check_preload_values();
+        mask_inactive_preload_cols_rows(shift_count);
         shift_reg_entry = scan_chain_data_t'(shift_reg_data.pop_back());
+
+        
         for(int row=0; row < sauria_pkg::Y; row++)begin
             if (shift_reg_entry[sauria_pkg::Y - 1 - row] != psums_mgr_info.o_c_arr[row])
-            `sauria_error(message_id, $sformatf("Shift Register and Scan Chain Bus Value Mismatch Row: %0d Exp: 0x%0h Act: 0x%0h", row, shift_reg_entry[row], psums_mgr_info.o_c_arr[row]))
+            `sauria_error(message_id, $sformatf("Shift Register and Scan Chain Bus Value Mismatch Row: %0d Exp: 0x%0h Act: 0x%0h", row, shift_reg_entry[sauria_pkg::Y - 1 - row], psums_mgr_info.o_c_arr[row]))
         end
     endfunction
     
@@ -218,5 +240,37 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
         end
         return reversed_bus;
     endfunction
+
+    virtual function void mask_inactive_preload_cols_rows(int col);
+        int data_col     = shift_reg_data.size() - 1;
+        bit inactive_col = col > (sauria_pkg::X - psums_inactive_cols - 1);
+        mask_inactive_cols_rows_data(data_col, inactive_col, 1'b1);
+    endfunction
+
+    virtual function void mask_shift_reg_cols_rows(int col);
+        bit inactive_col = (pending_scan_chain_bus_check ? (col < psums_inactive_cols) : 1'b0);
+        mask_inactive_cols_rows_data(col, inactive_col, 1'b0);
+    endfunction
+
+    virtual function void mask_inactive_cols_rows_data(int col, bit inactive_col, bit row_rev);
+        int elem_start_offset;
+        int data_row;
+ 
+        `sauria_info(message_id, $sformatf("Masking Cols_Rows Data Col: %0d Inactive_Col : %0d Row_Rev: %0d",
+                                col, inactive_col, row_rev)) 
+
+        for(int row=0; row < sauria_pkg::Y; row++)begin
+
+            data_row = row_rev ? sauria_pkg::Y - 1 - row : row;
+            elem_start_offset = data_row * PSUM_ELEM_LEN;
+
+            if (!psums_rows_active[data_row] || inactive_col) begin
+                `sauria_info(message_id, $sformatf("De-activating Partial Sum Col: %0d Row: %0d", col, row))
+                shift_reg_data[col][elem_start_offset +: PSUM_ELEM_LEN] = sauria_psums_elem_data_t'(0);
+            end
+        end
+        
+    endfunction
+
 
 endclass

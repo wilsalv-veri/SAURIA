@@ -46,8 +46,8 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
     ifmaps_feeder_data_t       ifmaps_feeder_out_data[$];
     ifmaps_feeder_data_t       ifmaps_feeder_out_data_inst, ifmaps_feeder_out_data_entry;
 
-    weights_feeder_data_t       weights_feeder_out_data[$];
-    weights_feeder_data_t       weights_feeder_out_data_inst, weights_feeder_out_data_entry;
+    weights_feeder_data_t      weights_feeder_out_data[$];
+    weights_feeder_data_t      weights_feeder_out_data_inst, weights_feeder_out_data_entry;
 
     a_arr_data_t               ifmaps_entry;
     b_arr_data_t               weights_entry;
