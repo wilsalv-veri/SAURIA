@@ -29,7 +29,6 @@ Key aspects of the verification effort include:
 
 <p align="center">
   <img src="docs/rtl_docs/diagram.svg" width="500" >
-
 </p>
 
 ###### Author: Jordi Fornt Mas (jordi.fornt@bsc.es)

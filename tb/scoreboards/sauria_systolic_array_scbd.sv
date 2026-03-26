@@ -288,13 +288,26 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
     endfunction
 
      virtual function void calculate_mac();
-        int unsigned  accum;
-        int unsigned  product;
+        shortreal fp_ifmaps_data;
+        shortreal fp_weights_data;
+        shortreal fp_accum;
 
         for(int row=0; row < sauria_pkg::Y; row++)begin
             for(int col=0; col < sauria_pkg::X; col++)begin
                 for(int c=0; c < incntlim; c++)begin
-                    mac_psum_reg[row][col] += ifmaps_feeder_data[row].ifmaps_data[c] * weights_feeder_data[col].weights_data[c];
+                    if (ARITHMETIC) begin
+                        fp_ifmaps_data = fp16_to_shortreal(ifmaps_feeder_data[row].ifmaps_data[c]);
+                        fp_weights_data = fp16_to_shortreal(weights_feeder_data[col].weights_data[c]);
+                        fp_accum += fp_ifmaps_data * fp_weights_data;
+
+                        if (c == (incntlim - 1)) begin
+                            mac_psum_reg[row][col] = shortreal_to_fp16(fp_accum);
+                            fp_accum = 0.0;
+                        end
+                        
+                    end
+                    else
+                        mac_psum_reg[row][col] += ifmaps_feeder_data[row].ifmaps_data[c] * weights_feeder_data[col].weights_data[c];
                 end
             `sauria_info(message_id, $sformatf("Partial Sum Row: %0d Col: %0d Accum_Val: 0x%0h", row, col, mac_psum_reg[row][col]))
             end
@@ -447,5 +460,66 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
             weights_feeder_data[col].weights_data.delete();
         end
     endfunction
-   
+
+    virtual function shortreal fp16_to_shortreal (sauria_fp_elem_data_t fp_elem_data);
+        bit [31:0] fp32;
+        bit [4:0]  exp16;
+        bit [9:0]  man16;
+        bit        sign;
+
+        sign  = fp_elem_data[15];
+        exp16 = fp_elem_data[14:10];
+        man16 = fp_elem_data[9:0];
+
+        if (exp16 == 0) begin
+            // Case: Zero or Subnormal
+            // For a simple model, we can treat subnormals as zero
+            fp32 = {sign, 31'b0};
+        end else if (exp16 == 5'h1F) begin
+            // Case: Infinity or NaN
+            fp32 = {sign, 8'hFF, 23'b0}; 
+        end else begin
+            // Case: Normal numbers
+            // Re-bias: New Exp = Exp - 15 + 127 = Exp + 112
+            fp32 = {sign, (8'(exp16) + 8'd112), man16, 13'b0};
+        end
+
+        return $bitstoshortreal(fp32);
+    endfunction
+
+    virtual function sauria_fp_elem_data_t shortreal_to_fp16(shortreal fp_elem_data);
+        bit [31:0] f32;
+        bit [15:0] f16;
+        bit [7:0]  exp32;
+        bit [22:0] man32;
+        bit        sign;
+        int        new_exp;
+
+        f32   = $shortrealtobits(fp_elem_data);
+        sign  = f32[31];
+        exp32 = f32[30:23];
+        man32 = f32[22:0];
+
+        // 1. Handle Zero
+        if (exp32 == 0) return {sign, 15'b0};
+
+        // 2. Handle Infinity / NaN
+        if (exp32 == 8'hFF) return {sign, 5'h1F, 10'h0};
+
+        // 3. Calculate New Exponent (Re-bias: Exp - 127 + 15 = Exp - 112)
+        new_exp = int'(exp32) - 112;
+
+        // 4. Check for Overflow/Underflow
+        if (new_exp >= 31) begin
+            // Overflow to Infinity
+            return {sign, 5'h1F, 10'h0};
+        end else if (new_exp <= 0) begin
+            // Underflow to Zero (or subnormal, but zero is safer for simple models)
+            return {sign, 15'b0};
+        end else begin
+            // Normal Number: Pack Sign, New Exponent, and top 10 bits of Mantissa
+            return {sign, 5'(new_exp), man32[22:13]};
+        end
+    endfunction
+     
 endclass

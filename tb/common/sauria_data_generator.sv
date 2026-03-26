@@ -55,17 +55,17 @@ class sauria_data_generator extends uvm_object;
                 IFMAPS: begin
                     if ((elem_idx % sauria_pkg::SRAMA_N == 0) && (elem_idx > 0)) byte_idx++; 
                     elem_base_offset = elem_idx*$bits(sauria_ifmaps_elem_data_t);
-                    rdata[elem_base_offset +: $bits(sauria_ifmaps_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data(ifmaps_data_mode);
+                    rdata[elem_base_offset +: $bits(sauria_ifmaps_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data(ifmaps_data_mode) : get_int_elem_data(ifmaps_data_mode);
                 end
                 WEIGHTS: begin
                     if ((elem_idx % sauria_pkg::SRAMB_N == 0) && (elem_idx > 0)) byte_idx++; 
                     elem_base_offset = elem_idx*$bits(sauria_weights_elem_data_t);
-                    rdata[elem_base_offset +: $bits(sauria_weights_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data(weights_data_mode);
+                    rdata[elem_base_offset +: $bits(sauria_weights_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data(weights_data_mode) : get_int_elem_data(weights_data_mode);
                 end
                 PSUMS: begin
                     if ((elem_idx % sauria_pkg::SRAMC_N == 0) && (elem_idx > 0)) byte_idx++; 
                     elem_base_offset = elem_idx*$bits(sauria_psums_elem_data_t);
-                    rdata[elem_base_offset +: $bits(sauria_psums_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data() : get_int_elem_data(psums_data_mode);
+                    rdata[elem_base_offset +: $bits(sauria_psums_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data(psums_data_mode) : get_int_elem_data(psums_data_mode);
                 end
             endcase
         end
@@ -128,8 +128,25 @@ class sauria_data_generator extends uvm_object;
         return 2;
     endfunction
 
-    virtual function real get_fp_elem_data();
-    
+    virtual function sauria_psums_elem_data_t get_fp_elem_data(data_gen_mode_t data_mode);
+
+        case(data_mode)
+            //RAND: return get_rand_int_elem_data();
+            //ADDR_AS_DATA: return get_addr_int_elem_data();
+            //BAD_PATTERN: return get_bad_pattern_int_elem_data();
+            //INCR_PATTERN: return get_incr_count_int_elem_data();
+            //SING_NIB_INCR_PATTERN: return get_single_nib_incr_count_int_elem_data();
+            ALL_ONES: return get_ones_fp_elem_data();
+            ALL_TWOS: return get_twos_fp_elem_data(); 
+        endcase
+    endfunction
+
+    virtual function sauria_fp_elem_data_t get_ones_fp_elem_data();
+        return sauria_fp_elem_data_t'('h3c00);
+    endfunction
+
+    virtual function sauria_fp_elem_data_t get_twos_fp_elem_data();
+        return sauria_fp_elem_data_t'('h4000);
     endfunction
 
     virtual function int get_elem_size();

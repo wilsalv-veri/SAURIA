@@ -39,7 +39,7 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
     }
 
     constraint weights_active_cols_c{
-        weights_cols_active == sauria_axi4_lite_data_t'('hff);
+        weights_cols_active == sauria_axi4_lite_data_t'('hffff);
     }
 
     function new(string name="sauria_axi4_lite_core_weights_cfg_base_seq");
@@ -69,14 +69,17 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
             33: begin
                 set_weights_w_lim();
                 set_weights_w_step();
+                set_weights_k_lim_lower();//Only for FP
             end
             34: begin
                 set_weights_k_lim();
                 set_weights_k_step();
+                set_weights_tile_k_lim_lower(); //Only for FP
             end
             35: begin
                 set_weights_tile_k_lim();
                 set_weights_tile_k_step();
+                set_weights_cols_active_lower(); //Only for FP
             end
             36: begin
                 set_weights_cols_active();
@@ -117,49 +120,81 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
                 
     virtual function void set_weights_w_lim();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[15:0] = weights_w_lim;
+        //wdata[15:0] = weights_w_lim;
+        wdata[14:0] = weights_w_lim;
+        
         set_cfg_cr_data(wdata);
     endfunction
 
     virtual function void set_weights_w_step();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:16] = weights_w_step;
+        //wdata[31:16] = weights_w_step;
+        wdata[29:15] = weights_w_step;
+        
         set_cfg_cr_data(wdata);
     endfunction
 
+    //Only For FP
+    virtual function void set_weights_k_lim_lower();
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[31:30] = weights_k_lim[1:0];
+        set_cfg_cr_data(wdata);
+    endfunction
+                
+    
     virtual function void set_weights_k_lim();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[15:0] = weights_k_lim;
+        //wdata[15:0] = weights_k_lim;
+        wdata[12:0] = weights_k_lim[14:2];
         set_cfg_cr_data(wdata);
     endfunction
                 
     virtual function void set_weights_k_step();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:16] = weights_k_step;
+        //wdata[31:16] = weights_k_step;
+        wdata[27:13] = weights_k_step;
         set_cfg_cr_data(wdata);
     endfunction
 
+    //Only For FP
+    virtual function void set_weights_tile_k_lim_lower();
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[31:28] = weights_tile_k_lim[3:0];
+        set_cfg_cr_data(wdata);
+    endfunction
+    
     virtual function void set_weights_tile_k_lim();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[15:0] = weights_tile_k_lim;
+        //wdata[15:0] = weights_tile_k_lim;
+        wdata[10:0] = weights_tile_k_lim[14:4];
         set_cfg_cr_data(wdata);
     endfunction
                 
     virtual function void set_weights_tile_k_step();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:16] = weights_tile_k_step;
+        //wdata[31:16] = weights_tile_k_step;
+        wdata[25:11] = weights_tile_k_step;
         set_cfg_cr_data(wdata);
     endfunction
 
+    //Only For FP
+    virtual function void set_weights_cols_active_lower();
+        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        wdata[31:26] = weights_cols_active[5:0];
+        set_cfg_cr_data(wdata);
+    endfunction
+    
     virtual function void set_weights_cols_active();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[15:0] = weights_cols_active;
+        //wdata[15:0] = weights_cols_active;
+        wdata[9:0] = weights_cols_active[15:6];
         set_cfg_cr_data(wdata);
     endfunction
                 
     virtual function void set_weights_aligned_flag();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[16] = weights_aligned_flag;
+        //wdata[16] = weights_aligned_flag;
+        wdata[10] = weights_aligned_flag;
         set_cfg_cr_data(wdata);
     endfunction
     

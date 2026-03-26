@@ -8,6 +8,7 @@ package sauria_common_pkg;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
+    parameter ARITHMETIC             = `ARITHMETIC;
     parameter SAURIA_CLK_HALF_PERIOD = 1000; // in picoseconds (based on timescale)
     parameter SYSTEM_CLK_HALF_PERIOD = SAURIA_CLK_HALF_PERIOD / 3;
     

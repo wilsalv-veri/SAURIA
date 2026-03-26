@@ -65,7 +65,7 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
         dma_ifmaps_y_lim        == Y - 1; 
         dma_ifmaps_c_lim        == C - 1; 
 
-        dma_ifmaps_y_step       == dma_ifmaps_ett*df_ctrl_pkg::A_BYTES;
+        dma_ifmaps_y_step       == dma_ifmaps_ett; //*df_ctrl_pkg::A_BYTES;
         dma_ifmaps_c_step       == dma_ifmaps_y_step*(dma_ifmaps_y_lim+1);
        
         solve dma_tile_ifmaps_x_step before dma_tile_ifmaps_y_step;

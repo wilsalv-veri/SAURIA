@@ -78,7 +78,7 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
     }
 
     constraint ifmpas_active_inactive_rows_c{
-        ifmaps_rows_active == sauria_axi4_lite_data_t'('h0f);
+        ifmaps_rows_active == sauria_axi4_lite_data_t'('hff);
     }
 
     function new(string name="sauria_axi4_lite_core_ifmaps_cfg_base_seq");
@@ -339,8 +339,7 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
         wdata[5:0] = ifmaps_loc_woffs_4[7:2];
         set_cfg_cr_data(wdata);
     endfunction
-    
-                
+        
     virtual function void set_ifmaps_loc_woffs_5();
         sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
         wdata[13:6] = ifmaps_loc_woffs_5;

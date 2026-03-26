@@ -87,6 +87,7 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
     endtask
 
     function write_psums_mgr_sramc_read_info(sauria_psums_mgr_seq_item psums_mgr_info);
+        
         this.psums_mgr_info = psums_mgr_info;
         next_read_context_num =  this.psums_mgr_info.context_num;
         if(!rd_done_count) check_next_read_address();
@@ -105,9 +106,11 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
         end 
             
         curr_read_context_num =  next_read_context_num;
+        
     endfunction
 
     function write_psums_mgr_preload_values_info(sauria_psums_mgr_seq_item psums_mgr_info);
+        
         this.psums_mgr_info = psums_mgr_info;
         if ((shift_count < sauria_pkg::X) && (pending_scan_chain_bus_check)) begin
             if (shift_reg_data.size() > 0) begin
@@ -125,10 +128,11 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
         shift_reg_data.push_front(shift_reg_data_entry); 
         pending_shift_reg_check = 1'b1;
         shift_sram_data         = 1'b0;
-            
+        
     endfunction
 
     function write_psums_mgr_shift_reg_info(sauria_psums_mgr_seq_item psums_mgr_shift_reg_info);
+        
         if (pending_shift_reg_check && psums_mgr_shift_reg_info.shift_done)begin
             check_shift_reg_data();
             pending_shift_reg_check = 1'b0;
@@ -137,6 +141,7 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
     endfunction
 
     function write_psums_mgr_sramc_write_info(sauria_psums_mgr_seq_item psums_mgr_info);
+        
         this.psums_mgr_info = psums_mgr_info;
         next_write_context_num = this.psums_mgr_info.context_num;
         check_next_write_address();

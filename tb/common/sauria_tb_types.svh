@@ -14,6 +14,7 @@
     typedef bit [sauria_pkg::IA_W-1:0]    sauria_ifmaps_elem_data_t;
     typedef bit [sauria_pkg::IB_W-1:0]    sauria_weights_elem_data_t;
     typedef bit [sauria_pkg::OC_W-1:0]    sauria_psums_elem_data_t;
+    typedef sauria_psums_elem_data_t      sauria_fp_elem_data_t; //In FP case IFMAPS, WEIGHTS, and PSUMS are same length
 
     typedef bit [CFG_AXI_BYTE_NUM-1:0]    sauria_axi4_lite_strobe_t;
     typedef bit [DATA_AXI_BYTE_NUM-1:0]   sauria_axi4_strobe_t;
