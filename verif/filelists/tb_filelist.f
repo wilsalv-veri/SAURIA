@@ -21,6 +21,7 @@ $SAURIA/tb/packages/sauria_env_pkg.sv
 $SAURIA/tb/packages/sauria_base_tests_pkg.sv
 $SAURIA/tb/packages/sauria_cfg_tests_pkg.sv
 $SAURIA/tb/packages/sauria_tb_top_pkg.sv
+$SAURIA/tb/packages/sauria_cfg_regs_pkg.sv
 +incdir+$SAURIA/tb/coverage/
 $SAURIA/tb/coverage/sauria_ss_cov.sv
 +incdir+$SAURIA/tb/assertions/
@@ -41,6 +42,12 @@ $SAURIA/tb/assertions/sauria_psums_assert.sv
 +incdir+$SAURIA/tb/seqs/core_psums_cfg_seqs/
 +incdir+$SAURIA/tb/seqs/core_ifmaps_cfg_seqs/
 +incdir+$SAURIA/tb/seqs/core_main_controller_cfg_seqs/
++incdir+$SAURIA/tb/reg_models/
++incdir+$SAURIA/tb/reg_models/psums_manager_regs/
++incdir+$SAURIA/tb/reg_models/df_controller_regs/
++incdir+$SAURIA/tb/reg_models/weights_feeder_regs/
++incdir+$SAURIA/tb/reg_models/ifmaps_feeder_regs/
++incdir+$SAURIA/tb/reg_models/core_controller_regs/
 +incdir+$SAURIA/tb/agents/
 +incdir+$SAURIA/tb/agents/sauria_weights_feeder_agent/
 +incdir+$SAURIA/tb/agents/sauria_systolic_array_agent/

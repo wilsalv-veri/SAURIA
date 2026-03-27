@@ -9,6 +9,12 @@ package sauria_common_pkg;
     `include "uvm_macros.svh"
 
     parameter ARITHMETIC             = `ARITHMETIC;
+    parameter INT_ARITHMETIC         = !ARITHMETIC;
+    parameter FP_ARITHMETIC          = ARITHMETIC;
+    parameter COLS_ACTIVE_SIZE       = sauria_pkg::X;
+    parameter ROWS_ACTIVE_SIZE       = sauria_pkg::Y;
+    
+    
     parameter SAURIA_CLK_HALF_PERIOD = 1000; // in picoseconds (based on timescale)
     parameter SYSTEM_CLK_HALF_PERIOD = SAURIA_CLK_HALF_PERIOD / 3;
     
@@ -40,6 +46,8 @@ package sauria_common_pkg;
     parameter START_SRAMA_LOCAL_ADDR = sauria_addr_pkg::SAURIA_DMA_OFFSET + sauria_addr_pkg::SRAMA_OFFSET;
     parameter START_SRAMB_LOCAL_ADDR = sauria_addr_pkg::SAURIA_DMA_OFFSET + sauria_addr_pkg::SRAMB_OFFSET;
     parameter START_SRAMC_LOCAL_ADDR = sauria_addr_pkg::SAURIA_DMA_OFFSET + sauria_addr_pkg::SRAMC_OFFSET;
+    
+    parameter SAURIA_REG_SIZE = 32;
     
     parameter DF_CONTROLLER_CFG_CRs_START_IDX        = 18;
     parameter DF_CONTROLLER_CFG_CRs_END_IDX          = 21;

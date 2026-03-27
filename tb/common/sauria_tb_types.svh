@@ -220,7 +220,10 @@
 
     typedef enum {RAND, ADDR_AS_DATA, BAD_PATTERN, 
                 INCR_PATTERN, SING_NIB_INCR_PATTERN, 
-                ALL_ONES, ALL_TWOS} data_gen_mode_t;
+                ALL_ONES, ALL_TWOS} int_data_gen_mode_t;
+        
+    typedef enum {FP_ONE, FP_ONE_W_FRAC_COMP, FP_NEG_ONE,         
+                FP_HALF, FP_TWO} fp_data_gen_mode_t;
 
     typedef bit [sauria_pkg::ADRA_W-1:0]                                      srama_addr_t;
     typedef bit [sauria_pkg::SRAMA_W-1:0]                                     srama_data_t;
