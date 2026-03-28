@@ -117,19 +117,25 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
     virtual function void set_core_weights_cfg_reg_33();
         core_weights_reg_block.core_weights_cfg_reg_33.weights_w_lim.set(weights_w_lim);
         core_weights_reg_block.core_weights_cfg_reg_33.weights_w_step.set(weights_w_step);
-        core_weights_reg_block.core_weights_cfg_reg_33.weights_k_lim_lower.set(weights_k_lim[SEQ_WEIGHTS_K_LIM_LOWER_MSB:SEQ_WEIGHTS_K_LIM_LOWER_LSB]);
+        if (FP_ARITHMETIC) begin
+            core_weights_reg_block.core_weights_cfg_reg_33.weights_k_lim_lower.set(weights_k_lim[SEQ_WEIGHTS_K_LIM_LOWER_MSB:SEQ_WEIGHTS_K_LIM_LOWER_LSB]);
+        end
     endfunction
 
     virtual function void set_core_weights_cfg_reg_34();
         core_weights_reg_block.core_weights_cfg_reg_34.weights_k_lim.set(weights_k_lim[WEI_TILE_DIM_SIZE:SEQ_WEIGHTS_K_LIM_LSB]);
         core_weights_reg_block.core_weights_cfg_reg_34.weights_k_step.set(weights_k_step);
-        core_weights_reg_block.core_weights_cfg_reg_34.weights_tile_k_lim_lower.set(weights_tile_k_lim[SEQ_WEIGHTS_TILE_K_LIM_LOWER_MSB:SEQ_WEIGHTS_TILE_K_LIM_LOWER_LSB]);
+        if (FP_ARITHMETIC) begin
+            core_weights_reg_block.core_weights_cfg_reg_34.weights_tile_k_lim_lower.set(weights_tile_k_lim[SEQ_WEIGHTS_TILE_K_LIM_LOWER_MSB:SEQ_WEIGHTS_TILE_K_LIM_LOWER_LSB]);
+        end
     endfunction
     
     virtual function void set_core_weights_cfg_reg_35();
         core_weights_reg_block.core_weights_cfg_reg_35.weights_tile_k_lim.set(weights_tile_k_lim[WEI_TILE_DIM_SIZE:SEQ_WEIGHTS_TILE_K_LIM_LSB]);
         core_weights_reg_block.core_weights_cfg_reg_35.weights_tile_k_step.set(weights_tile_k_step);
-        core_weights_reg_block.core_weights_cfg_reg_35.weights_cols_active_lower.set(weights_cols_active[SEQ_WEIGHTS_ACTIVE_COLS_LOWER_MSB:SEQ_WEIGHTS_ACTIVE_COLS_LOWER_LSB]);
+        if (FP_ARITHMETIC) begin
+            core_weights_reg_block.core_weights_cfg_reg_35.weights_cols_active_lower.set(weights_cols_active[SEQ_WEIGHTS_ACTIVE_COLS_LOWER_MSB:SEQ_WEIGHTS_ACTIVE_COLS_LOWER_LSB]);
+        end
     endfunction
 
     virtual function void set_core_weights_cfg_reg_36();
@@ -137,6 +143,7 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
         core_weights_reg_block.core_weights_cfg_reg_36.weights_aligned_flag.set(weights_aligned_flag);
     endfunction
 
+    //--------------------33-------------------------
     virtual function void set_weights_w_lim();    
         //INT
         //wdata[15:0] = weights_w_lim;

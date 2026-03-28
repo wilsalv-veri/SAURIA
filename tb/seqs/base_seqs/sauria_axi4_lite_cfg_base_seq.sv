@@ -16,12 +16,12 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_t
     bit                                start_controller_fsm  = 1'b0;
 
     sauria_core_weights_reg_block      core_weights_reg_block;
+    sauria_core_psums_reg_block        core_psums_reg_block;
 
     function new(string name="sauria_axi4_lite_cfg_base_seq");
         super.new(name);
     endfunction
  
-     
     virtual task pre_start();
         sauria_axi4_lite_seqr axi4_lite_seqr;
     
@@ -33,10 +33,16 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_t
                 `sauria_error(message_id, "Failed to get access to computation params")
         
             if (axi4_lite_seqr.core_weights_reg_block == null) begin
-                `sauria_fatal(message_id, "Regmodel handle on sequencer is null! Check env connection.")
+                `sauria_fatal(message_id, "Weights regmodel handle on sequencer is null! Check env connection.")
             end
             this.core_weights_reg_block = axi4_lite_seqr.core_weights_reg_block;
+
+            if (axi4_lite_seqr.core_psums_reg_block == null) begin
+                `sauria_fatal(message_id, "Psums regmodel handle on sequencer is null! Check env connection.")
+            end
+            this.core_psums_reg_block = axi4_lite_seqr.core_psums_reg_block;
         end
+        else `sauria_error(message_id, "Sequencer handle is not of the expected type sauria_axi4_lite_seqr")
 
         if (!this.randomize())
             `sauria_error(message_id, "Failed to randomize sequence")
@@ -58,6 +64,8 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_t
 
         if (queue_start_idx == CORE_WEIGHTS_CFG_CRs_START_IDX)
             send_weights_cfg_CRs();
+        else if (queue_start_idx == CORE_PSUMS_CFG_CRs_START_IDX)
+            send_psums_cfg_CRs();
         else begin
             for(int idx = queue_start_idx; idx <= queue_end_idx; idx++)begin
                 axi4_lite_wr_txn_item = cfg_cr_queue[idx];
@@ -90,6 +98,10 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_t
     endfunction
 
     virtual task send_weights_cfg_CRs();
+        //To be implemented by child class
+    endtask
+
+    virtual task send_psums_cfg_CRs();
         //To be implemented by child class
     endtask
 

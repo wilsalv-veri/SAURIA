@@ -30,7 +30,14 @@ package sauria_cfg_regs_pkg;
     `include "sauria_core_weights_cfg_reg_35.sv"
     `include "sauria_core_weights_cfg_reg_36.sv"
 
+    `include "sauria_core_psums_cfg_reg_37.sv"
+    `include "sauria_core_psums_cfg_reg_38.sv"
+    `include "sauria_core_psums_cfg_reg_39.sv"
+    `include "sauria_core_psums_cfg_reg_40.sv"
+    `include "sauria_core_psums_cfg_reg_41.sv"
+
     `include "sauria_core_weights_reg_block.sv"
+    `include "sauria_core_psums_reg_block.sv"
 
 endpackage
 
