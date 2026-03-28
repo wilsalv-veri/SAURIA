@@ -4,25 +4,28 @@ class sauria_env extends uvm_env;
 
     sauria_axi4_lite_agent      axi4_lite_agent;
     sauria_axi4_agent           axi4_agent;
+    sauria_axi4_lite_adapter    axi4_lite_adapter;
 
-    sauria_axi_vseqr            vseqr;
-    sauria_dma_req_addr_scbd    dma_req_addr_scbd;
+    sauria_core_weights_reg_block core_weights_reg_block;
+   
+    sauria_axi_vseqr              vseqr;
+    
+    sauria_dma_req_addr_scbd      dma_req_addr_scbd;
 
-    sauria_main_controller_agent main_controller_agent;
-    sauria_main_controller_scbd  main_controller_scbd;
+    sauria_main_controller_agent  main_controller_agent;
+    sauria_main_controller_scbd   main_controller_scbd;
 
-    sauria_ifmaps_feeder_agent   ifmaps_feeder_agent;
-    sauria_inv_ifmaps_feeder_reg ifmaps_inv_feeder_reg;
-    sauria_ifmaps_feeder_scbd    ifmaps_feeder_scbd;
+    sauria_ifmaps_feeder_agent    ifmaps_feeder_agent;
+    sauria_ifmaps_feeder_scbd     ifmaps_feeder_scbd;
 
-    sauria_weights_feeder_agent weights_feeder_agent;
-    sauria_weights_feeder_scbd  weights_feeder_scbd;
+    sauria_weights_feeder_agent   weights_feeder_agent;
+    sauria_weights_feeder_scbd    weights_feeder_scbd;
 
-    sauria_systolic_array_agent systolic_array_agent;
-    sauria_systolic_array_scbd  systolic_array_scbd;
+    sauria_systolic_array_agent   systolic_array_agent;
+    sauria_systolic_array_scbd    systolic_array_scbd;
 
-    sauria_psums_mgr_agent      psums_mgr_agent;
-    sauria_psums_mgr_scbd       psums_mgr_scbd;
+    sauria_psums_mgr_agent        psums_mgr_agent;
+    sauria_psums_mgr_scbd         psums_mgr_scbd;
 
     function new(string name="sauria_env", uvm_component parent=null);
         super.new(name, parent);
@@ -33,6 +36,11 @@ class sauria_env extends uvm_env;
 
         vseqr               = sauria_axi_vseqr::type_id::create("sauria_axi_vseqr", this);
         axi4_lite_agent     = sauria_axi4_lite_agent::type_id::create("sauria_axi4_lite_agent", this);
+        axi4_lite_adapter   = sauria_axi4_lite_adapter::type_id::create("sauria_axi4_lite_adapter", , get_full_name());
+        
+        core_weights_reg_block = sauria_core_weights_reg_block::type_id::create("sauria_core_weights_reg_block");
+        core_weights_reg_block.configure();
+
         axi4_agent          = sauria_axi4_agent::type_id::create("sauria_axi4_agent", this);
         dma_req_addr_scbd   = sauria_dma_req_addr_scbd::type_id::create("sauria_dma_req_addr_scbd", this);
         
@@ -40,7 +48,6 @@ class sauria_env extends uvm_env;
         main_controller_scbd  = sauria_main_controller_scbd::type_id::create("sauria_main_controller_scbd", this);
 
         ifmaps_feeder_agent   = sauria_ifmaps_feeder_agent::type_id::create("sauria_ifmaps_feeder_agent", this);
-        ifmaps_inv_feeder_reg = sauria_inv_ifmaps_feeder_reg::type_id::create("sauria_inv_ifmaps_feeder_reg", this);
         ifmaps_feeder_scbd    = sauria_ifmaps_feeder_scbd::type_id::create("sauria_ifmaps_feeder_scbd", this);
 
         weights_feeder_agent = sauria_weights_feeder_agent::type_id::create("sauria_weights_feeder_agent", this);
@@ -56,8 +63,12 @@ class sauria_env extends uvm_env;
     virtual function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
 
-        vseqr.axi4_lite_seqr = axi4_lite_agent.axi4_lite_seqr;
-        vseqr.axi4_seqr      = axi4_agent.axi4_seqr;
+       //vseqr.axi4_lite_seqr = axi4_lite_agent.axi4_lite_seqr;
+        //vseqr.axi4_seqr      = axi4_agent.axi4_seqr;
+        
+        core_weights_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
+        axi4_lite_agent.axi4_lite_seqr.core_weights_reg_block = core_weights_reg_block;
+
         axi4_agent.axi4_mon.send_dma_rd_addr.connect(dma_req_addr_scbd.receive_dma_rd_addr);
         axi4_agent.axi4_mon.send_dma_wr_addr.connect(dma_req_addr_scbd.receive_dma_wr_addr);
     

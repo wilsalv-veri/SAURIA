@@ -1,0 +1,15 @@
+
+//---------Weights Cfg Seq-----------------------------------------
+parameter SEQ_WEIGHTS_K_LIM_LOWER_LSB = 0;
+parameter SEQ_WEIGHTS_K_LIM_LOWER_MSB = 1;
+parameter SEQ_WEIGHTS_K_LIM_LSB       = SEQ_WEIGHTS_K_LIM_LOWER_MSB + 1;
+    
+parameter SEQ_WEIGHTS_TILE_K_LIM_LOWER_LSB = 0;
+parameter SEQ_WEIGHTS_TILE_K_LIM_LOWER_MSB = 3;
+     
+parameter SEQ_WEIGHTS_TILE_K_LIM_LSB        = SEQ_WEIGHTS_TILE_K_LIM_LOWER_MSB + 1;
+parameter SEQ_WEIGHTS_ACTIVE_COLS_LOWER_LSB = 0;
+parameter SEQ_WEIGHTS_ACTIVE_COLS_LOWER_MSB = 5;
+
+parameter SEQ_WEIGHTS_ACTIVE_COLS_LSB = SEQ_WEIGHTS_ACTIVE_COLS_LOWER_MSB + 1;
+    

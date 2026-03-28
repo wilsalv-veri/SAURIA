@@ -52,6 +52,9 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
     a_arr_data_t               ifmaps_entry;
     b_arr_data_t               weights_entry;
 
+    a_arr_data_t               popped_a_entry;
+    b_arr_data_t               popped_b_entry;
+
     function new(string name="sauria_systolic_array_scbd", uvm_component parent=null);
         super.new(name, parent);
     endfunction
@@ -269,7 +272,7 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
                     `sauria_info(message_id, $sformatf("IFMAPS_ROW: %0d_DATA: 0x%0h C: %0d",  row, a_arr_entries[0][row], c))
 
             end
-            a_arr_entries.pop_front();
+            popped_a_entry = a_arr_entries.pop_front();
         end
 
     endfunction
@@ -283,7 +286,7 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
                 if(col == 0)
                     `sauria_info(message_id, $sformatf("WEIGHTS_COL_0_DATA: 0x%0h C: %0d", b_arr_entries[0][col], c))
             end
-            b_arr_entries.pop_front();
+            popped_b_entry = b_arr_entries.pop_front();
         end
     endfunction
 

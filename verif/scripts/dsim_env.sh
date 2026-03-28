@@ -31,6 +31,9 @@ function compile_sauria(){
     # Ensure the output directory exists
     mkdir -p "$OUTPUT_DIR"
 
+    # Regenerate simulation and DVT filelists to keep builds in sync with new files/directories
+    python3 "$SAURIA/verif/scripts/generate_filelists.py"
+
     # Run the dsim compilation command
     dsim -genimage sauria_subsystem -sv \
          -f "$SAURIA/verif/filelists/top_filelist.f" \

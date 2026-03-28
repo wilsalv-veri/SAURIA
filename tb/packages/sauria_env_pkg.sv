@@ -5,14 +5,16 @@ package sauria_env_pkg;
 
     import uvm_pkg::*;
     import sauria_common_pkg::*;
-    import sauria_inv_feeders_pkg::*;
     import sauria_scbd_pkg::*;
+    import sauria_cfg_regs_pkg::*;
 
     `include "sauria_data_generator.sv"
 
     `include "sauria_axi4_lite_driver.sv"
+    `include "sauria_axi4_lite_seqr.sv" 
+    `include "sauria_axi4_lite_adapter.sv"
     `include "sauria_axi4_lite_agent.sv"
-   
+    
     `include "sauria_axi4_driver.sv"
     `include "sauria_axi4_monitor.sv"
     `include "sauria_axi4_agent.sv"

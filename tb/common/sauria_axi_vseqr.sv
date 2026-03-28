@@ -16,8 +16,8 @@ class sauria_axi_vseqr extends uvm_sequencer;
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
 
-        computation_params = sauria_computation_params::type_id::create("sauria_computation_params");   
-        uvm_config_db #(sauria_computation_params)::set(null, "*", "computation_params", computation_params);
+        //computation_params = sauria_computation_params::type_id::create("sauria_computation_params");   
+        //uvm_config_db #(sauria_computation_params)::set(null, "*", "computation_params", computation_params);
     endfunction
 
 endclass

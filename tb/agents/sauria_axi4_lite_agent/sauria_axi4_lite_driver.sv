@@ -71,6 +71,7 @@ class sauria_axi4_lite_driver extends uvm_driver #(sauria_axi4_lite_wr_txn_seq_i
         endcase
     endtask
 
+    //FIXME: wilalv: Add Read Register Support
     /* 
     virtual task drive_rd_addr_ch(sauria_axi4_lite_base_seq_item axi4_lite_item);
         sauria_axi4_lite_rd_addr_seq_item rd_addr_item;

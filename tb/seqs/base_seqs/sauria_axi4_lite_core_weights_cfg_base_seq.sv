@@ -2,8 +2,8 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
 
     `uvm_object_utils(sauria_axi4_lite_core_weights_cfg_base_seq)
 
-    sauria_computation_params    computation_params;
-
+    uvm_status_e status;
+    
     rand sauria_axi4_lite_data_t weights_w_lim;
     rand sauria_axi4_lite_data_t weights_w_step;
     rand sauria_axi4_lite_data_t weights_k_lim;
@@ -21,7 +21,7 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
         weights_k_lim  == sauria_axi4_lite_data_t'('h0);
     }
            
-    constraint weights_dimension_steps {
+    constraint weights_dimension_steps_c {
         weights_k_step == sauria_axi4_lite_data_t'('h0);
         weights_w_step == sauria_axi4_lite_data_t'('h0);
     }
@@ -49,8 +49,6 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
         queue_start_idx = CORE_WEIGHTS_CFG_CRs_START_IDX;
         queue_end_idx   = CORE_WEIGHTS_CFG_CRs_END_IDX;
 
-        if (!this.randomize())
-            `sauria_error(message_id, "Failed to randomize sauria_axi4_lite_core_weights_cfg_base_seq")
     endfunction
 
     virtual task body();
@@ -60,43 +58,24 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
     endtask
 
     virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
-        add_core_weights_cfg_CRs(cfg_cr_idx);
+        set_core_weights_cfg_CRs(cfg_cr_idx);
     endfunction
 
-    virtual function void add_core_weights_cfg_CRs(int cfg_cr_idx);
+    virtual function void set_core_weights_cfg_CRs(int cfg_cr_idx);
             
         case(cfg_cr_idx)
-            33: begin
-                set_weights_w_lim();
-                set_weights_w_step();
-                set_weights_k_lim_lower();//Only for FP
-            end
-            34: begin
-                set_weights_k_lim();
-                set_weights_k_step();
-                set_weights_tile_k_lim_lower(); //Only for FP
-            end
-            35: begin
-                set_weights_tile_k_lim();
-                set_weights_tile_k_step();
-                set_weights_cols_active_lower(); //Only for FP
-            end
-            36: begin
-                set_weights_cols_active();
-                set_weights_aligned_flag();
-            end
+            33: set_core_weights_cfg_reg_33();
+            34: set_core_weights_cfg_reg_34();
+            35: set_core_weights_cfg_reg_35();
+            36: set_core_weights_cfg_reg_36();
         endcase
-        cfg_cr_queue[cfg_cr_idx] = axi4_lite_wr_txn_item;
            
     endfunction
 
     virtual task get_weights_params();
+    
+        wait_comp_params_shared();
 
-        if (!uvm_config_db #(sauria_computation_params)::get(m_sequencer, "","computation_params", computation_params))
-            `sauria_error(message_id, "Failed to get access to computation params")
-        
-        wait(computation_params.shared);
-       
         weights_k_step      = 1;
         weights_k_lim       = 1;      
        
@@ -110,92 +89,111 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
                     weights_k_step, weights_k_lim, weights_tile_k_step, weights_tile_k_lim))
     endtask
 
-    virtual task share_weights_cfg();
-        if (!uvm_config_db #(sauria_computation_params)::get(m_sequencer, "","computation_params", computation_params))
-            `sauria_error(message_id, "Failed to get access to computation params")
-        
+    
+    virtual task share_weights_cfg();    
         computation_params.weights_cols_active = weights_cols_active;
         computation_params.weights_cfg_shared = 1'b1;
     endtask
-                
-    virtual function void set_weights_w_lim();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        //wdata[15:0] = weights_w_lim;
-        wdata[14:0] = weights_w_lim;
+
+    virtual task send_weights_cfg_CRs();
+        core_weights_reg_block.core_weights_cfg_reg_33.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_weights_cfg_reg_33")
         
-        set_cfg_cr_data(wdata);
+        core_weights_reg_block.core_weights_cfg_reg_34.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_weights_cfg_reg_34")
+        
+        core_weights_reg_block.core_weights_cfg_reg_35.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_weights_cfg_reg_35")
+        
+        core_weights_reg_block.core_weights_cfg_reg_36.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_weights_cfg_reg_36")
+        
+    endtask
+
+    virtual function void set_core_weights_cfg_reg_33();
+        core_weights_reg_block.core_weights_cfg_reg_33.weights_w_lim.set(weights_w_lim);
+        core_weights_reg_block.core_weights_cfg_reg_33.weights_w_step.set(weights_w_step);
+        core_weights_reg_block.core_weights_cfg_reg_33.weights_k_lim_lower.set(weights_k_lim[SEQ_WEIGHTS_K_LIM_LOWER_MSB:SEQ_WEIGHTS_K_LIM_LOWER_LSB]);
     endfunction
 
-    virtual function void set_weights_w_step();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        //wdata[31:16] = weights_w_step;
-        wdata[29:15] = weights_w_step;
-        
-        set_cfg_cr_data(wdata);
+    virtual function void set_core_weights_cfg_reg_34();
+        core_weights_reg_block.core_weights_cfg_reg_34.weights_k_lim.set(weights_k_lim[WEI_TILE_DIM_SIZE:SEQ_WEIGHTS_K_LIM_LSB]);
+        core_weights_reg_block.core_weights_cfg_reg_34.weights_k_step.set(weights_k_step);
+        core_weights_reg_block.core_weights_cfg_reg_34.weights_tile_k_lim_lower.set(weights_tile_k_lim[SEQ_WEIGHTS_TILE_K_LIM_LOWER_MSB:SEQ_WEIGHTS_TILE_K_LIM_LOWER_LSB]);
+    endfunction
+    
+    virtual function void set_core_weights_cfg_reg_35();
+        core_weights_reg_block.core_weights_cfg_reg_35.weights_tile_k_lim.set(weights_tile_k_lim[WEI_TILE_DIM_SIZE:SEQ_WEIGHTS_TILE_K_LIM_LSB]);
+        core_weights_reg_block.core_weights_cfg_reg_35.weights_tile_k_step.set(weights_tile_k_step);
+        core_weights_reg_block.core_weights_cfg_reg_35.weights_cols_active_lower.set(weights_cols_active[SEQ_WEIGHTS_ACTIVE_COLS_LOWER_MSB:SEQ_WEIGHTS_ACTIVE_COLS_LOWER_LSB]);
+    endfunction
+
+    virtual function void set_core_weights_cfg_reg_36();
+        core_weights_reg_block.core_weights_cfg_reg_36.weights_cols_active.set(weights_cols_active[COLS_ACTIVE_SIZE-1:SEQ_WEIGHTS_ACTIVE_COLS_LSB]);
+        core_weights_reg_block.core_weights_cfg_reg_36.weights_aligned_flag.set(weights_aligned_flag);
+    endfunction
+
+    virtual function void set_weights_w_lim();    
+        //INT
+        //wdata[15:0] = weights_w_lim;
+    endfunction
+
+    virtual function void set_weights_w_step(); 
+        //INT
+        //wdata[31:16] = weights_w_step;    
     endfunction
 
     //Only For FP
     virtual function void set_weights_k_lim_lower();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:30] = weights_k_lim[1:0];
-        set_cfg_cr_data(wdata);
+    
     endfunction
                 
-    
+    //--------------------34-------------------------
     virtual function void set_weights_k_lim();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        //INT
         //wdata[15:0] = weights_k_lim;
-        wdata[12:0] = weights_k_lim[14:2];
-        set_cfg_cr_data(wdata);
     endfunction
                 
     virtual function void set_weights_k_step();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        //INT
         //wdata[31:16] = weights_k_step;
-        wdata[27:13] = weights_k_step;
-        set_cfg_cr_data(wdata);
     endfunction
 
     //Only For FP
     virtual function void set_weights_tile_k_lim_lower();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:28] = weights_tile_k_lim[3:0];
-        set_cfg_cr_data(wdata);
+
     endfunction
     
+
+    //--------------------35-------------------------
     virtual function void set_weights_tile_k_lim();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        //wdata[15:0] = weights_tile_k_lim;
-        wdata[10:0] = weights_tile_k_lim[14:4];
-        set_cfg_cr_data(wdata);
+        //INT
+        //wdata[15:0] = weights_tile_k_lim;    
     endfunction
                 
-    virtual function void set_weights_tile_k_step();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+    virtual function void set_weights_tile_k_step();    
+        //INT
         //wdata[31:16] = weights_tile_k_step;
-        wdata[25:11] = weights_tile_k_step;
-        set_cfg_cr_data(wdata);
     endfunction
 
     //Only For FP
     virtual function void set_weights_cols_active_lower();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:26] = weights_cols_active[5:0];
-        set_cfg_cr_data(wdata);
+    
     endfunction
     
+    //--------------------36-------------------------
     virtual function void set_weights_cols_active();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        //wdata[15:0] = weights_cols_active;
-        wdata[9:0] = weights_cols_active[15:6];
-        set_cfg_cr_data(wdata);
+        //INT
+        //wdata[15:0] = weights_cols_active;    
     endfunction
                 
     virtual function void set_weights_aligned_flag();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
+        //INT
         //wdata[16] = weights_aligned_flag;
-        wdata[10] = weights_aligned_flag;
-        set_cfg_cr_data(wdata);
     endfunction
     
 endclass

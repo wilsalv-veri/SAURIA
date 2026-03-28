@@ -1,34 +1,53 @@
 import os 
 
 PROJECT_NAME = "SAURIA"
-project_path = os.getenv(PROJECT_NAME)
-project_env_var = f"${PROJECT_NAME}"
-
 generate_filelist_path = os.path.abspath(__file__)
 scripts_dir = os.path.dirname(generate_filelist_path)
+project_path = os.getenv(PROJECT_NAME)
+if project_path is None:
+    project_path = os.path.abspath(os.path.join(scripts_dir, "../.."))
 
-def generate_filelist(file_name, lines):
-    filelists_directory =  f"{project_path}/verif/filelists"
-    abs_path_file_name = f"{filelists_directory}/{file_name}"   
+project_env_var = f"${PROJECT_NAME}"
+VERIF_FILELISTS_DIR = f"{project_path}/verif/filelists"
+DVT_FILELISTS_DIR = f"{project_path}/.dvt/filelists"
+
+def generate_filelist(file_name, lines, filelists_directory):
+    abs_path_file_name = f"{filelists_directory}/{file_name}"
     print(f"ABS_PATH_FILE_NAME:{abs_path_file_name}")
     with open(abs_path_file_name, 'w') as f:
         for line in lines:
             f.write(line)
 
-def generate_top_filelist_lines(filelist_names):
+def generate_top_filelist_lines(filelist_names, dvt_mode=False):
     top_level_lines = []
-    top_level_lines.append("// Set the include path for UVM macros and other files\n")
-    top_level_lines.append("+incdir+$UVM_HOME/src\n\n")
-    top_level_lines.append("// Add the UVM package file. It is crucial to compile this before any\n")
-    top_level_lines.append("// files that depend on it\n")
-    top_level_lines.append("$UVM_HOME/src/uvm_pkg.sv\n\n")
+    if dvt_mode:
+        top_level_lines.append("// Set the include path for UVM macros and other files\n")
+        top_level_lines.append("-uvm\n\n")
+    else:
+        top_level_lines.append("// Set the include path for UVM macros and other files\n")
+        top_level_lines.append("+incdir+$UVM_HOME/src\n\n")
+        top_level_lines.append("// Add the UVM package file. It is crucial to compile this before any\n")
+        top_level_lines.append("// files that depend on it\n")
+        top_level_lines.append("$UVM_HOME/src/uvm_pkg.sv\n\n")
     
     top_level_lines.append("\n\n//Reference other filelists\n")
     
     for filelist_name in filelist_names:
-        top_level_lines.append(f"-f {project_env_var}/verif/filelists/{filelist_name}\n")
+        if dvt_mode:
+            top_level_lines.append(f"-f .dvt/filelists/dvt_{filelist_name}\n")
+        else:
+            top_level_lines.append(f"-f {project_env_var}/verif/filelists/{filelist_name}\n")
 
     return top_level_lines
+
+def convert_lines_for_dvt(lines):
+    converted_lines = []
+    prefix = f"{project_env_var}/"
+
+    for line in lines:
+        converted_lines.append(line.replace(prefix, ""))
+
+    return converted_lines
 
 def addLinesUnderCurrentDirectory(cwd_path,include_files):
         
@@ -41,20 +60,23 @@ def addLinesUnderCurrentDirectory(cwd_path,include_files):
         
         if cwd == "tb":
             sort_by_match(dir_entries, "packages")
+            sort_by_match(dir_entries, "reg_models")   
             sort_by_match(dir_entries, "interfaces")   
+        
         elif cwd == "configuration":
             sort_by_match(file_entries, "cfg_pkg")
             sort_by_match(file_entries, "cfg_macros")
         elif cwd == 'packages':
             sort_by_match(file_entries, "tb_top")
             sort_by_match(file_entries, "tests")  
-            sort_by_match(file_entries, "base_tests")  
+            sort_by_match(file_entries, "base_tests")
+            sort_by_match(file_entries, "sauria_cfg_seqs")    
+            sort_by_match(file_entries, "base_cfg_seqs")  
             sort_by_match(file_entries, "env")  
             sort_by_match(file_entries, "scbd")  
             sort_by_match(file_entries, "inv_feeders")  
             sort_by_match(file_entries, "golden_models")  
-            sort_by_match(file_entries, "sauria_cfg_seqs")  
-            sort_by_match(file_entries, "base_cfg_seqs")  
+            sort_by_match(file_entries, "cfg_regs")  
             sort_by_match(file_entries, "common")  
         elif cwd == 'interfaces':
             sort_by_match(file_entries, "axi")
@@ -149,6 +171,9 @@ class filelistIncludeLine:
             self.rel_path_set = True
 
 if __name__ == "__main__":
+
+    os.makedirs(VERIF_FILELISTS_DIR, exist_ok=True)
+    os.makedirs(DVT_FILELISTS_DIR, exist_ok=True)
     
     cfg_path = f"{project_path}/configuration"    
     tests_path = f"{project_path}/tests"    
@@ -176,8 +201,15 @@ if __name__ == "__main__":
         if dir_name != "configuration":
             filelist_names.append(filelist_name)
         
-        generate_filelist(filelist_name, include_files)
+        generate_filelist(filelist_name, include_files, VERIF_FILELISTS_DIR)
+
+        dvt_filelist_name = f"dvt_{filelist_name}"
+        dvt_include_files = convert_lines_for_dvt(include_files)
+        generate_filelist(dvt_filelist_name, dvt_include_files, DVT_FILELISTS_DIR)
 
     
     top_filelist_lines = generate_top_filelist_lines(filelist_names)
-    generate_filelist("top_filelist.f",top_filelist_lines)
+    generate_filelist("top_filelist.f", top_filelist_lines, VERIF_FILELISTS_DIR)
+
+    dvt_top_filelist_lines = generate_top_filelist_lines(filelist_names, dvt_mode=True)
+    generate_filelist("dvt_top_filelist.f", dvt_top_filelist_lines, DVT_FILELISTS_DIR)

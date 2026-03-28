@@ -80,10 +80,10 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
                                 * (computation_params.tile_psums_CK / computation_params.tile_psums_ck_step);
 
         wait(computation_params.ifmaps_cfg_shared);
-        psums_rows_active = computation_params.ifmaps_rows_active;
+        psums_rows_active = arr_col_data_t'(computation_params.ifmaps_rows_active);
         
         wait(computation_params.psums_mgr_cfg_shared);
-        psums_inactive_cols =  computation_params.psums_inactive_cols;
+        psums_inactive_cols = arr_row_data_t'(computation_params.psums_inactive_cols);
     endtask
 
     function write_psums_mgr_sramc_read_info(sauria_psums_mgr_seq_item psums_mgr_info);

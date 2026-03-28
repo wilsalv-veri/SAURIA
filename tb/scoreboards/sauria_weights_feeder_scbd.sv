@@ -18,6 +18,7 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
     sramb_addr_t               exp_next_sramb_addr;   
     weights_feeder_data_t      feeder_data[$];
     weights_feeder_data_t      feeder_data_inst;
+    weights_feeder_data_t      popped_inst;
 
     arr_row_data_t             weights_cols_active;
 
@@ -99,7 +100,7 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
                     `sauria_error(message_id, $sformatf("Feeder Output Does Not Match SRAMB Read Data Q_Size: %0d Addr: 0x%0h Exp: 0x%0h Act: 0x%0h",
                     feeder_data.size(), feeder_data[0].sramb_addr ,feeder_data[0].sramb_data, feeder_data[0].b_arr ))
                 
-                feeder_data.pop_front(); 
+                popped_inst = feeder_data.pop_front(); 
             end
             
             if(!weights_feeder_arr_info.pop_en && !overlapping_comps) clear_arr_byte_valids();

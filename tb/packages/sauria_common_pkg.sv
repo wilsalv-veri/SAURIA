@@ -14,6 +14,7 @@ package sauria_common_pkg;
     parameter COLS_ACTIVE_SIZE       = sauria_pkg::X;
     parameter ROWS_ACTIVE_SIZE       = sauria_pkg::Y;
     
+    parameter  BYTE = 8;
     
     parameter SAURIA_CLK_HALF_PERIOD = 1000; // in picoseconds (based on timescale)
     parameter SYSTEM_CLK_HALF_PERIOD = SAURIA_CLK_HALF_PERIOD / 3;
@@ -23,12 +24,13 @@ package sauria_common_pkg;
     parameter DATA_AXI_DATA_WIDTH    = 1024; // Data AXI4 Slave data width
     parameter DATA_AXI_ADDR_WIDTH    = 32;   // Data AXI4 Slave address width
     parameter DATA_AXI_ID_WIDTH      = 2;    // Data AXI4 Slave ID width
+
+    parameter CFG_AXI_DATA_WIDTH_BYTES = CFG_AXI_DATA_WIDTH / BYTE;
     
     parameter CFG_BASE_OFFSET        = sauria_addr_pkg::CONTROLLER_OFFSET;
     parameter MEM_BASE_OFFSET        = sauria_addr_pkg::DMA_OFFSET;
     parameter CORE_CFG_BASE_OFFSET   = sauria_addr_pkg::SAURIA_OFFSET;
 
-    parameter  BYTE = 8;
     parameter  CFG_AXI_BYTE_NUM      = CFG_AXI_DATA_WIDTH/BYTE;
     parameter  DATA_AXI_BYTE_NUM     = DATA_AXI_DATA_WIDTH/BYTE;
 
@@ -39,6 +41,10 @@ package sauria_common_pkg;
     parameter DMA_CTRL_REGS_OFFSET   = 0;
     parameter SAURIA_SS_REGS_OFFSET  = N_DMA_CTRL_REGS;
 
+    parameter ACT_TILE_DIM_SIZE      = sauria_pkg::ACT_IDX_W;
+    parameter WEI_TILE_DIM_SIZE      = sauria_pkg::WEI_IDX_W;
+    parameter PSUMS_TILE_DIM_SIZE    = sauria_pkg::OUT_IDX_W;
+
     parameter START_SRAMA_MEM_ADDR   = 32'h7000_0000;
     parameter START_SRAMB_MEM_ADDR   = 32'h8000_0000;
     parameter START_SRAMC_MEM_ADDR   = 32'h9000_0000;
@@ -48,6 +54,7 @@ package sauria_common_pkg;
     parameter START_SRAMC_LOCAL_ADDR = sauria_addr_pkg::SAURIA_DMA_OFFSET + sauria_addr_pkg::SRAMC_OFFSET;
     
     parameter SAURIA_REG_SIZE = 32;
+    parameter SAURIA_REG_SIZE_BYTES  = SAURIA_REG_SIZE/BYTE;
     
     parameter DF_CONTROLLER_CFG_CRs_START_IDX        = 18;
     parameter DF_CONTROLLER_CFG_CRs_END_IDX          = 21;

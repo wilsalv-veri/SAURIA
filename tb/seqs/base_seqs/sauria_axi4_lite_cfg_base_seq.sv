@@ -1,8 +1,10 @@
-class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi_txn_base_seq_item);
+class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_txn_seq_item);
       
     `uvm_object_utils(sauria_axi4_lite_cfg_base_seq)
 
     string message_id = "SAURIA_AXI4_LITE_BASE_CFG_SEQ";
+    parameter TIMEOUT_NS = 1000;
+    sauria_computation_params    computation_params;
 
     sauria_axi4_lite_wr_txn_seq_item   axi4_lite_wr_txn_item;
     sauria_axi4_lite_wr_txn_seq_item   cfg_cr_queue[N_SEQ_REGS];
@@ -13,10 +15,34 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi_txn_base_s
     bit                                enable_done_interrupt = 1'b0;
     bit                                start_controller_fsm  = 1'b0;
 
+    sauria_core_weights_reg_block      core_weights_reg_block;
+
     function new(string name="sauria_axi4_lite_cfg_base_seq");
         super.new(name);
     endfunction
  
+     
+    virtual task pre_start();
+        sauria_axi4_lite_seqr axi4_lite_seqr;
+    
+        super.pre_start();
+        
+        if ($cast(axi4_lite_seqr, get_sequencer())) begin
+
+            if (!uvm_config_db #(sauria_computation_params)::get(axi4_lite_seqr, "","computation_params", computation_params))
+                `sauria_error(message_id, "Failed to get access to computation params")
+        
+            if (axi4_lite_seqr.core_weights_reg_block == null) begin
+                `sauria_fatal(message_id, "Regmodel handle on sequencer is null! Check env connection.")
+            end
+            this.core_weights_reg_block = axi4_lite_seqr.core_weights_reg_block;
+        end
+
+        if (!this.randomize())
+            `sauria_error(message_id, "Failed to randomize sequence")
+    
+    endtask 
+
     virtual task body();
         configure_sauria();
         send_cfg_CRs();
@@ -24,26 +50,28 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi_txn_base_s
 
     virtual task configure_sauria();
         if (enable_done_interrupt) set_enable_done_interrupt();
-        add_cfg_CRs_to_queue();
+        set_cfg_CRs();
     endtask
 
     virtual task send_cfg_CRs();
         `sauria_info(message_id, "Sending Config CRs")
 
-        for(int idx = queue_start_idx; idx <= queue_end_idx; idx++)begin
-            axi4_lite_wr_txn_item = cfg_cr_queue[idx];
-            `sauria_info(message_id, $sformatf("Sending Config CR %0d With Value: 0x%0h", idx, axi4_lite_wr_txn_item.wr_data_item.wdata))
+        if (queue_start_idx == CORE_WEIGHTS_CFG_CRs_START_IDX)
+            send_weights_cfg_CRs();
+        else begin
+            for(int idx = queue_start_idx; idx <= queue_end_idx; idx++)begin
+                axi4_lite_wr_txn_item = cfg_cr_queue[idx];
+                `sauria_info(message_id, $sformatf("Sending Config CR %0d With Value: 0x%0h", idx, axi4_lite_wr_txn_item.wr_data_item.wdata))
 
-            start_item(axi4_lite_wr_txn_item);
-            
-            finish_item(axi4_lite_wr_txn_item);
+                start_item(axi4_lite_wr_txn_item);
+                finish_item(axi4_lite_wr_txn_item);
+            end
         end
-
         if (start_controller_fsm)  set_start_controller_fsm();    
     
     endtask
 
-    virtual function void add_cfg_CRs_to_queue();
+    virtual function void set_cfg_CRs();
         for(int cfg_cr_idx = queue_start_idx; cfg_cr_idx <= queue_end_idx; cfg_cr_idx++)begin
             
             create_wr_txn_with_name($sformatf("CFG_CR_IDX_%0d_wr_txn_item", cfg_cr_idx));
@@ -60,6 +88,10 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi_txn_base_s
     virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
         //To be implemented by child class
     endfunction
+
+    virtual task send_weights_cfg_CRs();
+        //To be implemented by child class
+    endtask
 
     virtual task set_enable_done_interrupt();
         create_wr_txn_with_name("done_interrupt_en_wr_txn_item");
@@ -102,5 +134,12 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi_txn_base_s
         return axi4_lite_wr_txn_item.wr_data_item.wdata;
     endfunction
 
-    
+    virtual task wait_comp_params_shared();
+        fork 
+            wait(computation_params.shared);
+            begin #TIMEOUT_NS; `sauria_error(message_id, "Timeout waiting for shared flag"); end
+        join_any
+        disable fork;
+    endtask
+
 endclass
