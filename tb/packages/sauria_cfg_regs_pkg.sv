@@ -25,6 +25,9 @@ package sauria_cfg_regs_pkg;
   
     `include "sauria_cfg_regs_params.sv"
 
+    `include "sauria_core_main_controller_cfg_reg_22.sv"
+    `include "sauria_core_main_controller_cfg_reg_23.sv"
+
     `include "sauria_core_ifmaps_cfg_reg_24.sv"
     `include "sauria_core_ifmaps_cfg_reg_25.sv"
     `include "sauria_core_ifmaps_cfg_reg_26.sv"
@@ -46,6 +49,7 @@ package sauria_cfg_regs_pkg;
     `include "sauria_core_psums_cfg_reg_40.sv"
     `include "sauria_core_psums_cfg_reg_41.sv"
 
+    `include "sauria_core_main_controller_reg_block.sv"
     `include "sauria_core_ifmaps_reg_block.sv"
     `include "sauria_core_weights_reg_block.sv"
     `include "sauria_core_psums_reg_block.sv"

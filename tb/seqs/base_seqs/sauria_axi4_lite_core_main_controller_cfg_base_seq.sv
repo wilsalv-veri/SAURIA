@@ -2,25 +2,8 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
 
     `uvm_object_utils(sauria_axi4_lite_core_main_controller_cfg_base_seq)
 
+    uvm_status_e status;
    
-    parameter INC_CNT_LIM_END_IDX              = ACT_IDX_W - 1;
-    
-    parameter ACT_REPS_START_IDX               = INC_CNT_LIM_END_IDX + 1;
-    parameter ACT_REPS_END_IDX                 = ACT_REPS_START_IDX + OUT_IDX_W - 1;
-    
-    parameter WEIGHT_REPS_LOWER_BITS_START_IDX = ACT_REPS_END_IDX + 1;
-    parameter WEIGHT_REPS_LOWER_BITS_END_IDX   = 31;
-    parameter WEIGHT_REPS_UPPER_BITS_START_IDX = 0;
-    parameter WEIGHT_REPS_UPPER_BITS_END_IDX   = WEIGHT_REPS_UPPER_BITS_START_IDX + OUT_IDX_W - (WEIGHT_REPS_LOWER_BITS_END_IDX - WEIGHT_REPS_LOWER_BITS_START_IDX) - 1;
-    
-    parameter ZERO_NEGLIGENCE_START_IDX        = WEIGHT_REPS_UPPER_BITS_END_IDX + 1;
-    parameter ZERO_NEGLIGENCE_END_IDX          = ZERO_NEGLIGENCE_START_IDX + TH_W - 1;
-    
-    parameter WEIGHT_REPS_LOWER_BITS_LEN       = WEIGHT_REPS_LOWER_BITS_END_IDX - WEIGHT_REPS_LOWER_BITS_START_IDX + 1;
-    parameter WEIGHT_REPS_UPPER_BITS_LEN       = WEIGHT_REPS_UPPER_BITS_END_IDX - WEIGHT_REPS_UPPER_BITS_START_IDX + 1;
-    
-    sauria_computation_params    computation_params;
-
     rand sauria_axi4_lite_data_t total_macs;
     rand sauria_axi4_lite_data_t act_reps;
                         
@@ -59,63 +42,44 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
     endtask
 
     virtual task set_total_macs_params();
-       
-        if (!uvm_config_db #(sauria_computation_params)::get(m_sequencer, "","computation_params", computation_params))
-            `sauria_error(message_id, "Failed to get access to computation params")
+        wait_comp_params_shared();
         
         computation_params.incntlim = total_macs;
         computation_params.main_controller_cfg_shared = 1'b1;
     endtask
   
     virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
-        add_core_main_controller_cfg_CRs(cfg_cr_idx);
+        set_core_main_controller_cfg_CRs(cfg_cr_idx);
     endfunction
 
-    virtual function void add_core_main_controller_cfg_CRs(int cfg_cr_idx);
+    virtual function void set_core_main_controller_cfg_CRs(int cfg_cr_idx);
             
         case(cfg_cr_idx)
-            22: begin
-                set_total_macs();
-                set_act_reps();
-                set_weight_reps_lower();
-            end
-            23:begin
-                set_weight_reps_upper();
-                set_zero_negligence_threshold();
-            end
+            22: set_core_main_controller_cfg_reg_22();
+            23: set_core_main_controller_cfg_reg_23();
         endcase
-        cfg_cr_queue[cfg_cr_idx] = axi4_lite_wr_txn_item;
       
     endfunction
+
+    virtual function void set_core_main_controller_cfg_reg_22();
+        core_main_controller_reg_block.core_main_controller_cfg_reg_22.total_macs.set(total_macs);
+        core_main_controller_reg_block.core_main_controller_cfg_reg_22.act_reps.set(act_reps);
+        core_main_controller_reg_block.core_main_controller_cfg_reg_22.weight_reps_lower.set(weight_reps[SEQ_MAIN_WEIGHT_REPS_LOWER_MSB:SEQ_MAIN_WEIGHT_REPS_LOWER_LSB]);
+    endfunction
+
+    virtual function void set_core_main_controller_cfg_reg_23();
+        core_main_controller_reg_block.core_main_controller_cfg_reg_23.weight_reps_upper.set(weight_reps[SEQ_MAIN_WEIGHT_REPS_UPPER_MSB:SEQ_MAIN_WEIGHT_REPS_UPPER_LSB]);
+        core_main_controller_reg_block.core_main_controller_cfg_reg_23.zero_negligence_threshold.set(zero_negligence_threshold);
+    endfunction
+
+    virtual task send_main_controller_cfg_CRs();
+        core_main_controller_reg_block.core_main_controller_cfg_reg_22.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_main_controller_cfg_reg_22")
+
+        core_main_controller_reg_block.core_main_controller_cfg_reg_23.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_main_controller_cfg_reg_23")
+    endtask
    
-    virtual function void set_total_macs();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[INC_CNT_LIM_END_IDX:0] = total_macs;
-        set_cfg_cr_data(wdata);
-    endfunction
-    
-    virtual function void set_act_reps();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[ACT_REPS_END_IDX:ACT_REPS_START_IDX] = act_reps;
-        set_cfg_cr_data(wdata);
-    endfunction
-        
-    virtual function void set_weight_reps_lower();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[WEIGHT_REPS_LOWER_BITS_END_IDX:WEIGHT_REPS_LOWER_BITS_START_IDX] = weight_reps[WEIGHT_REPS_LOWER_BITS_LEN - 1:0];
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_weight_reps_upper();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[WEIGHT_REPS_UPPER_BITS_END_IDX:WEIGHT_REPS_UPPER_BITS_START_IDX] = weight_reps[OUT_IDX_W:WEIGHT_REPS_LOWER_BITS_LEN];
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_zero_negligence_threshold();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:13] = zero_negligence_threshold;
-        set_cfg_cr_data(wdata);
-    endfunction
-    
 endclass

@@ -1,4 +1,11 @@
 
+//---------Main Controller Cfg Seq-------------------------------
+parameter SEQ_MAIN_WEIGHT_REPS_LOWER_LSB = 0;
+parameter SEQ_MAIN_WEIGHT_REPS_LOWER_MSB = MAIN_CTRL_WEIGHT_REPS_LOWER_SIZE - 1;
+
+parameter SEQ_MAIN_WEIGHT_REPS_UPPER_LSB = SEQ_MAIN_WEIGHT_REPS_LOWER_MSB + 1;
+parameter SEQ_MAIN_WEIGHT_REPS_UPPER_MSB = OUT_IDX_W;
+
 //---------IFMAPS Cfg Seq-----------------------------------------
 parameter SEQ_IFMAPS_Y_LIM_LOWER_LSB         = 0;
 parameter SEQ_IFMAPS_Y_LIM_LOWER_MSB         = 1;
