@@ -1,4 +1,37 @@
 
+//---------IFMAPS Cfg Seq-----------------------------------------
+parameter SEQ_IFMAPS_Y_LIM_LOWER_LSB         = 0;
+parameter SEQ_IFMAPS_Y_LIM_LOWER_MSB         = 1;
+parameter SEQ_IFMAPS_Y_LIM_LSB               = SEQ_IFMAPS_Y_LIM_LOWER_MSB + 1;
+
+parameter SEQ_IFMAPS_CH_LIM_LOWER_LSB        = 0;
+parameter SEQ_IFMAPS_CH_LIM_LOWER_MSB        = 3;
+parameter SEQ_IFMAPS_CH_LIM_LSB              = SEQ_IFMAPS_CH_LIM_LOWER_MSB + 1;
+
+parameter SEQ_IFMAPS_TILE_X_LIM_LOWER_LSB    = 0;
+parameter SEQ_IFMAPS_TILE_X_LIM_LOWER_MSB    = 5;
+parameter SEQ_IFMAPS_TILE_X_LIM_LSB          = SEQ_IFMAPS_TILE_X_LIM_LOWER_MSB + 1;
+
+parameter SEQ_IFMAPS_TILE_Y_LIM_LOWER_LSB    = 0;
+parameter SEQ_IFMAPS_TILE_Y_LIM_LOWER_MSB    = 7;
+parameter SEQ_IFMAPS_TILE_Y_LIM_LSB          = SEQ_IFMAPS_TILE_Y_LIM_LOWER_MSB + 1;
+
+parameter SEQ_IFMAPS_DIL_PATTERN_LOWER_LSB   = 0;
+parameter SEQ_IFMAPS_DIL_PATTERN_LOWER_MSB   = 9;
+parameter SEQ_IFMAPS_DIL_PATTERN_2ND_LSB     = SEQ_IFMAPS_DIL_PATTERN_LOWER_MSB + 1;
+parameter SEQ_IFMAPS_DIL_PATTERN_2ND_MSB     = 41;
+parameter SEQ_IFMAPS_DIL_PATTERN_UPPER_LSB   = SEQ_IFMAPS_DIL_PATTERN_2ND_MSB + 1;
+parameter SEQ_IFMAPS_DIL_PATTERN_MSB         = 63;
+
+parameter SEQ_IFMAPS_LOC_WOFFS_0_LOWER_LSB   = 0;
+parameter SEQ_IFMAPS_LOC_WOFFS_0_LOWER_MSB   = 1;
+parameter SEQ_IFMAPS_LOC_WOFFS_0_LSB         = SEQ_IFMAPS_LOC_WOFFS_0_LOWER_MSB + 1;
+parameter SEQ_IFMAPS_LOC_WOFFS_MSB           = 7;
+
+parameter SEQ_IFMAPS_LOC_WOFFS_4_LOWER_LSB   = 0;
+parameter SEQ_IFMAPS_LOC_WOFFS_4_LOWER_MSB   = 1;
+parameter SEQ_IFMAPS_LOC_WOFFS_4_LSB         = SEQ_IFMAPS_LOC_WOFFS_4_LOWER_MSB + 1;
+
 //---------Weights Cfg Seq-----------------------------------------
 parameter SEQ_WEIGHTS_K_LIM_LOWER_LSB = 0;
 parameter SEQ_WEIGHTS_K_LIM_LOWER_MSB = 1;

@@ -7,6 +7,7 @@ class sauria_axi4_lite_seqr extends uvm_sequencer #(sauria_axi4_lite_wr_txn_seq_
     sauria_computation_params          computation_params;
 
     sauria_core_weights_reg_block      core_weights_reg_block;
+    sauria_core_ifmaps_reg_block       core_ifmaps_reg_block;
     sauria_core_psums_reg_block        core_psums_reg_block;
 
     function new(string name="sauria_axi4_lite_seqr", uvm_component parent=null);

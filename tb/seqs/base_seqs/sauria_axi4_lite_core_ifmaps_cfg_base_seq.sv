@@ -4,7 +4,7 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
 
     `uvm_object_utils(sauria_axi4_lite_core_ifmaps_cfg_base_seq)
 
-    sauria_computation_params    computation_params;
+    uvm_status_e status;
 
     rand sauria_axi4_lite_data_t ifmaps_x_lim;
     rand sauria_axi4_lite_data_t ifmaps_x_step;
@@ -99,69 +99,121 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
     endtask
 
     virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
-        add_core_ifmaps_cfg_CRs(cfg_cr_idx);
+        set_core_ifmaps_cfg_CRs(cfg_cr_idx);
     endfunction
 
-    virtual function void add_core_ifmaps_cfg_CRs(int cfg_cr_idx);
+    virtual function void set_core_ifmaps_cfg_CRs(int cfg_cr_idx);
 
         case(cfg_cr_idx)
-            24:begin
-                set_ifmaps_x_lim();
-                set_ifmaps_x_step();
-                set_ifmaps_y_lim_lower();
-            end
-            25:begin
-                set_ifmaps_y_lim_upper();
-                set_ifmaps_y_step();
-                set_ifmaps_ch_lim_lower();
-            end
-            26:begin
-                set_ifmaps_ch_lim_upper();
-                set_ifmaps_ch_step();
-                set_ifmaps_tile_x_lim_lower();
-            end
-            27:begin
-                set_ifmaps_tile_x_lim_upper();
-                set_ifmaps_tile_x_step();
-                set_ifmaps_tile_y_lim_lower();
-            end
-            28: begin
-                set_ifmaps_tile_y_lim_upper();
-                set_ifmaps_tile_y_step();
-                set_dilation_pattern_lower();
-            end
-            29: begin
-                set_dilation_pattern_second_byte();
-            end
-            30: begin
-                set_dilation_pattern_upper();
-                set_ifmaps_rows_active();
-                set_ifmaps_loc_woffs_0_lower();
-            end
-            31: begin
-                set_ifmaps_loc_woffs_0_upper();
-                set_ifmaps_loc_woffs_1();
-                set_ifmaps_loc_woffs_2();
-                set_ifmaps_loc_woffs_3();
-                set_ifmaps_loc_woffs_4_lower();
-            end
-            32:begin
-                set_ifmaps_loc_woffs_4_upper();
-                set_ifmaps_loc_woffs_5();
-                set_ifmaps_loc_woffs_6();
-                set_ifmaps_loc_woffs_7();
-            end
+            24: set_core_ifmaps_cfg_reg_24();
+            25: set_core_ifmaps_cfg_reg_25();
+            26: set_core_ifmaps_cfg_reg_26();
+            27: set_core_ifmaps_cfg_reg_27();
+            28: set_core_ifmaps_cfg_reg_28();
+            29: set_core_ifmaps_cfg_reg_29();
+            30: set_core_ifmaps_cfg_reg_30();
+            31: set_core_ifmaps_cfg_reg_31();
+            32: set_core_ifmaps_cfg_reg_32();
         endcase
-        cfg_cr_queue[cfg_cr_idx] = axi4_lite_wr_txn_item;
-
+        
     endfunction
+
+    virtual function void set_core_ifmaps_cfg_reg_24();
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_24.ifmaps_x_lim.set(ifmaps_x_lim);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_24.ifmaps_x_step.set(ifmaps_x_step);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_24.ifmaps_y_lim_lower.set(ifmaps_y_lim[SEQ_IFMAPS_Y_LIM_LOWER_MSB:SEQ_IFMAPS_Y_LIM_LOWER_LSB]);
+    endfunction
+
+    virtual function void set_core_ifmaps_cfg_reg_25();
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_25.ifmaps_y_lim.set(ifmaps_y_lim[ACT_TILE_DIM_SIZE:SEQ_IFMAPS_Y_LIM_LSB]);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_25.ifmaps_y_step.set(ifmaps_y_step);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_25.ifmaps_ch_lim_lower.set(ifmaps_ch_lim[SEQ_IFMAPS_CH_LIM_LOWER_MSB:SEQ_IFMAPS_CH_LIM_LOWER_LSB]);
+    endfunction
+
+    virtual function void set_core_ifmaps_cfg_reg_26();
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_26.ifmaps_ch_lim.set(ifmaps_ch_lim[ACT_TILE_DIM_SIZE:SEQ_IFMAPS_CH_LIM_LSB]);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_26.ifmaps_ch_step.set(ifmaps_ch_step);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_26.ifmaps_tile_x_lim_lower.set(ifmaps_tile_x_lim[SEQ_IFMAPS_TILE_X_LIM_LOWER_MSB:SEQ_IFMAPS_TILE_X_LIM_LOWER_LSB]);
+    endfunction
+
+    virtual function void set_core_ifmaps_cfg_reg_27();
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_27.ifmaps_tile_x_lim.set(ifmaps_tile_x_lim[ACT_TILE_DIM_SIZE:SEQ_IFMAPS_TILE_X_LIM_LSB]);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_27.ifmaps_tile_x_step.set(ifmaps_tile_x_step);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_27.ifmaps_tile_y_lim_lower.set(ifmaps_tile_y_lim[SEQ_IFMAPS_TILE_Y_LIM_LOWER_MSB:SEQ_IFMAPS_TILE_Y_LIM_LOWER_LSB]);
+    endfunction
+
+    virtual function void set_core_ifmaps_cfg_reg_28();
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_28.ifmaps_tile_y_lim.set(ifmaps_tile_y_lim[ACT_TILE_DIM_SIZE:SEQ_IFMAPS_TILE_Y_LIM_LSB]);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_28.ifmaps_tile_y_step.set(ifmaps_tile_y_step);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_28.dilation_pattern_lower.set(dilation_pattern[SEQ_IFMAPS_DIL_PATTERN_LOWER_MSB:SEQ_IFMAPS_DIL_PATTERN_LOWER_LSB]);
+    endfunction
+
+    virtual function void set_core_ifmaps_cfg_reg_29();
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_29.dilation_pattern_second_byte.set(dilation_pattern[SEQ_IFMAPS_DIL_PATTERN_2ND_MSB:SEQ_IFMAPS_DIL_PATTERN_2ND_LSB]);
+    endfunction
+
+    virtual function void set_core_ifmaps_cfg_reg_30();
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_30.dilation_pattern_upper.set(dilation_pattern[SEQ_IFMAPS_DIL_PATTERN_MSB:SEQ_IFMAPS_DIL_PATTERN_UPPER_LSB]);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_30.ifmaps_rows_active.set(ifmaps_rows_active);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_30.ifmaps_loc_woffs_0_lower.set(ifmaps_loc_woffs_0[SEQ_IFMAPS_LOC_WOFFS_0_LOWER_MSB:SEQ_IFMAPS_LOC_WOFFS_0_LOWER_LSB]);
+    endfunction
+
+    virtual function void set_core_ifmaps_cfg_reg_31();
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_31.ifmaps_loc_woffs_0.set(ifmaps_loc_woffs_0[SEQ_IFMAPS_LOC_WOFFS_MSB:SEQ_IFMAPS_LOC_WOFFS_0_LSB]);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_31.ifmaps_loc_woffs_1.set(ifmaps_loc_woffs_1);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_31.ifmaps_loc_woffs_2.set(ifmaps_loc_woffs_2);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_31.ifmaps_loc_woffs_3.set(ifmaps_loc_woffs_3);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_31.ifmaps_loc_woffs_4_lower.set(ifmaps_loc_woffs_4[SEQ_IFMAPS_LOC_WOFFS_4_LOWER_MSB:SEQ_IFMAPS_LOC_WOFFS_4_LOWER_LSB]);
+    endfunction
+
+    virtual function void set_core_ifmaps_cfg_reg_32();
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_32.ifmaps_loc_woffs_4.set(ifmaps_loc_woffs_4[SEQ_IFMAPS_LOC_WOFFS_MSB:SEQ_IFMAPS_LOC_WOFFS_4_LSB]);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_32.ifmaps_loc_woffs_5.set(ifmaps_loc_woffs_5);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_32.ifmaps_loc_woffs_6.set(ifmaps_loc_woffs_6);
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_32.ifmaps_loc_woffs_7.set(ifmaps_loc_woffs_7);
+    endfunction
+
+    virtual task send_ifmaps_cfg_CRs();
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_24.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_ifmaps_cfg_reg_24")
+
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_25.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_ifmaps_cfg_reg_25")
+
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_26.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_ifmaps_cfg_reg_26")
+
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_27.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_ifmaps_cfg_reg_27")
+
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_28.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_ifmaps_cfg_reg_28")
+
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_29.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_ifmaps_cfg_reg_29")
+
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_30.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_ifmaps_cfg_reg_30")
+
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_31.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_ifmaps_cfg_reg_31")
+
+        core_ifmaps_reg_block.core_ifmaps_cfg_reg_32.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating core_ifmaps_cfg_reg_32")
+    endtask
 
     virtual task get_ifmaps_params();
 
-        if (!uvm_config_db #(sauria_computation_params)::get(m_sequencer, "","computation_params", computation_params))
-            `sauria_error(message_id, "Failed to get access to computation params")
-        
-        wait(computation_params.shared);
+        wait_comp_params_shared();
        
         ifmaps_x_step  = SRAMA_N;                     
         ifmaps_x_lim   = ifmaps_x_step;                 
@@ -182,180 +234,9 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
     endtask
 
     virtual task share_ifmaps_cfg();
-        if (!uvm_config_db #(sauria_computation_params)::get(m_sequencer, "","computation_params", computation_params))
-            `sauria_error(message_id, "Failed to get access to computation params")
-        
         computation_params.ifmaps_rows_active = ifmaps_rows_active;
         computation_params.ifmaps_cfg_shared  = 1'b1;
     endtask
 
-    virtual function void set_ifmaps_x_lim();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[14:0] = ifmaps_x_lim;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_x_step();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[29:15] = ifmaps_x_step;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_y_lim_lower();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:30] = ifmaps_y_lim[1:0];
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_y_lim_upper();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[12:0] = ifmaps_y_lim[14:2];
-        set_cfg_cr_data(wdata);
-    endfunction
-                
-    virtual function void set_ifmaps_y_step();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[27:13] = ifmaps_y_step;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_ch_lim_lower();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:28] = ifmaps_ch_lim[3:0];
-        set_cfg_cr_data(wdata);
-    endfunction
-        
-    virtual function void set_ifmaps_ch_lim_upper();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[10:0] = ifmaps_ch_lim[14:4];
-        set_cfg_cr_data(wdata);
-    endfunction
-    
-    virtual function void set_ifmaps_ch_step();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[25:11] = ifmaps_ch_step;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_tile_x_lim_lower();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:26] = ifmaps_tile_x_lim[5:0];
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_tile_x_lim_upper();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[8:0] = ifmaps_tile_x_lim[14:6];
-        set_cfg_cr_data(wdata);
-    endfunction
-            
-    virtual function void set_ifmaps_tile_x_step();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[23:9] = ifmaps_tile_x_step;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_tile_y_lim_lower();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:24] = ifmaps_tile_y_lim[7:0];
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_tile_y_lim_upper();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[6:0] = ifmaps_tile_y_lim[14:8];
-        set_cfg_cr_data(wdata);
-    endfunction
-                
-    virtual function void set_ifmaps_tile_y_step();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[21:7] = ifmaps_tile_y_step;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_dilation_pattern_lower();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:22] = dilation_pattern[9:0];
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_dilation_pattern_second_byte();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata = dilation_pattern[41:10];
-        set_cfg_cr_data(wdata);
-    endfunction
-    
-    virtual function void set_dilation_pattern_upper();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[21:0] = dilation_pattern[63:42];
-        set_cfg_cr_data(wdata);
-    endfunction
-    
-    virtual function void set_ifmaps_rows_active();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[29:22] = ifmaps_rows_active;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_loc_woffs_0_lower();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:30] = ifmaps_loc_woffs_0[1:0];
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_loc_woffs_0_upper();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[5:0] = ifmaps_loc_woffs_0[7:2];
-        set_cfg_cr_data(wdata);
-    endfunction
-    
-                
-    virtual function void set_ifmaps_loc_woffs_1();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[13:6] = ifmaps_loc_woffs_1;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_loc_woffs_2();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[21:14] = ifmaps_loc_woffs_2;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_loc_woffs_3();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[29:22] = ifmaps_loc_woffs_3;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_loc_woffs_4_lower();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:30] = ifmaps_loc_woffs_4[1:0];
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_loc_woffs_4_upper();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[5:0] = ifmaps_loc_woffs_4[7:2];
-        set_cfg_cr_data(wdata);
-    endfunction
-        
-    virtual function void set_ifmaps_loc_woffs_5();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[13:6] = ifmaps_loc_woffs_5;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_loc_woffs_6();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[21:14] = ifmaps_loc_woffs_6;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_ifmaps_loc_woffs_7();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[29:22] = ifmaps_loc_woffs_7;
-        set_cfg_cr_data(wdata);
-    endfunction
     
 endclass

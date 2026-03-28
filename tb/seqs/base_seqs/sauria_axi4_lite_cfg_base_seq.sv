@@ -16,6 +16,7 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_t
     bit                                start_controller_fsm  = 1'b0;
 
     sauria_core_weights_reg_block      core_weights_reg_block;
+    sauria_core_ifmaps_reg_block       core_ifmaps_reg_block;
     sauria_core_psums_reg_block        core_psums_reg_block;
 
     function new(string name="sauria_axi4_lite_cfg_base_seq");
@@ -36,6 +37,11 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_t
                 `sauria_fatal(message_id, "Weights regmodel handle on sequencer is null! Check env connection.")
             end
             this.core_weights_reg_block = axi4_lite_seqr.core_weights_reg_block;
+
+            if (axi4_lite_seqr.core_ifmaps_reg_block == null) begin
+                `sauria_fatal(message_id, "Ifmaps regmodel handle on sequencer is null! Check env connection.")
+            end
+            this.core_ifmaps_reg_block = axi4_lite_seqr.core_ifmaps_reg_block;
 
             if (axi4_lite_seqr.core_psums_reg_block == null) begin
                 `sauria_fatal(message_id, "Psums regmodel handle on sequencer is null! Check env connection.")
@@ -64,6 +70,8 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_t
 
         if (queue_start_idx == CORE_WEIGHTS_CFG_CRs_START_IDX)
             send_weights_cfg_CRs();
+        else if (queue_start_idx == CORE_IFMAPS_CFG_CRs_START_IDX)
+            send_ifmaps_cfg_CRs();
         else if (queue_start_idx == CORE_PSUMS_CFG_CRs_START_IDX)
             send_psums_cfg_CRs();
         else begin
@@ -98,6 +106,10 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_t
     endfunction
 
     virtual task send_weights_cfg_CRs();
+        //To be implemented by child class
+    endtask
+
+    virtual task send_ifmaps_cfg_CRs();
         //To be implemented by child class
     endtask
 

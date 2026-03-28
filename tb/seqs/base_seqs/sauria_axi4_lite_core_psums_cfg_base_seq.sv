@@ -81,7 +81,6 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
             40: set_core_psums_cfg_reg_40();
             41: set_core_psums_cfg_reg_41();
         endcase
-        cfg_cr_queue[cfg_cr_idx] = axi4_lite_wr_txn_item;
         
     endfunction
 
@@ -221,7 +220,6 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
         //wdata[1:0] = psums_tile_cy_step[13:12];
     endfunction
     
-                
     virtual function void set_psums_tile_ck_lim();
         //INT
         //wdata[15:2] = psums_tile_ck_lim;

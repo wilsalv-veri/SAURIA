@@ -7,6 +7,7 @@ class sauria_env extends uvm_env;
     sauria_axi4_lite_adapter    axi4_lite_adapter;
 
     sauria_core_weights_reg_block core_weights_reg_block;
+    sauria_core_ifmaps_reg_block  core_ifmaps_reg_block;
     sauria_core_psums_reg_block   core_psums_reg_block;
    
     sauria_axi_vseqr              vseqr;
@@ -42,6 +43,9 @@ class sauria_env extends uvm_env;
         core_weights_reg_block = sauria_core_weights_reg_block::type_id::create("sauria_core_weights_reg_block");
         core_weights_reg_block.configure();
 
+        core_ifmaps_reg_block = sauria_core_ifmaps_reg_block::type_id::create("sauria_core_ifmaps_reg_block");
+        core_ifmaps_reg_block.configure();
+
         core_psums_reg_block = sauria_core_psums_reg_block::type_id::create("sauria_core_psums_reg_block");
         core_psums_reg_block.configure();
 
@@ -72,6 +76,9 @@ class sauria_env extends uvm_env;
         
         core_weights_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
         axi4_lite_agent.axi4_lite_seqr.core_weights_reg_block = core_weights_reg_block;
+
+        core_ifmaps_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
+        axi4_lite_agent.axi4_lite_seqr.core_ifmaps_reg_block = core_ifmaps_reg_block;
 
         core_psums_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
         axi4_lite_agent.axi4_lite_seqr.core_psums_reg_block = core_psums_reg_block;
