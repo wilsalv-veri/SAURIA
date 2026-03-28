@@ -6,6 +6,7 @@ class sauria_env extends uvm_env;
     sauria_axi4_agent           axi4_agent;
     sauria_axi4_lite_adapter    axi4_lite_adapter;
 
+    sauria_df_controller_reg_block   df_controller_reg_block;
     sauria_core_main_controller_reg_block core_main_controller_reg_block;
     sauria_core_weights_reg_block core_weights_reg_block;
     sauria_core_ifmaps_reg_block  core_ifmaps_reg_block;
@@ -41,6 +42,9 @@ class sauria_env extends uvm_env;
         axi4_lite_agent     = sauria_axi4_lite_agent::type_id::create("sauria_axi4_lite_agent", this);
         axi4_lite_adapter   = sauria_axi4_lite_adapter::type_id::create("sauria_axi4_lite_adapter", , get_full_name());
         
+        df_controller_reg_block = sauria_df_controller_reg_block::type_id::create("sauria_df_controller_reg_block");
+        df_controller_reg_block.configure();
+
         core_main_controller_reg_block = sauria_core_main_controller_reg_block::type_id::create("sauria_core_main_controller_reg_block");
         core_main_controller_reg_block.configure();
 
@@ -78,6 +82,9 @@ class sauria_env extends uvm_env;
        //vseqr.axi4_lite_seqr = axi4_lite_agent.axi4_lite_seqr;
         //vseqr.axi4_seqr      = axi4_agent.axi4_seqr;
         
+        df_controller_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
+        axi4_lite_agent.axi4_lite_seqr.df_controller_reg_block = df_controller_reg_block;
+
         core_main_controller_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
         axi4_lite_agent.axi4_lite_seqr.core_main_controller_reg_block = core_main_controller_reg_block;
 

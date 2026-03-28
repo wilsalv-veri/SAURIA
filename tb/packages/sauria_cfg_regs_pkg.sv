@@ -25,6 +25,11 @@ package sauria_cfg_regs_pkg;
   
     `include "sauria_cfg_regs_params.sv"
 
+    `include "../reg_models/regs/df_controller_regs/sauria_df_controller_cfg_reg_18.sv"
+    `include "../reg_models/regs/df_controller_regs/sauria_df_controller_cfg_reg_19.sv"
+    `include "../reg_models/regs/df_controller_regs/sauria_df_controller_cfg_reg_20.sv"
+    `include "../reg_models/regs/df_controller_regs/sauria_df_controller_cfg_reg_21.sv"
+
     `include "sauria_core_main_controller_cfg_reg_22.sv"
     `include "sauria_core_main_controller_cfg_reg_23.sv"
 
@@ -49,6 +54,7 @@ package sauria_cfg_regs_pkg;
     `include "sauria_core_psums_cfg_reg_40.sv"
     `include "sauria_core_psums_cfg_reg_41.sv"
 
+    `include "../reg_models/reg_blocks/sauria_df_controller_reg_block.sv"
     `include "sauria_core_main_controller_reg_block.sv"
     `include "sauria_core_ifmaps_reg_block.sv"
     `include "sauria_core_weights_reg_block.sv"

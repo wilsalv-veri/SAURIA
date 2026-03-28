@@ -1,3 +1,32 @@
+/**********DF Controller Config********************* */
+
+//IDX 18
+parameter DF_START_SRAMA_ADDR_LSB       = 0;
+parameter DF_START_SRAMA_ADDR_SIZE      = SAURIA_REG_SIZE;
+
+//IDX 19
+parameter DF_START_SRAMB_ADDR_LSB       = 0;
+parameter DF_START_SRAMB_ADDR_SIZE      = SAURIA_REG_SIZE;
+
+//IDX 20
+parameter DF_START_SRAMC_ADDR_LSB       = 0;
+parameter DF_START_SRAMC_ADDR_SIZE      = SAURIA_REG_SIZE;
+
+//IDX 21
+parameter DF_LOOP_ORDER_LSB             = 16;
+parameter DF_LOOP_ORDER_SIZE            = 2;
+
+parameter DF_STAND_ALONE_LSB            = 18;
+parameter DF_STAND_ALONE_KEEP_A_LSB     = 19;
+parameter DF_STAND_ALONE_KEEP_B_LSB     = 20;
+parameter DF_STAND_ALONE_KEEP_C_LSB     = 21;
+
+parameter DF_START_LSB                  = 22;
+parameter DF_CW_EQ_LSB                  = 23;
+parameter DF_CH_EQ_LSB                  = 24;
+parameter DF_CK_EQ_LSB                  = 25;
+parameter DF_WXFER_OP_LSB               = 31;
+
 /**********Main Controller Dimensions********************* */
 
 //IDX 22

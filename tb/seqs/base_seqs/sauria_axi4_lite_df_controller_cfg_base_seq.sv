@@ -1,6 +1,8 @@
 class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_base_seq;
 
     `uvm_object_utils(sauria_axi4_lite_df_controller_cfg_base_seq)
+
+    uvm_status_e                        status;
    
     sauria_computation_params          computation_params;
 
@@ -68,17 +70,11 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
     endtask
 
     virtual task exchange_computation_params();
-        get_computation_params_access();
         set_compute_params_loop_order();
         set_starting_tensors_addr();
         set_tensor_modifiers();
         get_tensor_sizes();
     endtask
-
-    virtual function void get_computation_params_access();
-         if (!uvm_config_db #(sauria_computation_params)::get(m_sequencer, "","computation_params", computation_params))
-            `sauria_error(message_id, "Failed to get access to computation params")
-    endfunction
 
     virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
         add_df_controller_cfg_CRs(cfg_cr_idx);
@@ -87,25 +83,35 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
     virtual function void add_df_controller_cfg_CRs(int cfg_cr_idx);
             
         case(cfg_cr_idx)
-            18: set_start_SRAMA_addr();
-            19: set_start_SRAMB_addr();
-            20: set_start_SRAMC_addr();
-            21: begin
-                clear_start();
-                set_loop_order();
-                set_stand_alone_mode();
-                set_Cw_eq();
-                set_Ch_eq();
-                set_Ck_eq();
-                set_WXfer_op();
-            end
+            18: set_df_controller_cfg_reg_18();
+            19: set_df_controller_cfg_reg_19();
+            20: set_df_controller_cfg_reg_20();
+            21: set_df_controller_cfg_reg_21();
         endcase
-        cfg_cr_queue[cfg_cr_idx] = axi4_lite_wr_txn_item;
 
     endfunction
 
+    virtual task send_df_controller_cfg_CRs();
+        df_controller_reg_block.df_controller_cfg_reg_18.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating df_controller_cfg_reg_18")
+
+        df_controller_reg_block.df_controller_cfg_reg_19.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating df_controller_cfg_reg_19")
+
+        df_controller_reg_block.df_controller_cfg_reg_20.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating df_controller_cfg_reg_20")
+
+        df_controller_reg_block.df_controller_cfg_reg_21.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating df_controller_cfg_reg_21")
+    endtask
+
     virtual task get_tensor_sizes();
-        wait(computation_params.shared);
+        wait_comp_params_shared();
+
         ifmaps_size  = computation_params.get_ifmaps_size();
         weights_size = computation_params.get_weights_size();
         psums_size   = computation_params.get_psums_size();
@@ -128,63 +134,30 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
         computation_params.Ck_eq    = Ck_eq;
         computation_params.WXfer_op = WXfer_op;
     endfunction
-    
-    virtual function void clear_start();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[22] = 1'b0; //!start
-        set_cfg_cr_data(wdata);
+
+    virtual function void set_df_controller_cfg_reg_18();
+        df_controller_reg_block.df_controller_cfg_reg_18.start_srama_addr.set(start_SRAMA_addr);
     endfunction
 
-    virtual function void set_stand_alone_mode();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[18] = stand_alone;
-        wdata[19] = stand_alone_keep_A;
-        wdata[20] = stand_alone_keep_B;
-        wdata[21] = stand_alone_keep_C;   
-        
-        set_cfg_cr_data(wdata);
+    virtual function void set_df_controller_cfg_reg_19();
+        df_controller_reg_block.df_controller_cfg_reg_19.start_sramb_addr.set(start_SRAMB_addr);
     endfunction
 
-    virtual function void set_start_SRAMA_addr();
-        set_cfg_cr_data(start_SRAMA_addr);
+    virtual function void set_df_controller_cfg_reg_20();
+        df_controller_reg_block.df_controller_cfg_reg_20.start_sramc_addr.set(start_SRAMC_addr);
     endfunction
 
-    virtual function void set_start_SRAMB_addr();
-        set_cfg_cr_data(start_SRAMB_addr);
-    endfunction
-
-    virtual function void set_start_SRAMC_addr();
-        set_cfg_cr_data(start_SRAMC_addr);
-    endfunction
-
-    virtual function void set_loop_order();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[17:16] = loop_order;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_Cw_eq();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[23] = Cw_eq;
-        set_cfg_cr_data(wdata);
-    endfunction
-   
-    virtual function void set_Ch_eq();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[24] = Ch_eq;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_Ck_eq();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[25] = Ck_eq;
-        set_cfg_cr_data(wdata);
-    endfunction
-
-    virtual function void set_WXfer_op();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31] = WXfer_op;
-        set_cfg_cr_data(wdata);
+    virtual function void set_df_controller_cfg_reg_21();
+        df_controller_reg_block.df_controller_cfg_reg_21.start.set(1'b0);
+        df_controller_reg_block.df_controller_cfg_reg_21.loop_order.set(loop_order);
+        df_controller_reg_block.df_controller_cfg_reg_21.stand_alone.set(stand_alone);
+        df_controller_reg_block.df_controller_cfg_reg_21.stand_alone_keep_a.set(stand_alone_keep_A);
+        df_controller_reg_block.df_controller_cfg_reg_21.stand_alone_keep_b.set(stand_alone_keep_B);
+        df_controller_reg_block.df_controller_cfg_reg_21.stand_alone_keep_c.set(stand_alone_keep_C);
+        df_controller_reg_block.df_controller_cfg_reg_21.cw_eq.set(Cw_eq);
+        df_controller_reg_block.df_controller_cfg_reg_21.ch_eq.set(Ch_eq);
+        df_controller_reg_block.df_controller_cfg_reg_21.ck_eq.set(Ck_eq);
+        df_controller_reg_block.df_controller_cfg_reg_21.wxfer_op.set(WXfer_op);
     endfunction
 
 endclass
