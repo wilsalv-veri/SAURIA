@@ -292,3 +292,65 @@ parameter PSUMS_INACTIVE_COLS_SIZE       = COLS_ACTIVE_SIZE;
 parameter PSUMS_INACTIVE_COLS_MSB        = PSUMS_INACTIVE_COLS_LSB + PSUMS_INACTIVE_COLS_SIZE - 1;
 
 parameter PSUMS_PRELOAD_EN_LSB           = PSUMS_INACTIVE_COLS_MSB + 1;
+
+/**********Ctrl Status Registers********************* */
+
+// ctrl_status_reg_0 (offset 0x0) - Control & Status
+parameter CTRL_STATUS_START_LSB             = 0;
+parameter CTRL_STATUS_START_SIZE            = 1;
+parameter CTRL_STATUS_DONE_LSB              = 1;
+parameter CTRL_STATUS_DONE_SIZE             = 1;
+parameter CTRL_STATUS_IDLE_LSB              = 2;
+parameter CTRL_STATUS_IDLE_SIZE             = 1;
+parameter CTRL_STATUS_READY_LSB             = 3;
+parameter CTRL_STATUS_READY_SIZE            = 1;
+parameter CTRL_STATUS_AUTO_RESTART_LSB      = 7;
+parameter CTRL_STATUS_AUTO_RESTART_SIZE     = 1;
+parameter CTRL_STATUS_MEM_SWITCH_LSB        = 16;
+parameter CTRL_STATUS_MEM_SWITCH_SIZE       = 1;
+parameter CTRL_STATUS_MEM_KEEP_A_LSB        = 17;
+parameter CTRL_STATUS_MEM_KEEP_A_SIZE       = 1;
+parameter CTRL_STATUS_MEM_KEEP_B_LSB        = 18;
+parameter CTRL_STATUS_MEM_KEEP_B_SIZE       = 1;
+parameter CTRL_STATUS_MEM_KEEP_C_LSB        = 19;
+parameter CTRL_STATUS_MEM_KEEP_C_SIZE       = 1;
+parameter CTRL_STATUS_IMPLICIT_MAP_LSB      = 24;
+parameter CTRL_STATUS_IMPLICIT_MAP_SIZE     = 1;
+
+parameter CTRL_STATUS_SOFT_RESET_LSB        = 31;
+parameter CTRL_STATUS_SOFT_RESET_SIZE       = 1;
+
+// ctrl_status_reg_1 (offset 0x4) - Global Interrupt Enable
+parameter CTRL_STATUS_GLOBAL_INT_EN_LSB     = 0;
+parameter CTRL_STATUS_GLOBAL_INT_EN_SIZE    = 1;
+
+// ctrl_status_reg_2 (offset 0x8) - Done Interrupt Enable
+parameter CTRL_STATUS_DONE_INT_EN_LSB       = 0;
+parameter CTRL_STATUS_DONE_INT_EN_SIZE      = 1;
+
+// ctrl_status_reg_3 (offset 0xC) - Done Interrupt Status
+parameter CTRL_STATUS_DONE_INT_STATUS_LSB   = 0;
+parameter CTRL_STATUS_DONE_INT_STATUS_SIZE  = 1;
+
+// ctrl_status_reg_4 (offset 0x14) - Status Flags
+parameter CTRL_STATUS_STATUS_FLAGS_LSB      = 0;
+parameter CTRL_STATUS_STATUS_FLAGS_SIZE     = SAURIA_REG_SIZE;
+
+// ctrl_status_reg_5 (offset 0x180) - Cycle Counter
+parameter CTRL_STATUS_CYCLE_COUNTER_LSB     = 0;
+parameter CTRL_STATUS_CYCLE_COUNTER_SIZE    = SAURIA_REG_SIZE;
+
+// ctrl_status_reg_6 (offset 0x184) - Stalls Counter
+parameter CTRL_STATUS_STALLS_COUNTER_LSB    = 0;
+parameter CTRL_STATUS_STALLS_COUNTER_SIZE   = SAURIA_REG_SIZE;
+
+// Register address offsets within the ctrl_status block
+parameter CTRL_STATUS_BASE_OFFSET    = CFG_BASE_OFFSET;
+parameter CTRL_STATUS_REG_0_ADDR = 'h0;
+parameter CTRL_STATUS_REG_1_ADDR = 'h4;
+parameter CTRL_STATUS_REG_2_ADDR = 'h8;
+parameter CTRL_STATUS_REG_3_ADDR = 'hC;
+parameter CTRL_STATUS_REG_4_ADDR = 'h10;
+parameter CTRL_STATUS_REG_5_ADDR = 'h14;
+parameter CTRL_STATUS_REG_6_ADDR = 'h18;
+parameter NUM_CTRL_STATUS_REGS   = 7;

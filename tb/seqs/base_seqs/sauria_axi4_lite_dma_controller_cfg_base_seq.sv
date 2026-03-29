@@ -2,11 +2,8 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
 
     `uvm_object_utils(sauria_axi4_lite_dma_controller_cfg_base_seq)
 
-    `uvm_declare_p_sequencer(uvm_sequencer #(sauria_axi4_lite_wr_txn_seq_item))
-
-    uvm_status_e                        status;
-    
-    //sauria_computation_params          computation_params;
+    uvm_status_e                     status;
+    sauria_dma_controller_reg_block  dma_controller_reg_block;
 
     rand int X;
     rand int Y;
@@ -14,31 +11,31 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
     rand int K;
     rand int W;
 
-    rand sauria_axi4_lite_data_t       dma_tile_x_lim;
-    rand sauria_axi4_lite_data_t       dma_tile_y_lim;
+    rand sauria_axi4_lite_data_t  dma_tile_x_lim;
+    rand sauria_axi4_lite_data_t  dma_tile_y_lim;
 
-    rand sauria_axi4_lite_data_t       dma_tile_c_lim;
-    rand sauria_axi4_lite_data_t       dma_tile_k_lim;
+    rand sauria_axi4_lite_data_t  dma_tile_c_lim;
+    rand sauria_axi4_lite_data_t  dma_tile_k_lim;
 
-    rand sauria_axi4_lite_data_t       dma_tile_psums_x_step;
-    rand sauria_axi4_lite_data_t       dma_tile_psums_y_step;
-    rand sauria_axi4_lite_data_t       dma_tile_psums_k_step;
-    rand sauria_axi4_lite_data_t       dma_tile_ifmaps_x_step;
-    rand sauria_axi4_lite_data_t       dma_tile_ifmaps_y_step;
-    rand sauria_axi4_lite_data_t       dma_tile_ifmaps_c_step;
-    rand sauria_axi4_lite_data_t       dma_tile_weights_k_step;
-    rand sauria_axi4_lite_data_t       dma_tile_weights_c_step;
+    rand sauria_axi4_lite_data_t  dma_tile_psums_x_step;
+    rand sauria_axi4_lite_data_t  dma_tile_psums_y_step;
+    rand sauria_axi4_lite_data_t  dma_tile_psums_k_step;
+    rand sauria_axi4_lite_data_t  dma_tile_ifmaps_x_step;
+    rand sauria_axi4_lite_data_t  dma_tile_ifmaps_y_step;
+    rand sauria_axi4_lite_data_t  dma_tile_ifmaps_c_step;
+    rand sauria_axi4_lite_data_t  dma_tile_weights_k_step;
+    rand sauria_axi4_lite_data_t  dma_tile_weights_c_step;
     
-    rand sauria_axi4_lite_data_t       dma_ifmaps_y_lim;
-    rand sauria_axi4_lite_data_t       dma_ifmaps_c_lim;
-    rand sauria_axi4_lite_data_t       dma_psums_y_step;
-    rand sauria_axi4_lite_data_t       dma_psums_k_step;
-    rand sauria_axi4_lite_data_t       dma_ifmaps_y_step;
-    rand sauria_axi4_lite_data_t       dma_ifmaps_c_step;
+    rand sauria_axi4_lite_data_t  dma_ifmaps_y_lim;
+    rand sauria_axi4_lite_data_t  dma_ifmaps_c_lim;
+    rand sauria_axi4_lite_data_t  dma_psums_y_step;
+    rand sauria_axi4_lite_data_t  dma_psums_k_step;
+    rand sauria_axi4_lite_data_t  dma_ifmaps_y_step;
+    rand sauria_axi4_lite_data_t  dma_ifmaps_c_step;
 
-    rand sauria_axi4_lite_data_t       dma_weights_w_step;
-    rand sauria_axi4_lite_data_t       dma_weights_w_lim;
-    rand sauria_axi4_lite_data_t       dma_ifmaps_ett;
+    rand sauria_axi4_lite_data_t  dma_weights_w_step;
+    rand sauria_axi4_lite_data_t  dma_weights_w_lim;
+    rand sauria_axi4_lite_data_t  dma_ifmaps_ett;
     
     //Independent Constraints
     constraint tile_dimensions_c {
@@ -109,20 +106,25 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
     function new(string name="sauria_axi4_lite_dma_cfg_base_seq");
         super.new(name);
         message_id = "SAURIA_AXI4_LITE_DMA_CONTROLLER_CFG_BASE_SEQ";
-   
-        queue_start_idx =  DMA_CONTROLLER_CFG_CRs_START_IDX;
-        queue_end_idx   =  DMA_CONTROLLER_CFG_CRs_END_IDX;
-
     endfunction
+
+    virtual task pre_start();
+        super.pre_start();
+        this.dma_controller_reg_block = subsystem_reg_block.dma_controller_reg_block;
+    endtask
 
     virtual task body();
         share_computation_params();
         super.body();
     endtask
 
-    virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
-        add_dma_controller_cfg_CRs(cfg_cr_idx);
+    virtual function void set_unit_specific_cfg_CRs();
+        set_dma_controller_cfg_CRs();
     endfunction
+
+    virtual task send_unit_specific_cfg_CRs();
+        send_dma_controller_cfg_CRs();
+    endtask
 
     virtual function void share_computation_params();  
         share_tile_dimensions();
@@ -200,29 +202,25 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
     
     endfunction
 
-    virtual function void add_dma_controller_cfg_CRs(int cfg_cr_idx);
-            
-        case(cfg_cr_idx)
-            0:  set_dma_controller_cfg_reg_0();
-            1:  set_dma_controller_cfg_reg_1();
-            2:  set_dma_controller_cfg_reg_2();
-            3:  set_dma_controller_cfg_reg_3();
-            4:  set_dma_controller_cfg_reg_4();
-            5:  set_dma_controller_cfg_reg_5();
-            6:  set_dma_controller_cfg_reg_6();
-            7:  set_dma_controller_cfg_reg_7();
-            8:  set_dma_controller_cfg_reg_8();
-            9:  set_dma_controller_cfg_reg_9();
-            10: set_dma_controller_cfg_reg_10();
-            11: set_dma_controller_cfg_reg_11();
-            12: set_dma_controller_cfg_reg_12();
-            13: set_dma_controller_cfg_reg_13();
-            14: set_dma_controller_cfg_reg_14();
-            15: set_dma_controller_cfg_reg_15();
-            16: set_dma_controller_cfg_reg_16();
-            17: set_dma_controller_cfg_reg_17();
-        endcase  
-
+    virtual function void set_dma_controller_cfg_CRs();
+        set_dma_controller_cfg_reg_0();
+        set_dma_controller_cfg_reg_1();
+        set_dma_controller_cfg_reg_2();
+        set_dma_controller_cfg_reg_3();
+        set_dma_controller_cfg_reg_4();
+        set_dma_controller_cfg_reg_5();
+        set_dma_controller_cfg_reg_6();
+        set_dma_controller_cfg_reg_7();
+        set_dma_controller_cfg_reg_8();
+        set_dma_controller_cfg_reg_9();
+        set_dma_controller_cfg_reg_10();
+        set_dma_controller_cfg_reg_11();
+        set_dma_controller_cfg_reg_12();
+        set_dma_controller_cfg_reg_13();
+        set_dma_controller_cfg_reg_14();
+        set_dma_controller_cfg_reg_15();
+        set_dma_controller_cfg_reg_16();
+        set_dma_controller_cfg_reg_17(); 
     endfunction
 
     virtual task send_dma_controller_cfg_CRs();
@@ -300,13 +298,13 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
     endtask
     
     virtual function void set_dma_controller_cfg_reg_0();
-        dma_controller_reg_block.dma_controller_cfg_reg_0.dma_tile_x_lim.set(to_reg_data(dma_tile_x_lim & sauria_axi4_lite_data_t'('h0000ffff)));
-        dma_controller_reg_block.dma_controller_cfg_reg_0.dma_tile_y_lim.set(to_reg_data(dma_tile_y_lim & sauria_axi4_lite_data_t'('h0000ffff)));
+        dma_controller_reg_block.dma_controller_cfg_reg_0.dma_tile_x_lim.set(to_reg_data(dma_tile_x_lim));
+        dma_controller_reg_block.dma_controller_cfg_reg_0.dma_tile_y_lim.set(to_reg_data(dma_tile_y_lim));
     endfunction
 
     virtual function void set_dma_controller_cfg_reg_1();
-        dma_controller_reg_block.dma_controller_cfg_reg_1.dma_tile_c_lim.set(to_reg_data(dma_tile_c_lim & sauria_axi4_lite_data_t'('h0000ffff)));
-        dma_controller_reg_block.dma_controller_cfg_reg_1.dma_tile_k_lim.set(to_reg_data(dma_tile_k_lim & sauria_axi4_lite_data_t'('h0000ffff)));
+        dma_controller_reg_block.dma_controller_cfg_reg_1.dma_tile_c_lim.set(to_reg_data(dma_tile_c_lim));
+        dma_controller_reg_block.dma_controller_cfg_reg_1.dma_tile_k_lim.set(to_reg_data(dma_tile_k_lim));
     endfunction
 
     virtual function void set_dma_controller_cfg_reg_2();

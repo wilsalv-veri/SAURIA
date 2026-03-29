@@ -2,8 +2,9 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
 
     `uvm_object_utils(sauria_axi4_lite_df_controller_cfg_base_seq)
 
-    uvm_status_e                        status;
-   
+    uvm_status_e                       status;
+    sauria_df_controller_reg_block     df_controller_reg_block;
+
     rand bit                           stand_alone;
     rand bit                           stand_alone_keep_A;
     rand bit                           stand_alone_keep_B;
@@ -53,11 +54,12 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
     function new(string name="sauria_axi4_lite_df_controller_cfg_base_seq");
         super.new(name);
         message_id = "SAURIA_AXI4_LITE_DF_CONTROLLER_CFG_BASE_SEQ";
-        enable_done_interrupt = 1'b1;
-        queue_start_idx       =  DF_CONTROLLER_CFG_CRs_START_IDX;
-        queue_end_idx         =  DF_CONTROLLER_CFG_CRs_END_IDX;
- 
     endfunction
+
+    virtual task pre_start();
+        super.pre_start();
+        this.df_controller_reg_block = subsystem_reg_block.df_controller_reg_block;
+    endtask
 
     virtual task body();
         exchange_computation_params(); 
@@ -71,19 +73,19 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
         get_tensor_sizes();
     endtask
 
-    virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
-        add_df_controller_cfg_CRs(cfg_cr_idx);
+    virtual function void set_unit_specific_cfg_CRs();
+        set_df_controller_cfg_CRs();
     endfunction
 
-    virtual function void add_df_controller_cfg_CRs(int cfg_cr_idx);
-            
-        case(cfg_cr_idx)
-            18: set_df_controller_cfg_reg_18();
-            19: set_df_controller_cfg_reg_19();
-            20: set_df_controller_cfg_reg_20();
-            21: set_df_controller_cfg_reg_21();
-        endcase
+    virtual task send_unit_specific_cfg_CRs();
+        send_df_controller_cfg_CRs();
+    endtask
 
+    virtual function void set_df_controller_cfg_CRs();
+        set_df_controller_cfg_reg_18();
+        set_df_controller_cfg_reg_19();
+        set_df_controller_cfg_reg_20();
+        set_df_controller_cfg_reg_21();
     endfunction
 
     virtual task send_df_controller_cfg_CRs();

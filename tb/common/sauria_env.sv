@@ -2,16 +2,11 @@ class sauria_env extends uvm_env;
 
     `uvm_component_utils(sauria_env)
 
-    sauria_axi4_lite_agent      axi4_lite_agent;
-    sauria_axi4_agent           axi4_agent;
-    sauria_axi4_lite_adapter    axi4_lite_adapter;
+    sauria_axi4_lite_agent        axi4_lite_agent;
+    sauria_axi4_agent             axi4_agent;
+    sauria_axi4_lite_adapter      axi4_lite_adapter;
 
-    sauria_dma_controller_reg_block  dma_controller_reg_block;
-    sauria_df_controller_reg_block   df_controller_reg_block;
-    sauria_core_main_controller_reg_block core_main_controller_reg_block;
-    sauria_core_weights_reg_block core_weights_reg_block;
-    sauria_core_ifmaps_reg_block  core_ifmaps_reg_block;
-    sauria_core_psums_reg_block   core_psums_reg_block;
+    sauria_ss_reg_block           subsystem_reg_block;
    
     sauria_axi_vseqr              vseqr;
     
@@ -43,23 +38,8 @@ class sauria_env extends uvm_env;
         axi4_lite_agent     = sauria_axi4_lite_agent::type_id::create("sauria_axi4_lite_agent", this);
         axi4_lite_adapter   = sauria_axi4_lite_adapter::type_id::create("sauria_axi4_lite_adapter", , get_full_name());
         
-        dma_controller_reg_block = sauria_dma_controller_reg_block::type_id::create("sauria_dma_controller_reg_block");
-        dma_controller_reg_block.configure();
-
-        df_controller_reg_block = sauria_df_controller_reg_block::type_id::create("sauria_df_controller_reg_block");
-        df_controller_reg_block.configure();
-
-        core_main_controller_reg_block = sauria_core_main_controller_reg_block::type_id::create("sauria_core_main_controller_reg_block");
-        core_main_controller_reg_block.configure();
-
-        core_weights_reg_block = sauria_core_weights_reg_block::type_id::create("sauria_core_weights_reg_block");
-        core_weights_reg_block.configure();
-
-        core_ifmaps_reg_block = sauria_core_ifmaps_reg_block::type_id::create("sauria_core_ifmaps_reg_block");
-        core_ifmaps_reg_block.configure();
-
-        core_psums_reg_block = sauria_core_psums_reg_block::type_id::create("sauria_core_psums_reg_block");
-        core_psums_reg_block.configure();
+        subsystem_reg_block = sauria_ss_reg_block::type_id::create("sauria_ss_reg_block");
+        subsystem_reg_block.configure();
 
         axi4_agent          = sauria_axi4_agent::type_id::create("sauria_axi4_agent", this);
         dma_req_addr_scbd   = sauria_dma_req_addr_scbd::type_id::create("sauria_dma_req_addr_scbd", this);
@@ -86,23 +66,14 @@ class sauria_env extends uvm_env;
        //vseqr.axi4_lite_seqr = axi4_lite_agent.axi4_lite_seqr;
         //vseqr.axi4_seqr      = axi4_agent.axi4_seqr;
         
-        dma_controller_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
-        axi4_lite_agent.axi4_lite_seqr.dma_controller_reg_block = dma_controller_reg_block;
-
-        df_controller_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
-        axi4_lite_agent.axi4_lite_seqr.df_controller_reg_block = df_controller_reg_block;
-
-        core_main_controller_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
-        axi4_lite_agent.axi4_lite_seqr.core_main_controller_reg_block = core_main_controller_reg_block;
-
-        core_weights_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
-        axi4_lite_agent.axi4_lite_seqr.core_weights_reg_block = core_weights_reg_block;
-
-        core_ifmaps_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
-        axi4_lite_agent.axi4_lite_seqr.core_ifmaps_reg_block = core_ifmaps_reg_block;
-
-        core_psums_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
-        axi4_lite_agent.axi4_lite_seqr.core_psums_reg_block = core_psums_reg_block;
+        subsystem_reg_block.dma_controller_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
+        subsystem_reg_block.df_controller_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
+        subsystem_reg_block.core_main_controller_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
+        subsystem_reg_block.core_weights_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
+        subsystem_reg_block.core_ifmaps_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
+        subsystem_reg_block.core_psums_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
+        subsystem_reg_block.ctrl_status_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
+        axi4_lite_agent.axi4_lite_seqr.subsystem_reg_block = subsystem_reg_block;
 
         axi4_agent.axi4_mon.send_dma_rd_addr.connect(dma_req_addr_scbd.receive_dma_rd_addr);
         axi4_agent.axi4_mon.send_dma_wr_addr.connect(dma_req_addr_scbd.receive_dma_wr_addr);

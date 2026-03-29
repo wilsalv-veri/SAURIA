@@ -19,6 +19,7 @@ $SAURIA/tb/interfaces/sauria_ifmaps_feeder_ifc.sv
 +incdir+$SAURIA/tb/reg_models/regs/df_controller_regs/
 +incdir+$SAURIA/tb/reg_models/regs/weights_feeder_regs/
 +incdir+$SAURIA/tb/reg_models/regs/ifmaps_feeder_regs/
++incdir+$SAURIA/tb/reg_models/regs/ctrl_status_regs/
 +incdir+$SAURIA/tb/reg_models/regs/core_controller_regs/
 +incdir+$SAURIA/tb/reg_models/reg_blocks/
 +incdir+$SAURIA/tb/reg_models/reg_params/

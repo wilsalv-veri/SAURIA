@@ -2,8 +2,9 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
 
     `uvm_object_utils(sauria_axi4_lite_core_weights_cfg_base_seq)
 
-    uvm_status_e status;
-    
+    uvm_status_e                   status;
+    sauria_core_weights_reg_block  core_weights_reg_block;
+
     rand sauria_axi4_lite_data_t weights_w_lim;
     rand sauria_axi4_lite_data_t weights_w_step;
     rand sauria_axi4_lite_data_t weights_k_lim;
@@ -45,11 +46,12 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
     function new(string name="sauria_axi4_lite_core_weights_cfg_base_seq");
         super.new(name);
         message_id = "SAURIA_AXI4_LITE_CORE_WEIGHTS_CFG_BASE_SEQ";
-    
-        queue_start_idx = CORE_WEIGHTS_CFG_CRs_START_IDX;
-        queue_end_idx   = CORE_WEIGHTS_CFG_CRs_END_IDX;
-
     endfunction
+
+    virtual task pre_start();
+        super.pre_start();
+        this.core_weights_reg_block = subsystem_reg_block.core_weights_reg_block;
+    endtask
 
     virtual task body();
         get_weights_params();
@@ -57,19 +59,19 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
         super.body();
     endtask
 
-    virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
-        set_core_weights_cfg_CRs(cfg_cr_idx);
+    virtual function void set_unit_specific_cfg_CRs();
+        set_core_weights_cfg_CRs();
     endfunction
 
-    virtual function void set_core_weights_cfg_CRs(int cfg_cr_idx);
-            
-        case(cfg_cr_idx)
-            33: set_core_weights_cfg_reg_33();
-            34: set_core_weights_cfg_reg_34();
-            35: set_core_weights_cfg_reg_35();
-            36: set_core_weights_cfg_reg_36();
-        endcase
-           
+    virtual task send_unit_specific_cfg_CRs();
+        send_core_weights_cfg_CRs();
+    endtask
+
+    virtual function void set_core_weights_cfg_CRs();
+        set_core_weights_cfg_reg_33();
+        set_core_weights_cfg_reg_34();
+        set_core_weights_cfg_reg_35();
+        set_core_weights_cfg_reg_36();
     endfunction
 
     virtual task get_weights_params();
@@ -95,7 +97,7 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
         computation_params.weights_cfg_shared = 1'b1;
     endtask
 
-    virtual task send_weights_cfg_CRs();
+    virtual task send_core_weights_cfg_CRs();
         core_weights_reg_block.core_weights_cfg_reg_33.update(status);
         if (status != UVM_IS_OK)
             `sauria_error(message_id, "Status not OK while updating core_weights_cfg_reg_33")
@@ -175,7 +177,6 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
 
     endfunction
     
-
     //--------------------35-------------------------
     virtual function void set_weights_tile_k_lim();
         //INT

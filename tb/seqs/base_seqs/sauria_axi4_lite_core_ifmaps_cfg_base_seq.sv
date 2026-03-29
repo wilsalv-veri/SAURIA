@@ -4,7 +4,8 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
 
     `uvm_object_utils(sauria_axi4_lite_core_ifmaps_cfg_base_seq)
 
-    uvm_status_e status;
+    uvm_status_e                  status;
+    sauria_core_ifmaps_reg_block  core_ifmaps_reg_block;
 
     rand sauria_axi4_lite_data_t ifmaps_x_lim;
     rand sauria_axi4_lite_data_t ifmaps_x_step;
@@ -84,13 +85,12 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
     function new(string name="sauria_axi4_lite_core_ifmaps_cfg_base_seq");
         super.new(name);
         message_id = "SAURIA_AXI4_LITE_CORE_IFMAPS_CFG_BASE_SEQ";
-
-        queue_start_idx = CORE_IFMAPS_CFG_CRs_START_IDX;
-        queue_end_idx   = CORE_IFMAPS_CFG_CRs_END_IDX;
-
-        if(!this.randomize())
-            `sauria_error(message_id, "Failed to randomize sauria_axi4_lite_core_ifmaps_cfg_base_seq")
     endfunction
+
+    virtual task pre_start();
+        super.pre_start();
+        this.core_ifmaps_reg_block = subsystem_reg_block.core_ifmaps_reg_block;
+    endtask
 
     virtual task body();
         get_ifmaps_params();
@@ -98,24 +98,24 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
         super.body();
     endtask
 
-    virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
-        set_core_ifmaps_cfg_CRs(cfg_cr_idx);
+    virtual function void set_unit_specific_cfg_CRs();
+        set_core_ifmaps_cfg_CRs();
     endfunction
 
-    virtual function void set_core_ifmaps_cfg_CRs(int cfg_cr_idx);
+    virtual task send_unit_specific_cfg_CRs();
+        send_ifmaps_core_cfg_CRs();
+    endtask
 
-        case(cfg_cr_idx)
-            24: set_core_ifmaps_cfg_reg_24();
-            25: set_core_ifmaps_cfg_reg_25();
-            26: set_core_ifmaps_cfg_reg_26();
-            27: set_core_ifmaps_cfg_reg_27();
-            28: set_core_ifmaps_cfg_reg_28();
-            29: set_core_ifmaps_cfg_reg_29();
-            30: set_core_ifmaps_cfg_reg_30();
-            31: set_core_ifmaps_cfg_reg_31();
-            32: set_core_ifmaps_cfg_reg_32();
-        endcase
-        
+    virtual function void set_core_ifmaps_cfg_CRs();
+        set_core_ifmaps_cfg_reg_24();
+        set_core_ifmaps_cfg_reg_25();
+        set_core_ifmaps_cfg_reg_26();
+        set_core_ifmaps_cfg_reg_27();
+        set_core_ifmaps_cfg_reg_28();
+        set_core_ifmaps_cfg_reg_29();
+        set_core_ifmaps_cfg_reg_30();
+        set_core_ifmaps_cfg_reg_31();
+        set_core_ifmaps_cfg_reg_32();
     endfunction
 
     virtual function void set_core_ifmaps_cfg_reg_24();
@@ -173,7 +173,7 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
         core_ifmaps_reg_block.core_ifmaps_cfg_reg_32.ifmaps_loc_woffs_7.set(ifmaps_loc_woffs_7);
     endfunction
 
-    virtual task send_ifmaps_cfg_CRs();
+    virtual task send_ifmaps_core_cfg_CRs();
         core_ifmaps_reg_block.core_ifmaps_cfg_reg_24.update(status);
         if (status != UVM_IS_OK)
             `sauria_error(message_id, "Status not OK while updating core_ifmaps_cfg_reg_24")

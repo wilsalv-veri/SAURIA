@@ -9,7 +9,7 @@ class sauria_axi4_lite_cfg_seq_lib extends uvm_sequence_library #(sauria_axi_txn
     function new(string name="sauria_axi4_lite_cfg_seq_lib");
         super.new(name);
         sequence_count   = 0;
-        num_of_sequences = 6;
+        num_of_sequences = 7;
         sequence_count   = num_of_sequences;
         add_sauria_cfg_seqs();
         init_sequence_library();
@@ -26,6 +26,7 @@ class sauria_axi4_lite_cfg_seq_lib extends uvm_sequence_library #(sauria_axi_txn
         add_core_ifmaps_cfg_sequence();
         add_core_weights_cfg_sequence();
         add_core_psums_cfg_sequence();
+        add_ctrl_status_cfg_sequence();
     endfunction
 
     virtual function void add_df_controller_cfg_seq(); 
@@ -50,6 +51,10 @@ class sauria_axi4_lite_cfg_seq_lib extends uvm_sequence_library #(sauria_axi_txn
 
     virtual function void add_core_psums_cfg_sequence(); 
         add_typewide_sequence(sauria_axi4_lite_core_psums_cfg_base_seq::get_type());
+    endfunction
+
+    virtual function void add_ctrl_status_cfg_sequence();
+        add_typewide_sequence(sauria_axi4_lite_ctrl_status_cfg_base_seq::get_type());
     endfunction
 
 endclass

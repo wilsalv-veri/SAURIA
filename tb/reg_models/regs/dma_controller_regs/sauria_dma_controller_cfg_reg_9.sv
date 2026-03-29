@@ -15,7 +15,15 @@ class sauria_dma_controller_cfg_reg_9 extends uvm_reg;
     function void configure(uvm_reg_block blk_parent, uvm_reg_file regfile_parent=null, string hdl_path="");
         super.configure(blk_parent, regfile_parent, hdl_path);
 
-        dma_tile_weights_c_step.configure(.parent(this), .size(DMA_TILE_WEIGHTS_C_STEP_SIZE), .lsb_pos(DMA_TILE_WEIGHTS_C_STEP_LSB), .access(REG_CFG_ACCESS), .volatile(REG_CFG_VOLATILE_VAL), .reset(REG_CFG_RESET_VAL), .has_reset(REG_CFG_HAS_RESET), .is_rand(REG_CFG_IS_RAND), .individually_accessible(REG_CFG_INDIVIDUALLY_ACCESSIBLE));
+        dma_tile_weights_c_step.configure(.parent(this),
+                                          .size(DMA_TILE_WEIGHTS_C_STEP_SIZE),
+                                          .lsb_pos(DMA_TILE_WEIGHTS_C_STEP_LSB),
+                                          .access(REG_CFG_ACCESS),
+                                          .volatile(REG_CFG_VOLATILE_VAL),
+                                          .reset(REG_CFG_RESET_VAL),
+                                          .has_reset(REG_CFG_HAS_RESET),
+                                          .is_rand(REG_CFG_IS_RAND),
+                                          .individually_accessible(REG_CFG_INDIVIDUALLY_ACCESSIBLE));
     endfunction
 
 endclass

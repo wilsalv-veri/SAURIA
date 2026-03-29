@@ -7,11 +7,13 @@ package sauria_cfg_regs_pkg;
     import sauria_pkg::*;
     import sauria_common_pkg::*;
     
-   
     parameter REG_FLAG_SIZE                   = 1;
     parameter REG_COVERAGE                    = UVM_NO_COVERAGE;
     parameter REG_CFG_VOLATILE_VAL            = 0;
+    parameter REG_STATUS_VOLATILE_VAL         = 1;
     parameter string REG_CFG_ACCESS           = "RW";
+    parameter string REG_STATUS_ACCESS        = "RO";
+    parameter string REG_W1T_ACCESS           = "W1T";
     parameter REG_CFG_RESET_VAL               = 'h0;
     parameter REG_CFG_HAS_RESET               = 0;
     parameter REG_CFG_IS_RAND                 = 0;
@@ -25,29 +27,37 @@ package sauria_cfg_regs_pkg;
   
     `include "sauria_cfg_regs_params.sv"
 
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_0.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_1.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_2.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_3.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_4.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_5.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_6.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_7.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_8.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_9.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_10.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_11.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_12.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_13.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_14.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_15.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_16.sv"
-    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_17.sv"
+    `include "sauria_ctrl_status_reg_0.sv"
+    `include "sauria_ctrl_status_reg_1.sv"
+    `include "sauria_ctrl_status_reg_2.sv"
+    `include "sauria_ctrl_status_reg_3.sv"
+    `include "sauria_ctrl_status_reg_4.sv"
+    `include "sauria_ctrl_status_reg_5.sv"
+    `include "sauria_ctrl_status_reg_6.sv"
+    
+    `include "sauria_dma_controller_cfg_reg_0.sv"
+    `include "sauria_dma_controller_cfg_reg_1.sv"
+    `include "sauria_dma_controller_cfg_reg_2.sv"
+    `include "sauria_dma_controller_cfg_reg_3.sv"
+    `include "sauria_dma_controller_cfg_reg_4.sv"
+    `include "sauria_dma_controller_cfg_reg_5.sv"
+    `include "sauria_dma_controller_cfg_reg_6.sv"
+    `include "sauria_dma_controller_cfg_reg_7.sv"
+    `include "sauria_dma_controller_cfg_reg_8.sv"
+    `include "sauria_dma_controller_cfg_reg_9.sv"
+    `include "sauria_dma_controller_cfg_reg_10.sv"
+    `include "sauria_dma_controller_cfg_reg_11.sv"
+    `include "sauria_dma_controller_cfg_reg_12.sv"
+    `include "sauria_dma_controller_cfg_reg_13.sv"
+    `include "sauria_dma_controller_cfg_reg_14.sv"
+    `include "sauria_dma_controller_cfg_reg_15.sv"
+    `include "sauria_dma_controller_cfg_reg_16.sv"
+    `include "sauria_dma_controller_cfg_reg_17.sv"
 
-    `include "../reg_models/regs/df_controller_regs/sauria_df_controller_cfg_reg_18.sv"
-    `include "../reg_models/regs/df_controller_regs/sauria_df_controller_cfg_reg_19.sv"
-    `include "../reg_models/regs/df_controller_regs/sauria_df_controller_cfg_reg_20.sv"
-    `include "../reg_models/regs/df_controller_regs/sauria_df_controller_cfg_reg_21.sv"
+    `include "sauria_df_controller_cfg_reg_18.sv"
+    `include "sauria_df_controller_cfg_reg_19.sv"
+    `include "sauria_df_controller_cfg_reg_20.sv"
+    `include "sauria_df_controller_cfg_reg_21.sv"
 
     `include "sauria_core_main_controller_cfg_reg_22.sv"
     `include "sauria_core_main_controller_cfg_reg_23.sv"
@@ -73,13 +83,16 @@ package sauria_cfg_regs_pkg;
     `include "sauria_core_psums_cfg_reg_40.sv"
     `include "sauria_core_psums_cfg_reg_41.sv"
 
-    `include "../reg_models/reg_blocks/sauria_dma_controller_reg_block.sv"
-    `include "../reg_models/reg_blocks/sauria_df_controller_reg_block.sv"
+    `include "sauria_ctrl_status_reg_block.sv"
+    `include "sauria_dma_controller_reg_block.sv"
+    `include "sauria_df_controller_reg_block.sv"
     `include "sauria_core_main_controller_reg_block.sv"
     `include "sauria_core_ifmaps_reg_block.sv"
     `include "sauria_core_weights_reg_block.sv"
     `include "sauria_core_psums_reg_block.sv"
+    `include "sauria_ss_reg_block.sv"
 
+    
 endpackage
 
 `endif

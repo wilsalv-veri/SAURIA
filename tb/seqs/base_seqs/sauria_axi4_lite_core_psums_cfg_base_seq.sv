@@ -2,7 +2,8 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
 
     `uvm_object_utils(sauria_axi4_lite_core_psums_cfg_base_seq)
 
-    uvm_status_e status;
+    uvm_status_e                 status;
+    sauria_core_psums_reg_block  core_psums_reg_block;
 
     rand sauria_axi4_lite_data_t psums_reps;
     rand sauria_axi4_lite_data_t psums_cx_lim;
@@ -55,12 +56,12 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     function new(string name="sauria_axi4_lite_core_psums_cfg_base_seq");
         super.new(name);
         message_id = "SAURIA_AXI4_LITE_CORE_PSUMS_CFG_BASE_SEQ";
-    
-        start_controller_fsm = 1'b1;
-        queue_start_idx      = CORE_PSUMS_CFG_CRs_START_IDX;
-        queue_end_idx        = CORE_PSUMS_CFG_CRs_END_IDX;
-
     endfunction
+
+    virtual task pre_start();
+        super.pre_start();
+        this.core_psums_reg_block = subsystem_reg_block.core_psums_reg_block;
+    endtask
 
     virtual task body();
         get_psums_params();
@@ -68,20 +69,20 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
         super.body();
     endtask
 
-    virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
-        set_core_psums_cfg_CRs(cfg_cr_idx);
+    virtual function void set_unit_specific_cfg_CRs();
+        set_core_psums_cfg_CRs();
     endfunction
 
-    virtual function void set_core_psums_cfg_CRs(int cfg_cr_idx);
-        
-        case(cfg_cr_idx)
-            37: set_core_psums_cfg_reg_37();
-            38: set_core_psums_cfg_reg_38();
-            39: set_core_psums_cfg_reg_39();
-            40: set_core_psums_cfg_reg_40();
-            41: set_core_psums_cfg_reg_41();
-        endcase
-        
+    virtual task send_unit_specific_cfg_CRs();
+        send_psums_core_cfg_CRs();
+    endtask
+
+    virtual function void set_core_psums_cfg_CRs();
+        set_core_psums_cfg_reg_37();
+        set_core_psums_cfg_reg_38();
+        set_core_psums_cfg_reg_39();
+        set_core_psums_cfg_reg_40();
+        set_core_psums_cfg_reg_41();
     endfunction
 
     virtual function void set_core_psums_cfg_reg_37();
@@ -121,7 +122,7 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
         core_psums_reg_block.core_psums_cfg_reg_41.psums_preload_en.set(psums_preload_en);
     endfunction
 
-    virtual task send_psums_cfg_CRs();
+    virtual task send_psums_core_cfg_CRs();
         core_psums_reg_block.core_psums_cfg_reg_37.update(status);
         if (status != UVM_IS_OK)
             `sauria_error(message_id, "Status not OK while updating core_psums_cfg_reg_37")

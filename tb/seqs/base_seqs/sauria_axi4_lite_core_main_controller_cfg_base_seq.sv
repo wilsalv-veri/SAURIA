@@ -2,8 +2,9 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
 
     `uvm_object_utils(sauria_axi4_lite_core_main_controller_cfg_base_seq)
 
-    uvm_status_e status;
-   
+    uvm_status_e                           status;
+    sauria_core_main_controller_reg_block  core_main_controller_reg_block;
+
     rand sauria_axi4_lite_data_t total_macs;
     rand sauria_axi4_lite_data_t act_reps;
                         
@@ -11,7 +12,6 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
     
     rand sauria_axi4_lite_data_t zero_negligence_threshold;                
    
-    
     constraint total_macs_c {
         total_macs == sauria_axi4_lite_data_t'('h10);
     }
@@ -28,13 +28,12 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
     function new(string name="sauria_axi4_lite_core_main_controller_cfg_base_seq");
         super.new(name);
         message_id = "SAURIA_AXI4_LITE_CORE_MAIN_CONTROLLER_CFG_BASE_SEQ";
-        
-        queue_start_idx = CORE_MAIN_CONTROLLER_CFG_CRs_START_IDX;
-        queue_end_idx   = CORE_MAIN_CONTROLLER_CFG_CRs_END_IDX;
-
-        if(!this.randomize())
-            `sauria_error(message_id, "Failed to randomize sauria_axi4_lite_core_main_controller_cfg_base_seq")
     endfunction
+
+    virtual task pre_start();
+        super.pre_start();
+        this.core_main_controller_reg_block = subsystem_reg_block.core_main_controller_reg_block;
+    endtask
 
     virtual task body();
         set_total_macs_params();
@@ -48,17 +47,17 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
         computation_params.main_controller_cfg_shared = 1'b1;
     endtask
   
-    virtual function void add_unit_specific_cfg_CRs(int cfg_cr_idx);
-        set_core_main_controller_cfg_CRs(cfg_cr_idx);
+    virtual function void set_unit_specific_cfg_CRs();
+        set_core_main_controller_cfg_CRs();
     endfunction
 
-    virtual function void set_core_main_controller_cfg_CRs(int cfg_cr_idx);
-            
-        case(cfg_cr_idx)
-            22: set_core_main_controller_cfg_reg_22();
-            23: set_core_main_controller_cfg_reg_23();
-        endcase
-      
+    virtual task send_unit_specific_cfg_CRs();
+        send_main_controller_cfg_CRs();
+    endtask
+
+    virtual function void set_core_main_controller_cfg_CRs();
+        set_core_main_controller_cfg_reg_22();
+        set_core_main_controller_cfg_reg_23();
     endfunction
 
     virtual function void set_core_main_controller_cfg_reg_22();

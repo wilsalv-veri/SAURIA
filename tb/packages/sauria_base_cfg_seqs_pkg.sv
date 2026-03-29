@@ -21,6 +21,7 @@ package sauria_base_cfg_seqs_pkg;
     `include "sauria_axi4_lite_core_ifmaps_cfg_base_seq.sv"
     `include "sauria_axi4_lite_core_weights_cfg_base_seq.sv"
     `include "sauria_axi4_lite_core_psums_cfg_base_seq.sv"
+    `include "sauria_axi4_lite_ctrl_status_cfg_base_seq.sv"
     `include "sauria_axi4_lite_cfg_seq_lib.sv"
     `include "sauria_axi4_mem_base_seq.sv"
     `include "sauria_axi4_base_vseq.sv"

@@ -4,14 +4,8 @@ class sauria_axi4_lite_seqr extends uvm_sequencer #(sauria_axi4_lite_wr_txn_seq_
 
     string message_id = "SAURIA_AXI4_LITE_SEQR";
 
-    sauria_computation_params          computation_params;
-
-    sauria_dma_controller_reg_block    dma_controller_reg_block;
-    sauria_df_controller_reg_block     df_controller_reg_block;
-    sauria_core_main_controller_reg_block core_main_controller_reg_block;
-    sauria_core_weights_reg_block      core_weights_reg_block;
-    sauria_core_ifmaps_reg_block       core_ifmaps_reg_block;
-    sauria_core_psums_reg_block        core_psums_reg_block;
+    sauria_computation_params  computation_params;
+    sauria_ss_reg_block        subsystem_reg_block;
 
     function new(string name="sauria_axi4_lite_seqr", uvm_component parent=null);
         super.new(name,parent);
