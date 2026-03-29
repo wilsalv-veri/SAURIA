@@ -25,6 +25,25 @@ package sauria_cfg_regs_pkg;
   
     `include "sauria_cfg_regs_params.sv"
 
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_0.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_1.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_2.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_3.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_4.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_5.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_6.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_7.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_8.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_9.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_10.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_11.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_12.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_13.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_14.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_15.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_16.sv"
+    `include "../reg_models/regs/dma_controller_regs/sauria_dma_controller_cfg_reg_17.sv"
+
     `include "../reg_models/regs/df_controller_regs/sauria_df_controller_cfg_reg_18.sv"
     `include "../reg_models/regs/df_controller_regs/sauria_df_controller_cfg_reg_19.sv"
     `include "../reg_models/regs/df_controller_regs/sauria_df_controller_cfg_reg_20.sv"
@@ -54,6 +73,7 @@ package sauria_cfg_regs_pkg;
     `include "sauria_core_psums_cfg_reg_40.sv"
     `include "sauria_core_psums_cfg_reg_41.sv"
 
+    `include "../reg_models/reg_blocks/sauria_dma_controller_reg_block.sv"
     `include "../reg_models/reg_blocks/sauria_df_controller_reg_block.sv"
     `include "sauria_core_main_controller_reg_block.sv"
     `include "sauria_core_ifmaps_reg_block.sv"

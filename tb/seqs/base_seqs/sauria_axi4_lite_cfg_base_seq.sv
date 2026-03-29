@@ -15,6 +15,7 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_t
     bit                                enable_done_interrupt = 1'b0;
     bit                                start_controller_fsm  = 1'b0;
 
+    sauria_dma_controller_reg_block    dma_controller_reg_block;
     sauria_df_controller_reg_block     df_controller_reg_block;
     sauria_core_main_controller_reg_block core_main_controller_reg_block;
     sauria_core_weights_reg_block      core_weights_reg_block;
@@ -34,6 +35,11 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_t
 
             if (!uvm_config_db #(sauria_computation_params)::get(axi4_lite_seqr, "","computation_params", computation_params))
                 `sauria_error(message_id, "Failed to get access to computation params")
+
+            if (axi4_lite_seqr.dma_controller_reg_block == null) begin
+                `sauria_fatal(message_id, "DMA-controller regmodel handle on sequencer is null! Check env connection.")
+            end
+            this.dma_controller_reg_block = axi4_lite_seqr.dma_controller_reg_block;
 
             if (axi4_lite_seqr.df_controller_reg_block == null) begin
                 `sauria_fatal(message_id, "DF-controller regmodel handle on sequencer is null! Check env connection.")
@@ -62,9 +68,16 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_t
         end
         else `sauria_error(message_id, "Sequencer handle is not of the expected type sauria_axi4_lite_seqr")
 
-        if (!this.randomize())
-            `sauria_error(message_id, "Failed to randomize sequence")
+        //if (!this.randomize())
+        //    `sauria_error(message_id, "Failed to randomize sequence")
     
+        //1) Get Tile Dimensions(X, Y, W, C, K) and Tensor Dimensions 
+        //2) Set IFMAPS and WEIGHTS
+        //3) Set PSUMS
+        repeat(3) begin
+            if (!this.randomize())
+                `sauria_error(message_id, "Failed to randomize sauria_axi4_lite_cfg_w_dma_base_seq")
+        end
     endtask 
 
     virtual task body();
@@ -80,7 +93,9 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_t
     virtual task send_cfg_CRs();
         `sauria_info(message_id, "Sending Config CRs")
 
-        if (queue_start_idx == DF_CONTROLLER_CFG_CRs_START_IDX)
+        if (queue_start_idx == DMA_CONTROLLER_CFG_CRs_START_IDX)
+            send_dma_controller_cfg_CRs();
+        else if (queue_start_idx == DF_CONTROLLER_CFG_CRs_START_IDX)
             send_df_controller_cfg_CRs();
         else if (queue_start_idx == CORE_MAIN_CONTROLLER_CFG_CRs_START_IDX)
             send_main_controller_cfg_CRs();
@@ -90,15 +105,7 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_t
             send_ifmaps_cfg_CRs();
         else if (queue_start_idx == CORE_PSUMS_CFG_CRs_START_IDX)
             send_psums_cfg_CRs();
-        else begin
-            for(int idx = queue_start_idx; idx <= queue_end_idx; idx++)begin
-                axi4_lite_wr_txn_item = cfg_cr_queue[idx];
-                `sauria_info(message_id, $sformatf("Sending Config CR %0d With Value: 0x%0h", idx, axi4_lite_wr_txn_item.wr_data_item.wdata))
-
-                start_item(axi4_lite_wr_txn_item);
-                finish_item(axi4_lite_wr_txn_item);
-            end
-        end
+        
         if (start_controller_fsm)  set_start_controller_fsm();    
     
     endtask
@@ -122,6 +129,10 @@ class sauria_axi4_lite_cfg_base_seq extends uvm_sequence #(sauria_axi4_lite_wr_t
     endfunction
 
     virtual task send_weights_cfg_CRs();
+        //To be implemented by child class
+    endtask
+
+    virtual task send_dma_controller_cfg_CRs();
         //To be implemented by child class
     endtask
 

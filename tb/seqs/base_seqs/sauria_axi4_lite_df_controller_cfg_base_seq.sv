@@ -4,8 +4,6 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
 
     uvm_status_e                        status;
    
-    sauria_computation_params          computation_params;
-
     rand bit                           stand_alone;
     rand bit                           stand_alone_keep_A;
     rand bit                           stand_alone_keep_B;
@@ -58,10 +56,7 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
         enable_done_interrupt = 1'b1;
         queue_start_idx       =  DF_CONTROLLER_CFG_CRs_START_IDX;
         queue_end_idx         =  DF_CONTROLLER_CFG_CRs_END_IDX;
-
-        if(!this.randomize())
-            `sauria_error(message_id, "Failed to randomize sauria_axi4_lite_df_controller_cfg_base_seq")
-        
+ 
     endfunction
 
     virtual task body();

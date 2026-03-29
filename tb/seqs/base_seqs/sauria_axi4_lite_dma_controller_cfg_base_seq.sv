@@ -3,8 +3,10 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
     `uvm_object_utils(sauria_axi4_lite_dma_controller_cfg_base_seq)
 
     `uvm_declare_p_sequencer(uvm_sequencer #(sauria_axi4_lite_wr_txn_seq_item))
+
+    uvm_status_e                        status;
     
-    sauria_computation_params          computation_params;
+    //sauria_computation_params          computation_params;
 
     rand int X;
     rand int Y;
@@ -111,13 +113,6 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
         queue_start_idx =  DMA_CONTROLLER_CFG_CRs_START_IDX;
         queue_end_idx   =  DMA_CONTROLLER_CFG_CRs_END_IDX;
 
-        //1) Get Tile Dimensions(X, Y, W, C, K) and Tensor Dimensions 
-        //2) Set IFMAPS and WEIGHTS
-        //3) Set PSUMS
-        repeat(3) begin
-            if (!this.randomize())
-                `sauria_error(message_id, "Failed to randomize sauria_axi4_lite_cfg_w_dma_base_seq")
-        end
     endfunction
 
     virtual task body();
@@ -129,11 +124,7 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
         add_dma_controller_cfg_CRs(cfg_cr_idx);
     endfunction
 
-    virtual function void share_computation_params();
-        
-        if (!uvm_config_db #(sauria_computation_params)::get(p_sequencer, "","computation_params", computation_params))
-            `sauria_error(message_id, "Failed to get access to computation params")
-        
+    virtual function void share_computation_params();  
         share_tile_dimensions();
         share_ifmaps_params();
         share_weights_params();
@@ -212,121 +203,181 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
     virtual function void add_dma_controller_cfg_CRs(int cfg_cr_idx);
             
         case(cfg_cr_idx)
-            0: begin
-                set_dma_tile_x_lim();
-                set_dma_tile_y_lim();
-            end
-            1: begin
-                set_dma_tile_c_lim();
-                set_dma_tile_k_lim();
-            end
-            2:  set_dma_tile_psums_x_step();
-            3:  set_dma_tile_psums_y_step();
-            4:  set_dma_tile_psums_k_step();
-            5:  set_dma_tile_ifmaps_x_step();
-            6:  set_dma_tile_ifmaps_y_step();
-            7:  set_dma_tile_ifmaps_c_step();
-            8:  set_dma_tile_weights_k_step();
-            9:  set_dma_tile_weights_c_step();
-            10: set_dma_ifmaps_y_lim();
-            11: set_dma_ifmaps_c_lim();
-            12: set_dma_psums_y_step();
-            13: set_dma_psums_k_step();
-            14: set_dma_ifmaps_y_step();
-            15: set_dma_ifmaps_c_step();
-            16: set_dma_weights_w_step();
-            17: set_dma_ifmaps_ett(); 
+            0:  set_dma_controller_cfg_reg_0();
+            1:  set_dma_controller_cfg_reg_1();
+            2:  set_dma_controller_cfg_reg_2();
+            3:  set_dma_controller_cfg_reg_3();
+            4:  set_dma_controller_cfg_reg_4();
+            5:  set_dma_controller_cfg_reg_5();
+            6:  set_dma_controller_cfg_reg_6();
+            7:  set_dma_controller_cfg_reg_7();
+            8:  set_dma_controller_cfg_reg_8();
+            9:  set_dma_controller_cfg_reg_9();
+            10: set_dma_controller_cfg_reg_10();
+            11: set_dma_controller_cfg_reg_11();
+            12: set_dma_controller_cfg_reg_12();
+            13: set_dma_controller_cfg_reg_13();
+            14: set_dma_controller_cfg_reg_14();
+            15: set_dma_controller_cfg_reg_15();
+            16: set_dma_controller_cfg_reg_16();
+            17: set_dma_controller_cfg_reg_17();
         endcase  
-        cfg_cr_queue[cfg_cr_idx] = axi4_lite_wr_txn_item;
 
     endfunction
+
+    virtual task send_dma_controller_cfg_CRs();
+        dma_controller_reg_block.dma_controller_cfg_reg_0.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_0")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_1.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_1")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_2.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_2")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_3.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_3")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_4.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_4")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_5.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_5")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_6.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_6")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_7.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_7")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_8.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_8")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_9.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_9")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_10.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_10")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_11.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_11")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_12.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_12")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_13.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_13")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_14.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_14")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_15.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_15")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_16.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_16")
+
+        dma_controller_reg_block.dma_controller_cfg_reg_17.update(status);
+        if (status != UVM_IS_OK)
+            `sauria_error(message_id, "Status not OK while updating dma_controller_cfg_reg_17")
+    endtask
     
-    virtual function void set_dma_tile_x_lim();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[15:0] = dma_tile_x_lim;
-        set_cfg_cr_data(wdata);
-    endfunction 
-
-    virtual function void set_dma_tile_y_lim();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:16] = dma_tile_y_lim;
-        set_cfg_cr_data(wdata);
-    endfunction 
-   
-    virtual function void set_dma_tile_c_lim();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[15:0] = dma_tile_c_lim;
-        set_cfg_cr_data(wdata);
-    endfunction 
-
-    virtual function void set_dma_tile_k_lim();
-        sauria_axi4_lite_data_t wdata = get_cfg_cr_data();
-        wdata[31:16] = dma_tile_k_lim;
-        set_cfg_cr_data(wdata);
-    endfunction 
-    
-    virtual function void set_dma_tile_psums_x_step();
-        set_cfg_cr_data(dma_tile_psums_x_step);
-    endfunction
-    
-    virtual function void set_dma_tile_psums_y_step();
-        set_cfg_cr_data(dma_tile_psums_y_step);
-    endfunction
-    
-    virtual function void set_dma_tile_psums_k_step();
-        set_cfg_cr_data(dma_tile_psums_k_step);
+    virtual function void set_dma_controller_cfg_reg_0();
+        dma_controller_reg_block.dma_controller_cfg_reg_0.dma_tile_x_lim.set(to_reg_data(dma_tile_x_lim & sauria_axi4_lite_data_t'('h0000ffff)));
+        dma_controller_reg_block.dma_controller_cfg_reg_0.dma_tile_y_lim.set(to_reg_data(dma_tile_y_lim & sauria_axi4_lite_data_t'('h0000ffff)));
     endfunction
 
-    virtual function void set_dma_tile_ifmaps_x_step();
-        set_cfg_cr_data(dma_tile_ifmaps_x_step);
-    endfunction
-    
-    virtual function void set_dma_tile_ifmaps_y_step();
-        set_cfg_cr_data(dma_tile_ifmaps_y_step);
-    endfunction
-    
-    virtual function void set_dma_tile_ifmaps_c_step();
-        set_cfg_cr_data(dma_tile_ifmaps_c_step);
+    virtual function void set_dma_controller_cfg_reg_1();
+        dma_controller_reg_block.dma_controller_cfg_reg_1.dma_tile_c_lim.set(to_reg_data(dma_tile_c_lim & sauria_axi4_lite_data_t'('h0000ffff)));
+        dma_controller_reg_block.dma_controller_cfg_reg_1.dma_tile_k_lim.set(to_reg_data(dma_tile_k_lim & sauria_axi4_lite_data_t'('h0000ffff)));
     endfunction
 
-    virtual function void set_dma_tile_weights_k_step();
-        set_cfg_cr_data(dma_tile_weights_k_step);
-    endfunction
-    
-    virtual function void set_dma_tile_weights_c_step();
-        set_cfg_cr_data(dma_tile_weights_c_step);
+    virtual function void set_dma_controller_cfg_reg_2();
+        dma_controller_reg_block.dma_controller_cfg_reg_2.dma_tile_psums_x_step.set(to_reg_data(dma_tile_psums_x_step));
     endfunction
 
-    virtual function void set_dma_ifmaps_y_lim();
-        set_cfg_cr_data(dma_ifmaps_y_lim);
+    virtual function void set_dma_controller_cfg_reg_3();
+        dma_controller_reg_block.dma_controller_cfg_reg_3.dma_tile_psums_y_step.set(to_reg_data(dma_tile_psums_y_step));
     endfunction
 
-    virtual function void set_dma_ifmaps_c_lim();
-        set_cfg_cr_data(dma_ifmaps_c_lim);
+    virtual function void set_dma_controller_cfg_reg_4();
+        dma_controller_reg_block.dma_controller_cfg_reg_4.dma_tile_psums_k_step.set(to_reg_data(dma_tile_psums_k_step));
     endfunction
 
-    virtual function void set_dma_psums_y_step();
-        set_cfg_cr_data(dma_psums_y_step);
-    endfunction
-    
-    virtual function void set_dma_psums_k_step();
-        set_cfg_cr_data(dma_psums_k_step);
+    virtual function void set_dma_controller_cfg_reg_5();
+        dma_controller_reg_block.dma_controller_cfg_reg_5.dma_tile_ifmaps_x_step.set(to_reg_data(dma_tile_ifmaps_x_step));
     endfunction
 
-    virtual function void set_dma_ifmaps_y_step();
-        set_cfg_cr_data(dma_ifmaps_y_step);
+    virtual function void set_dma_controller_cfg_reg_6();
+        dma_controller_reg_block.dma_controller_cfg_reg_6.dma_tile_ifmaps_y_step.set(to_reg_data(dma_tile_ifmaps_y_step));
     endfunction
 
-    virtual function void set_dma_ifmaps_c_step();
-        set_cfg_cr_data(dma_ifmaps_c_step);
+    virtual function void set_dma_controller_cfg_reg_7();
+        dma_controller_reg_block.dma_controller_cfg_reg_7.dma_tile_ifmaps_c_step.set(to_reg_data(dma_tile_ifmaps_c_step));
     endfunction
 
-    virtual function void set_dma_weights_w_step();
-        set_cfg_cr_data(dma_weights_w_step);
+    virtual function void set_dma_controller_cfg_reg_8();
+        dma_controller_reg_block.dma_controller_cfg_reg_8.dma_tile_weights_k_step.set(to_reg_data(dma_tile_weights_k_step));
     endfunction
-    
-    virtual function void set_dma_ifmaps_ett();
-        set_cfg_cr_data(dma_ifmaps_ett);
+
+    virtual function void set_dma_controller_cfg_reg_9();
+        dma_controller_reg_block.dma_controller_cfg_reg_9.dma_tile_weights_c_step.set(to_reg_data(dma_tile_weights_c_step));
+    endfunction
+
+    virtual function void set_dma_controller_cfg_reg_10();
+        dma_controller_reg_block.dma_controller_cfg_reg_10.dma_ifmaps_y_lim.set(to_reg_data(dma_ifmaps_y_lim));
+    endfunction
+
+    virtual function void set_dma_controller_cfg_reg_11();
+        dma_controller_reg_block.dma_controller_cfg_reg_11.dma_ifmaps_c_lim.set(to_reg_data(dma_ifmaps_c_lim));
+    endfunction
+
+    virtual function void set_dma_controller_cfg_reg_12();
+        dma_controller_reg_block.dma_controller_cfg_reg_12.dma_psums_y_step.set(to_reg_data(dma_psums_y_step));
+    endfunction
+
+    virtual function void set_dma_controller_cfg_reg_13();
+        dma_controller_reg_block.dma_controller_cfg_reg_13.dma_psums_k_step.set(to_reg_data(dma_psums_k_step));
+    endfunction
+
+    virtual function void set_dma_controller_cfg_reg_14();
+        dma_controller_reg_block.dma_controller_cfg_reg_14.dma_ifmaps_y_step.set(to_reg_data(dma_ifmaps_y_step));
+    endfunction
+
+    virtual function void set_dma_controller_cfg_reg_15();
+        dma_controller_reg_block.dma_controller_cfg_reg_15.dma_ifmaps_c_step.set(to_reg_data(dma_ifmaps_c_step));
+    endfunction
+
+    virtual function void set_dma_controller_cfg_reg_16();
+        dma_controller_reg_block.dma_controller_cfg_reg_16.dma_weights_w_step.set(to_reg_data(dma_weights_w_step));
+    endfunction
+
+    virtual function void set_dma_controller_cfg_reg_17();
+        dma_controller_reg_block.dma_controller_cfg_reg_17.dma_ifmaps_ett.set(to_reg_data(dma_ifmaps_ett));
+    endfunction
+
+    virtual function uvm_reg_data_t to_reg_data(sauria_axi4_lite_data_t value);
+        uvm_reg_data_t reg_data;
+        reg_data = '0;
+        reg_data[SAURIA_REG_SIZE-1:0] = value;
+        return reg_data;
     endfunction
 
 endclass

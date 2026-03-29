@@ -13,6 +13,7 @@ $SAURIA/tb/interfaces/sauria_ifmaps_feeder_ifc.sv
 +incdir+$SAURIA/tb/interfaces/interface_connections/
 +incdir+$SAURIA/tb/reg_models/
 +incdir+$SAURIA/tb/reg_models/regs/
++incdir+$SAURIA/tb/reg_models/regs/dma_controller_regs/
 +incdir+$SAURIA/tb/reg_models/regs/psums_manager_regs/
 +incdir+$SAURIA/tb/reg_models/regs/main_controller_regs/
 +incdir+$SAURIA/tb/reg_models/regs/df_controller_regs/

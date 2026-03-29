@@ -1,5 +1,51 @@
 /**********DF Controller Config********************* */
 
+//IDX 0
+parameter DMA_TILE_X_LIM_LSB          = 0;
+parameter DMA_TILE_X_LIM_SIZE         = 16;
+parameter DMA_TILE_Y_LIM_LSB          = 16;
+parameter DMA_TILE_Y_LIM_SIZE         = 16;
+
+//IDX 1
+parameter DMA_TILE_C_LIM_LSB          = 0;
+parameter DMA_TILE_C_LIM_SIZE         = 16;
+parameter DMA_TILE_K_LIM_LSB          = 16;
+parameter DMA_TILE_K_LIM_SIZE         = 16;
+
+//IDX 2..17 (full-word)
+parameter DMA_TILE_PSUMS_X_STEP_LSB   = 0;
+parameter DMA_TILE_PSUMS_X_STEP_SIZE  = SAURIA_REG_SIZE;
+parameter DMA_TILE_PSUMS_Y_STEP_LSB   = 0;
+parameter DMA_TILE_PSUMS_Y_STEP_SIZE  = SAURIA_REG_SIZE;
+parameter DMA_TILE_PSUMS_K_STEP_LSB   = 0;
+parameter DMA_TILE_PSUMS_K_STEP_SIZE  = SAURIA_REG_SIZE;
+parameter DMA_TILE_IFMAPS_X_STEP_LSB  = 0;
+parameter DMA_TILE_IFMAPS_X_STEP_SIZE = SAURIA_REG_SIZE;
+parameter DMA_TILE_IFMAPS_Y_STEP_LSB  = 0;
+parameter DMA_TILE_IFMAPS_Y_STEP_SIZE = SAURIA_REG_SIZE;
+parameter DMA_TILE_IFMAPS_C_STEP_LSB  = 0;
+parameter DMA_TILE_IFMAPS_C_STEP_SIZE = SAURIA_REG_SIZE;
+parameter DMA_TILE_WEIGHTS_K_STEP_LSB = 0;
+parameter DMA_TILE_WEIGHTS_K_STEP_SIZE= SAURIA_REG_SIZE;
+parameter DMA_TILE_WEIGHTS_C_STEP_LSB = 0;
+parameter DMA_TILE_WEIGHTS_C_STEP_SIZE= SAURIA_REG_SIZE;
+parameter DMA_IFMAPS_Y_LIM_LSB        = 0;
+parameter DMA_IFMAPS_Y_LIM_SIZE       = SAURIA_REG_SIZE;
+parameter DMA_IFMAPS_C_LIM_LSB        = 0;
+parameter DMA_IFMAPS_C_LIM_SIZE       = SAURIA_REG_SIZE;
+parameter DMA_PSUMS_Y_STEP_LSB        = 0;
+parameter DMA_PSUMS_Y_STEP_SIZE       = SAURIA_REG_SIZE;
+parameter DMA_PSUMS_K_STEP_LSB        = 0;
+parameter DMA_PSUMS_K_STEP_SIZE       = SAURIA_REG_SIZE;
+parameter DMA_IFMAPS_Y_STEP_LSB       = 0;
+parameter DMA_IFMAPS_Y_STEP_SIZE      = SAURIA_REG_SIZE;
+parameter DMA_IFMAPS_C_STEP_LSB       = 0;
+parameter DMA_IFMAPS_C_STEP_SIZE      = SAURIA_REG_SIZE;
+parameter DMA_WEIGHTS_W_STEP_LSB      = 0;
+parameter DMA_WEIGHTS_W_STEP_SIZE     = SAURIA_REG_SIZE;
+parameter DMA_IFMAPS_ETT_LSB          = 0;
+parameter DMA_IFMAPS_ETT_SIZE         = SAURIA_REG_SIZE;
+
 //IDX 18
 parameter DF_START_SRAMA_ADDR_LSB       = 0;
 parameter DF_START_SRAMA_ADDR_SIZE      = SAURIA_REG_SIZE;

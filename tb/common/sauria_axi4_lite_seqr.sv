@@ -6,6 +6,7 @@ class sauria_axi4_lite_seqr extends uvm_sequencer #(sauria_axi4_lite_wr_txn_seq_
 
     sauria_computation_params          computation_params;
 
+    sauria_dma_controller_reg_block    dma_controller_reg_block;
     sauria_df_controller_reg_block     df_controller_reg_block;
     sauria_core_main_controller_reg_block core_main_controller_reg_block;
     sauria_core_weights_reg_block      core_weights_reg_block;
