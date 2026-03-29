@@ -125,7 +125,7 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
     endfunction
 
     virtual function void set_core_weights_cfg_reg_34();
-        core_weights_reg_block.core_weights_cfg_reg_34.weights_k_lim.set(weights_k_lim[WEI_TILE_DIM_SIZE:SEQ_WEIGHTS_K_LIM_LSB]);
+        core_weights_reg_block.core_weights_cfg_reg_34.weights_k_lim.set(weights_k_lim[SEQ_WEIGHTS_K_LIM_MSB:SEQ_WEIGHTS_K_LIM_LSB]);
         core_weights_reg_block.core_weights_cfg_reg_34.weights_k_step.set(weights_k_step);
         if (FP_ARITHMETIC) begin
             core_weights_reg_block.core_weights_cfg_reg_34.weights_tile_k_lim_lower.set(weights_tile_k_lim[SEQ_WEIGHTS_TILE_K_LIM_LOWER_MSB:SEQ_WEIGHTS_TILE_K_LIM_LOWER_LSB]);
@@ -133,7 +133,7 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
     endfunction
     
     virtual function void set_core_weights_cfg_reg_35();
-        core_weights_reg_block.core_weights_cfg_reg_35.weights_tile_k_lim.set(weights_tile_k_lim[WEI_TILE_DIM_SIZE:SEQ_WEIGHTS_TILE_K_LIM_LSB]);
+        core_weights_reg_block.core_weights_cfg_reg_35.weights_tile_k_lim.set(weights_tile_k_lim[SEQ_WEIGHTS_TILE_K_LIM_MSB:SEQ_WEIGHTS_TILE_K_LIM_LSB]);
         core_weights_reg_block.core_weights_cfg_reg_35.weights_tile_k_step.set(weights_tile_k_step);
         if (FP_ARITHMETIC) begin
             core_weights_reg_block.core_weights_cfg_reg_35.weights_cols_active_lower.set(weights_cols_active[SEQ_WEIGHTS_ACTIVE_COLS_LOWER_MSB:SEQ_WEIGHTS_ACTIVE_COLS_LOWER_LSB]);
@@ -141,67 +141,8 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
     endfunction
 
     virtual function void set_core_weights_cfg_reg_36();
-        core_weights_reg_block.core_weights_cfg_reg_36.weights_cols_active.set(weights_cols_active[COLS_ACTIVE_SIZE-1:SEQ_WEIGHTS_ACTIVE_COLS_LSB]);
+        core_weights_reg_block.core_weights_cfg_reg_36.weights_cols_active.set(weights_cols_active[SEQ_WEIGHTS_ACTIVE_COLS_MSB:SEQ_WEIGHTS_ACTIVE_COLS_LSB]);
         core_weights_reg_block.core_weights_cfg_reg_36.weights_aligned_flag.set(weights_aligned_flag);
     endfunction
 
-    //--------------------33-------------------------
-    virtual function void set_weights_w_lim();    
-        //INT
-        //wdata[15:0] = weights_w_lim;
-    endfunction
-
-    virtual function void set_weights_w_step(); 
-        //INT
-        //wdata[31:16] = weights_w_step;    
-    endfunction
-
-    //Only For FP
-    virtual function void set_weights_k_lim_lower();
-    
-    endfunction
-                
-    //--------------------34-------------------------
-    virtual function void set_weights_k_lim();
-        //INT
-        //wdata[15:0] = weights_k_lim;
-    endfunction
-                
-    virtual function void set_weights_k_step();
-        //INT
-        //wdata[31:16] = weights_k_step;
-    endfunction
-
-    //Only For FP
-    virtual function void set_weights_tile_k_lim_lower();
-
-    endfunction
-    
-    //--------------------35-------------------------
-    virtual function void set_weights_tile_k_lim();
-        //INT
-        //wdata[15:0] = weights_tile_k_lim;    
-    endfunction
-                
-    virtual function void set_weights_tile_k_step();    
-        //INT
-        //wdata[31:16] = weights_tile_k_step;
-    endfunction
-
-    //Only For FP
-    virtual function void set_weights_cols_active_lower();
-    
-    endfunction
-    
-    //--------------------36-------------------------
-    virtual function void set_weights_cols_active();
-        //INT
-        //wdata[15:0] = weights_cols_active;    
-    endfunction
-                
-    virtual function void set_weights_aligned_flag();
-        //INT
-        //wdata[16] = weights_aligned_flag;
-    endfunction
-    
 endclass

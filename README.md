@@ -207,6 +207,22 @@ For full setup instructions, see the [Setup and Usage Guide](docs/tb_docs/setup_
   ```bash
    run_sauria testname
   ```
+
+### Select Hardware Version for Filelists
+
+The filelist generator supports selecting the hardware configuration from the command line:
+
+```bash
+python3 verif/scripts/generate_filelists.py --hw-version int8_8x16
+python3 verif/scripts/generate_filelists.py --hw-version fp16_8x16
+python3 verif/scripts/generate_filelists.py --hw-version int8_32x32
+```
+
+If `--hw-version` is not provided, the default is `int8_8x16`:
+
+```bash
+python3 verif/scripts/generate_filelists.py
+```
 ---
 ## Sauria Repository
 

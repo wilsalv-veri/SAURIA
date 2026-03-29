@@ -42,8 +42,7 @@ class sauria_core_psums_cfg_reg_40 extends uvm_reg;
                             .is_rand(REG_CFG_IS_RAND),
                             .individually_accessible(REG_CFG_INDIVIDUALLY_ACCESSIBLE));
 
-        if (FP_ARITHMETIC) begin
-            psums_tile_ck_step_lower.configure(.parent(this),
+        psums_tile_ck_step_lower.configure(.parent(this),
                                 .size(PSUMS_TILE_CK_STEP_LOWER_SIZE),
                                 .lsb_pos(PSUMS_TILE_CK_STEP_LOWER_LSB),
                                 .access(REG_CFG_ACCESS),
@@ -52,8 +51,7 @@ class sauria_core_psums_cfg_reg_40 extends uvm_reg;
                                 .has_reset(REG_CFG_HAS_RESET),
                                 .is_rand(REG_CFG_IS_RAND),
                                 .individually_accessible(REG_CFG_INDIVIDUALLY_ACCESSIBLE));
-        end
-
+        
         if (INT_ARITHMETIC) begin
             psums_inactive_cols_lower.configure(.parent(this),
                                 .size(PSUMS_INACTIVE_COLS_LOWER_SIZE),

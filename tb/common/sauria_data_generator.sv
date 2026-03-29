@@ -152,15 +152,15 @@ class sauria_data_generator extends uvm_object;
         return sauria_fp_elem_data_t'('h3c00);
     endfunction
 
-    virtual function get_one_w_frac_comp_fp_elem_data();
+    virtual function sauria_fp_elem_data_t get_one_w_frac_comp_fp_elem_data();
         return sauria_fp_elem_data_t'('h3d00);
     endfunction
 
-    virtual function get_half_fp_elem_data();
+    virtual function sauria_fp_elem_data_t get_half_fp_elem_data();
         return sauria_fp_elem_data_t'('h3800);
     endfunction
 
-    virtual function get_neg_one_fp_elem_data();
+    virtual function sauria_fp_elem_data_t get_neg_one_fp_elem_data();
         return sauria_fp_elem_data_t'('hbc00);
     endfunction
 

@@ -92,23 +92,22 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     endfunction
 
     virtual function void set_core_psums_cfg_reg_38();
-        core_psums_reg_block.core_psums_cfg_reg_38.psums_cx_step.set(psums_cx_step[PSUMS_TILE_DIM_SIZE:SEQ_PSUMS_CX_STEP_LSB]);
+        core_psums_reg_block.core_psums_cfg_reg_38.psums_cx_step.set(psums_cx_step[SEQ_PSUMS_CX_STEP_MSB:SEQ_PSUMS_CX_STEP_LSB]);
         core_psums_reg_block.core_psums_cfg_reg_38.psums_ck_lim.set(psums_ck_lim);
         core_psums_reg_block.core_psums_cfg_reg_38.psums_ck_step_lower.set(psums_ck_step[SEQ_PSUMS_CK_STEP_LOWER_MSB:SEQ_PSUMS_CK_STEP_LOWER_LSB]);
     endfunction
 
     virtual function void set_core_psums_cfg_reg_39();
-        core_psums_reg_block.core_psums_cfg_reg_39.psums_ck_step.set(psums_ck_step[PSUMS_TILE_DIM_SIZE:SEQ_PSUMS_CK_STEP_LSB]);
+        core_psums_reg_block.core_psums_cfg_reg_39.psums_ck_step.set(psums_ck_step[SEQ_PSUMS_CK_STEP_MSB:SEQ_PSUMS_CK_STEP_LSB]);
         core_psums_reg_block.core_psums_cfg_reg_39.psums_tile_cy_lim.set(psums_tile_cy_lim);
         core_psums_reg_block.core_psums_cfg_reg_39.psums_tile_cy_step_lower.set(psums_tile_cy_step[SEQ_PSUMS_TILE_CY_STEP_LOWER_MSB:SEQ_PSUMS_TILE_CY_STEP_LOWER_LSB]);
     endfunction
 
     virtual function void set_core_psums_cfg_reg_40();
-        core_psums_reg_block.core_psums_cfg_reg_40.psums_tile_cy_step.set(psums_tile_cy_step[PSUMS_TILE_DIM_SIZE:SEQ_PSUMS_TILE_CY_STEP_LSB]);
+        core_psums_reg_block.core_psums_cfg_reg_40.psums_tile_cy_step.set(psums_tile_cy_step[SEQ_PSUMS_TILE_CY_STEP_MSB:SEQ_PSUMS_TILE_CY_STEP_LSB]);
         core_psums_reg_block.core_psums_cfg_reg_40.psums_tile_ck_lim.set(psums_tile_ck_lim);
-        if (FP_ARITHMETIC) begin
-            core_psums_reg_block.core_psums_cfg_reg_40.psums_tile_ck_step_lower.set(psums_tile_ck_step[SEQ_PSUMS_TILE_CK_STEP_LOWER_MSB:SEQ_PSUMS_TILE_CK_STEP_LOWER_LSB]);
-        end
+        core_psums_reg_block.core_psums_cfg_reg_40.psums_tile_ck_step_lower.set(psums_tile_ck_step[SEQ_PSUMS_TILE_CK_STEP_LOWER_MSB:SEQ_PSUMS_TILE_CK_STEP_LOWER_LSB]);
+        
         if (INT_ARITHMETIC) begin
             core_psums_reg_block.core_psums_cfg_reg_40.psums_inactive_cols_lower.set(psums_inactive_cols[SEQ_PSUMS_INACTIVE_COLS_LOWER_MSB:SEQ_PSUMS_INACTIVE_COLS_LOWER_LSB]);
         end
@@ -116,9 +115,9 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
 
     virtual function void set_core_psums_cfg_reg_41();
         if (FP_ARITHMETIC) begin
-            core_psums_reg_block.core_psums_cfg_reg_41.psums_tile_ck_step.set(psums_tile_ck_step[PSUMS_TILE_DIM_SIZE:SEQ_PSUMS_TILE_CK_STEP_LSB]); //Only for FP
+            core_psums_reg_block.core_psums_cfg_reg_41.psums_tile_ck_step.set(psums_tile_ck_step[SEQ_PSUMS_TILE_CK_STEP_MSB:SEQ_PSUMS_TILE_CK_STEP_LSB]); //Only for FP
         end
-        core_psums_reg_block.core_psums_cfg_reg_41.psums_inactive_cols.set(psums_inactive_cols[COLS_ACTIVE_SIZE-1:SEQ_PSUMS_INACTIVE_COLS_LSB]);
+        core_psums_reg_block.core_psums_cfg_reg_41.psums_inactive_cols.set(psums_inactive_cols[SEQ_PSUMS_INACTIVE_COLS_MSB:SEQ_PSUMS_INACTIVE_COLS_LSB]);
         core_psums_reg_block.core_psums_cfg_reg_41.psums_preload_en.set(psums_preload_en);
     endfunction
 
@@ -167,90 +166,4 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
         computation_params.psums_mgr_cfg_shared = 1'b1;
     endtask
   
-    //--------------------37-------------------------
-    virtual function void set_psums_reps();
-        //INT
-        //wdata[13:0] = psums_reps;
-    endfunction
-
-    virtual function void set_psums_cx_lim();
-        //INT
-        //wdata[27:14] = psums_cx_lim;
-    endfunction
-
-    virtual function void set_psums_cx_step_lower();
-        //INT
-        //wdata[31:28] = psums_cx_step[3:0];
-    endfunction
-    
-    //--------------------38-------------------------
-    virtual function void set_psums_cx_step_upper();
-        //INT
-        //wdata[9:0] = psums_cx_step[13:4];
-    endfunction
-    
-    virtual function void set_psums_ck_lim();
-        //INT
-        //wdata[23:10] = psums_ck_lim;
-    endfunction
-
-    virtual function void set_psums_ck_step_lower();
-        //INT
-        //wdata[31:24] = psums_ck_step[7:0];
-    endfunction
-
-    //--------------------39-------------------------
-    virtual function void set_psums_ck_step_upper();
-        //INT
-        //wdata[5:0] = psums_ck_step[13:8];
-    endfunction
-                
-    virtual function void set_psums_tile_cy_lim();
-        //INT
-        //wdata[19:6] = psums_tile_cy_lim;
-    endfunction
-
-    virtual function void set_psums_tile_cy_step_lower(); 
-        //INT
-        //wdata[31:20] = psums_tile_cy_step[11:0];
-    endfunction
-
-    //--------------------40-------------------------
-    virtual function void set_psums_tile_cy_step_upper(); 
-        //INT
-        //wdata[1:0] = psums_tile_cy_step[13:12];
-    endfunction
-    
-    virtual function void set_psums_tile_ck_lim();
-        //INT
-        //wdata[15:2] = psums_tile_ck_lim;
-     endfunction 
-
-    virtual function void set_psums_tile_ck_step();
-        //INT
-        //wdata[29:16] = psums_tile_ck_step;
-    endfunction
-
-    //--------------------41-------------------------
-    virtual function void set_psums_tile_ck_step_upper();
-        //INT
-        //wdata[29:16] = psums_tile_ck_step;
-    endfunction
-    
-    //Only for INT
-    virtual function void set_psums_inactive_cols_lower();
-        //INT
-        //wdata[31:30] = psums_inactive_cols[1:0];
-    endfunction
-
-    virtual function void set_psums_inactive_cols_upper();
-        //INT
-        //wdata[5:0] = psums_inactive_cols[7:2];
-    endfunction
-
-    virtual function void set_psums_preload_en();
-        //INT
-        //wdata[6] = psums_preload_en;
-    endfunction
-
 endclass

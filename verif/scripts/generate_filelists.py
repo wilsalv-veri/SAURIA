@@ -1,4 +1,5 @@
 import os 
+import argparse
 
 PROJECT_NAME = "SAURIA"
 generate_filelist_path = os.path.abspath(__file__)
@@ -10,6 +11,32 @@ if project_path is None:
 project_env_var = f"${PROJECT_NAME}"
 VERIF_FILELISTS_DIR = f"{project_path}/verif/filelists"
 DVT_FILELISTS_DIR = f"{project_path}/.dvt/filelists"
+
+DEFAULT_HW_VERSION = "int8_8x16"
+HW_VERSION_FILES = {
+    "int8_8x16": "int8_8x16.svh",
+    "fp16_8x16": "FP16_8x16.svh",
+    "int8_32x32": "int8_32x32.svh",
+}
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Generate simulation filelists for SAURIA"
+    )
+    parser.add_argument(
+        "--hw-version",
+        choices=tuple(HW_VERSION_FILES.keys()),
+        default=DEFAULT_HW_VERSION,
+        help="Hardware configuration to include in hw_version_filelist.f",
+    )
+    return parser.parse_args()
+
+def generate_hw_version_filelist_lines(hw_version):
+    hw_file = HW_VERSION_FILES[hw_version]
+    return [
+        "buildconfig\n\n",
+        f"${{RTL_DIR}}/hw_versions/{hw_file}\n",
+    ]
 
 def generate_filelist(file_name, lines, filelists_directory):
     abs_path_file_name = f"{filelists_directory}/{file_name}"
@@ -172,8 +199,16 @@ class filelistIncludeLine:
 
 if __name__ == "__main__":
 
+    args = parse_args()
+
     os.makedirs(VERIF_FILELISTS_DIR, exist_ok=True)
     os.makedirs(DVT_FILELISTS_DIR, exist_ok=True)
+
+    hw_version_lines = generate_hw_version_filelist_lines(args.hw_version)
+    generate_filelist("hw_version_filelist.f", hw_version_lines, VERIF_FILELISTS_DIR)
+
+    dvt_hw_version_lines = convert_lines_for_dvt(hw_version_lines)
+    generate_filelist("dvt_hw_version_filelist.f", dvt_hw_version_lines, DVT_FILELISTS_DIR)
     
     cfg_path = f"{project_path}/configuration"    
     tests_path = f"{project_path}/tests"    

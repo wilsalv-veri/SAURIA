@@ -58,6 +58,22 @@ source /verif/scripts/dsim_env.sh
 ---
 
 ## 5. Compile RTL, Testbench, and DPI Library
+Before compiling, generate filelists for the target hardware version:
+
+```bash
+python3 verif/scripts/generate_filelists.py --hw-version int8_8x16
+```
+
+Other supported values are:
+- `fp16_8x16`
+- `int8_32x32`
+
+If no hardware version is provided, `int8_8x16` is used by default:
+
+```bash
+python3 verif/scripts/generate_filelists.py
+```
+
 Compile the full environment using the provided helper script:
 ```bash
 compile_sauria

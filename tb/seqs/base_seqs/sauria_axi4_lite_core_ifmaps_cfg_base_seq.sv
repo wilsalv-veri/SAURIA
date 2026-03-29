@@ -238,5 +238,4 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
         computation_params.ifmaps_cfg_shared  = 1'b1;
     endtask
 
-    
 endclass
