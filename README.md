@@ -110,6 +110,11 @@ This execution model drives both stimulus construction and architectural checkin
 
 #### GEMM Interpretation
 
+![Image of Tiling Mental Model](/docs/tb_docs//tiling_mental_model.png)
+###### Author: Wilfredo Salvador (wilsalv@gmail.com)
+
+
+
 At a high level, Sauria execution can be viewed as tiled GEMM-style accumulation across the reduction dimension.
 
 Industry-standard GEMM:
