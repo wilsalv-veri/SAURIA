@@ -53,7 +53,7 @@ class sauria_ctrl_status_reg_block extends uvm_reg_block;
 
     virtual function void create_mem_map();
         default_map = create_map("ctrl_status_reg_map", CTRL_STATUS_BASE_OFFSET,
-                                 CFG_AXI_DATA_WIDTH_BYTES, UVM_LITTLE_ENDIAN, 1);
+                                 CFG_AXI_BYTE_NUM, UVM_LITTLE_ENDIAN, 1);
 
         default_map.add_reg(ctrl_status_reg_0, CTRL_STATUS_REG_0_ADDR, REG_CFG_ACCESS);
         default_map.add_reg(ctrl_status_reg_1, CTRL_STATUS_REG_1_ADDR, REG_CFG_ACCESS);

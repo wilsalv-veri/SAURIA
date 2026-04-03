@@ -237,7 +237,7 @@ psm_shift_fsm #(
         .o_buff_shift       (buff_shift_fsm),
         .o_cscan_en         (o_cscan_en),
 
-        //FIXME: wilsalv
+        //NOTE: wilsalv : CORE_BUGID8
         //.o_out_status       (o_out_status),
         .o_out_status       (shift_fsm_status),
         
@@ -247,6 +247,7 @@ psm_shift_fsm #(
 
 // Index Counter
 psm_idxcnt #(
+        .X(X),
         .IDX_W(IDX_W),
         .ADRC_W(ADRC_W),
         .WOFS_W(WOFS_W),

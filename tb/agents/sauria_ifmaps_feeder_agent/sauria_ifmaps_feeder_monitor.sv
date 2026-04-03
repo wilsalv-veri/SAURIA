@@ -130,6 +130,7 @@ class sauria_ifmaps_feeder_monitor extends uvm_monitor;
 
             //Allow Last Row to Be Fed
             repeat(sauria_pkg::Y) begin
+                wait(sauria_ifmaps_feeder_if.pipeline_en);
                 pop_done_count <= pop_done_count + 1;
                 @(posedge sauria_ifmaps_feeder_if.clk);
             end

@@ -90,13 +90,34 @@ assign  i_aux_cnt = (i_auxlim > 1);
 // Activation flags (EN of next counter)
 // ---------------------------------------
 
-assign aux_flag = aux_ov_flag;
-assign w_flag = aux_ov_flag & w_ov_flag;
+//NOTE: wilsalv :ARCH_ID1
+//assign aux_flag = aux_ov_flag;
+//assign w_flag = aux_ov_flag & w_ov_flag;
+assign aux_flag = aux_ov_flag & w_ov_flag;
+assign w_flag = w_ov_flag;
+
 assign tilk_flag = aux_ov_flag & w_ov_flag & til_k_ov_flag;
+
 
 // --------------------------
 // Counters instantiation
 // --------------------------
+
+//NOTE: wilsalv :ARCH_ID1
+// W counter
+cnt_generic #(
+        .CNT_W(IDX_W)
+    ) w_counter_i
+       (.i_clk  (i_clk),
+        .i_rstn (i_rstn),
+        .i_lim	(i_wlim),
+        .i_step	(i_wstep),
+        .i_en	(i_cnt_en),
+        .i_clear(i_cnt_clear),
+
+        .o_flag (w_ov_flag),
+        .o_cnt  (w_idx));
+
 
 // Auxiliary counter - Used only when word repetition is needed
 cnt_generic #(
@@ -106,12 +127,19 @@ cnt_generic #(
         .i_rstn (i_rstn),
         .i_lim	(i_auxlim),
         .i_step	(i_auxstep),
-        .i_en	(i_cnt_en),
+        
+        //NOTE: wilsalv :ARCH_ID1
+        //.i_en	(i_cnt_en),
+        .i_en	(i_cnt_en && w_flag && i_cswitch),
+        
+        
         .i_clear(i_cnt_clear),
 
         .o_flag (aux_ov_flag),
         .o_cnt  (aux_idx));
 
+//NOTE: wilsalv :ARCH_ID1
+/* 
 // W counter
 cnt_generic #(
         .CNT_W(IDX_W)
@@ -125,6 +153,7 @@ cnt_generic #(
 
         .o_flag (w_ov_flag),
         .o_cnt  (w_idx));
+*/
 
 // Tiling K counter
 cnt_generic #(
@@ -134,11 +163,16 @@ cnt_generic #(
         .i_rstn (i_rstn),
         .i_lim	(i_til_klim),
         .i_step	(i_til_kstep),
-        .i_en	(i_cnt_en && w_flag && i_cswitch),
+        
+        //NOTE: wilsalv :ARCH_ID1
+        //.i_en	(i_cnt_en && w_flag && i_cswitch),
+        .i_en	(i_cnt_en && aux_flag && i_cswitch),
+        
         .i_clear(i_cnt_clear),
 
         .o_flag (til_k_ov_flag),
         .o_cnt  (til_k_idx));
+
 
 // ------------------------
 // Partial Index Adder
@@ -152,12 +186,12 @@ assign sram_idx_d = aux_idx + w_idx + til_k_idx;
 
 always_comb begin
     
-    if (i_aux_cnt) begin
-        transition_flag = aux_ov_flag;
-
-    end else begin
+    //NOTE: wilsalv :ARCH_ID1
+    //if (i_aux_cnt) begin
+    //    transition_flag = aux_ov_flag;
+    //end else begin
         transition_flag = (sram_idx_q[IDX_W-1:WOFS_W] != sram_idx_d[IDX_W-1:WOFS_W]) && (!i_waligned);
-    end
+    //end
 end
 
 // ------------------------

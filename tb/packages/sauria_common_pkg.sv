@@ -25,14 +25,13 @@ package sauria_common_pkg;
     parameter DATA_AXI_ADDR_WIDTH    = 32;   // Data AXI4 Slave address width
     parameter DATA_AXI_ID_WIDTH      = 2;    // Data AXI4 Slave ID width
 
-    parameter CFG_AXI_DATA_WIDTH_BYTES = CFG_AXI_DATA_WIDTH / BYTE;
-    
     parameter CFG_BASE_OFFSET        = sauria_addr_pkg::CONTROLLER_OFFSET;
     parameter MEM_BASE_OFFSET        = sauria_addr_pkg::DMA_OFFSET;
     parameter CORE_CFG_BASE_OFFSET   = sauria_addr_pkg::SAURIA_OFFSET;
 
     parameter  CFG_AXI_BYTE_NUM      = CFG_AXI_DATA_WIDTH/BYTE;
     parameter  DATA_AXI_BYTE_NUM     = DATA_AXI_DATA_WIDTH/BYTE;
+    parameter  DATA_AXI_ADDR_MASK    = 32'hFFFF_FF80;
 
     parameter N_DMA_CTRL_REGS        = 22;
     parameter N_SAURIA_CORE_REGS     = sauria_pkg::TOTAL_REGS_CON + sauria_pkg::TOTAL_REGS_ACT + sauria_pkg::TOTAL_REGS_WEI + sauria_pkg::TOTAL_REGS_OUT;

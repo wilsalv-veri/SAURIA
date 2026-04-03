@@ -19,11 +19,7 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
     rand bit                           Ch_eq;
     rand bit                           Ck_eq;
     rand bit                           WXfer_op;
-    
-    sauria_axi4_lite_data_t            ifmaps_size;
-    sauria_axi4_lite_data_t            weights_size;
-    sauria_axi4_lite_data_t            psums_size;
-    
+     
     constraint stand_alone_cfg_c {
         stand_alone        == 1'b1;
         stand_alone_keep_A == 1'b1;
@@ -70,7 +66,6 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
         set_compute_params_loop_order();
         set_starting_tensors_addr();
         set_tensor_modifiers();
-        get_tensor_sizes();
     endtask
 
     virtual function void set_unit_specific_cfg_CRs();
@@ -104,14 +99,6 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
         df_controller_reg_block.df_controller_cfg_reg_21.update(status);
         if (status != UVM_IS_OK)
             `sauria_error(message_id, "Status not OK while updating df_controller_cfg_reg_21")
-    endtask
-
-    virtual task get_tensor_sizes();
-        wait_comp_params_shared();
-
-        ifmaps_size  = computation_params.get_ifmaps_size();
-        weights_size = computation_params.get_weights_size();
-        psums_size   = computation_params.get_psums_size();
     endtask
 
     virtual function void set_starting_tensors_addr();

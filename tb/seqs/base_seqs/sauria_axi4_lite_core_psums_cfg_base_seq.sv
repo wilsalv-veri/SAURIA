@@ -5,48 +5,24 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     uvm_status_e                 status;
     sauria_core_psums_reg_block  core_psums_reg_block;
 
-    rand sauria_axi4_lite_data_t psums_reps;
-    rand sauria_axi4_lite_data_t psums_cx_lim;
-    rand sauria_axi4_lite_data_t psums_cx_step;
+    sauria_axi4_lite_data_t psums_reps;
+    sauria_axi4_lite_data_t psums_cx_lim;
+    sauria_axi4_lite_data_t psums_cx_step;
                        
-    rand sauria_axi4_lite_data_t psums_ck_lim;
-    rand sauria_axi4_lite_data_t psums_ck_step;
+    sauria_axi4_lite_data_t psums_ck_lim;
+    sauria_axi4_lite_data_t psums_ck_step;
         
-    rand sauria_axi4_lite_data_t psums_tile_cy_lim;
-    rand sauria_axi4_lite_data_t psums_tile_cy_step; 
+    sauria_axi4_lite_data_t psums_tile_cy_lim;
+    sauria_axi4_lite_data_t psums_tile_cy_step; 
          
-    rand sauria_axi4_lite_data_t psums_tile_ck_lim;
-    rand sauria_axi4_lite_data_t psums_tile_ck_step;
+    sauria_axi4_lite_data_t psums_tile_ck_lim;
+    sauria_axi4_lite_data_t psums_tile_ck_step;
          
     rand sauria_axi4_lite_data_t psums_inactive_cols;
     rand sauria_axi4_lite_data_t psums_preload_en;
-  
-    constraint psums_reps_c{
-        psums_reps == sauria_axi4_lite_data_t'('h3);
-    }
-
-    constraint psums_dimensions_c{
-        psums_cx_lim == sauria_axi4_lite_data_t'('h0);
-        psums_ck_lim == sauria_axi4_lite_data_t'('h0);
-    }
-    
-    constraint psums_dimension_steps_c{
-        psums_cx_step == sauria_axi4_lite_data_t'('h0);                   
-        psums_ck_step == sauria_axi4_lite_data_t'('h0);
-    }
-        
-    constraint psums_tile_dimensions_c{
-        psums_tile_cy_lim == sauria_axi4_lite_data_t'('h0);   
-        psums_tile_ck_lim == sauria_axi4_lite_data_t'('h0);
-    }
-    
-    constraint psums_tile_dimension_steps_c{
-        psums_tile_cy_step == sauria_axi4_lite_data_t'('h0); 
-        psums_tile_ck_step == sauria_axi4_lite_data_t'('h0);
-    }
-         
+       
     constraint psums_preload_en_c{
-        psums_preload_en == sauria_axi4_lite_data_t'('h1);
+        psums_preload_en == sauria_axi4_lite_data_t'('h0);
     }
     
     constraint psums_inactive_cols_c{
@@ -143,21 +119,24 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
             `sauria_error(message_id, "Status not OK while updating core_psums_cfg_reg_41")
     endtask
 
-    virtual task get_psums_params();
-
+    virtual task get_psums_params(); 
         wait_comp_params_shared();
 
-        psums_cx_step       = computation_params.psums_cx_step;
-        psums_cx_lim        = computation_params.psums_CX;          
-                            
-        psums_ck_step       = computation_params.psums_ck_step;  
-        psums_ck_lim        = computation_params.psums_CK;        
+        psums_cx_step       = SRAMC_N;                    
+        psums_cx_lim        = computation_params.psums_CX; 
+                 
+        psums_ck_step       = psums_cx_lim;   
+        psums_ck_lim        = psums_ck_step * computation_params.psums_K; 
         
-        psums_tile_cy_step  = computation_params.tile_psums_cy_step;
-        psums_tile_cy_lim   = computation_params.tile_psums_CY; 
+        //Single Tile
+        psums_tile_cy_step  = psums_ck_lim; 
+        psums_tile_cy_lim   = psums_ck_lim;  
         
-        psums_tile_ck_step  = computation_params.tile_psums_ck_step;
-        psums_tile_ck_lim   = computation_params.tile_psums_CK; 
+        psums_tile_ck_step  = psums_ck_lim; 
+        psums_tile_ck_lim   = psums_ck_lim; 
+           
+        psums_reps          = (computation_params.psums_CX / SRAMA_N) 
+                            * (computation_params.psums_K  / SRAMB_N);
     endtask
 
     virtual task share_psums_cfg();

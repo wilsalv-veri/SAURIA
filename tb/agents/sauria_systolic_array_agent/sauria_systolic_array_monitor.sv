@@ -26,6 +26,7 @@ class sauria_systolic_array_monitor extends uvm_monitor;
     
     bit                 act_start_feeding, wei_start_feeding;
     int                 data_valid_done_count;
+    bit                 update_data_valid_done_count;
     
     bit                 data_valid_sel;
     bit                 feeding_paused, feeding_paused_hold, feeding_unpaused;
@@ -82,23 +83,26 @@ class sauria_systolic_array_monitor extends uvm_monitor;
 
                 systolic_array_info.scan_cswitch_valid = pipeline_en_q; //!feeding_unpaused;
 
-                systolic_array_info.act_data_valid = ((data_valid_done_count != 0) || (feeding_unpaused == 1'b1)) ? 1'b1 : 
+                systolic_array_info.act_data_valid = ( (data_valid_done_count != 0) || (feeding_unpaused == 1'b1)) ? 1'b1 : 
                                                      ((feeding_paused == 1'b1) || (feeding_paused_hold)) ? 1'b0 : ((data_valid_sel == 1'b1) ? act_data_valid_q : act_data_valid_d); 
                                                      
                 
+
                 systolic_array_info.wei_data_valid = ((data_valid_done_count != 0) || (feeding_unpaused == 1'b1)) ? 1'b1 : 
                                                      ((feeding_paused == 1'b1) || (feeding_paused_hold))  ? 1'b0 : ((data_valid_sel == 1'b1) ? wei_data_valid_q : wei_data_valid_d);
-                                                    
+                
+                
+
                 if (feeding_unpaused)
-                    `sauria_info(message_id, "FEEDING_UNPAUSED")
+                    `sauria_info(message_id, $sformatf("FEEDING_UNPAUSED Normal: %0d Enabling: %0d", normal_operation_pipeline_en, enabling_pipeline))
 
                 if(feeding_paused_hold == 1'b1)  
-                    `sauria_info(message_id, "FEEDING_PAUSED_HOLD")
+                    `sauria_info(message_id, $sformatf("FEEDING_PAUSED_HOLD Normal: %0d Enabling: %0d Act_d: 0x%0h Act_q: 0x%0h Valid_Sel: %0d", normal_operation_pipeline_en, enabling_pipeline, act_data_valid_d, act_data_valid_q, data_valid_sel))
                 else if (feeding_paused == 1'b1)
-                    `sauria_info(message_id, "FEEDING_PAUSED")
+                    `sauria_info(message_id, $sformatf("FEEDING_PAUSED Normal: %0d Enabling: %0d", normal_operation_pipeline_en, enabling_pipeline))
                 
                 
-                //`sauria_info(message_id, $sformatf("Data_Valid_Done_Count: %0d", data_valid_done_count))
+                `sauria_info(message_id, $sformatf("Data_Valid_Done_Count: %0d", data_valid_done_count))
 
                 systolic_array_info.cswitch_arr =  cswitch_arr_q;
                 systolic_array_info.cswitch_done_count = cswitch_done_count;
@@ -122,29 +126,12 @@ class sauria_systolic_array_monitor extends uvm_monitor;
 
         forever @(posedge sauria_systolic_array_if.clk)begin
             
-            //if (normal_operation_pipeline_en || sync_pipeline_after_dis)  begin    
-                cswitch_arr_d          <= sauria_systolic_array_if.cswitch_arr;
-                arr_psum_reserve_reg_d <= sauria_systolic_array_if.arr_psum_reserve_reg;
-                arr_psum_accum_in_d    <= sauria_systolic_array_if.arr_psum_accum_in;
-                arr_psum_accum_out_d   <= sauria_systolic_array_if.arr_psum_accum_out;
-            //end
+            cswitch_arr_d          <= sauria_systolic_array_if.cswitch_arr;
             cswitch_arr_q         <= cswitch_arr_d;
 
-            /* 
-            if (disabling_pipeline || sync_pipeline_after_dis) 
-                cswitch_arr_alternate <= (pipeline_dis == 1'b1) ? cswitch_arr_d : cswitch_arr_q; 
-             
-            //cswitch_arr_q          <= (normal_operation_pipeline_en || !pipeline_dis) ? cswitch_arr_d:  cswitch_arr_alternate;
-            cswitch_arr_q          <= (normal_operation_pipeline_en || !pipeline_dis) ? (disabling_pipeline ? cswitch_arr_q : cswitch_arr_d) :  
-                                                                                        cswitch_arr_alternate;
-
-            cswitch_arr_q          <= (normal_operation_pipeline_en || !pipeline_dis) ? (disabling_pipeline ? cswitch_arr_q : cswitch_arr_d) :  
-                                                                                        cswitch_arr_alternate;
-            */
-
-            //`sauria_info(message_id, $sformatf("CSWITCH D: 0x%0h Alternate: 0x%0h Q: 0x%0h", cswitch_arr_d, cswitch_arr_alternate, cswitch_arr_q))
-            //`sauria_info(message_id, $sformatf("Pipeline State Disabling : %0d Sync_After Disabling: %0d_Dis: %0d Normal_Operation: %0d", 
-            //disabling_pipeline, pipeline_dis, sync_pipeline_after_dis, normal_operation_pipeline_en, ))
+            arr_psum_reserve_reg_d <= sauria_systolic_array_if.arr_psum_reserve_reg;
+            arr_psum_accum_in_d    <= sauria_systolic_array_if.arr_psum_accum_in;
+            arr_psum_accum_out_d   <= sauria_systolic_array_if.arr_psum_accum_out;
             
             arr_psum_reserve_reg_q <= arr_psum_reserve_reg_d;
             
@@ -188,7 +175,7 @@ class sauria_systolic_array_monitor extends uvm_monitor;
                 pipeline_dis          <= !normal_operation_pipeline_en; 
         
             normal_operation_pipeline_en = pipeline_en_q && pipeline_en_d;
-            enabling_pipeline            = (pipeline_en_d && pipeline_dis);
+            enabling_pipeline            = (sauria_systolic_array_if.pipeline_en && pipeline_dis); //pipeline_en_d
             disabling_pipeline           = (pipeline_en_q && !pipeline_en_d);
             sync_pipeline_after_dis      = (sauria_systolic_array_if.pipeline_en && pipeline_dis);
         end
@@ -210,15 +197,21 @@ class sauria_systolic_array_monitor extends uvm_monitor;
             act_pop_en_d <= sauria_systolic_array_if.act_pop_en;
             wei_pop_en_d <= sauria_systolic_array_if.wei_pop_en;
             
+            if (!(feeding_paused || feeding_paused_hold)) begin
+                update_data_valid_done_count = ( ((act_data_valid_d && !sauria_systolic_array_if.act_data_valid) && 
+               (wei_data_valid_d &&  !sauria_systolic_array_if.wei_data_valid)) ||
+                (data_valid_done_count > 0) && ( data_valid_done_count < sauria_pkg::X) ||  feeding_unpaused);   
+            end
+
             feeding_paused = (pipeline_en_d && !sauria_systolic_array_if.pipeline_en) && 
                             ((act_pop_en_d && sauria_systolic_array_if.act_pop_en) 
-                            || (wei_pop_en_d && sauria_systolic_array_if.wei_pop_en));
+                            || (wei_pop_en_d && sauria_systolic_array_if.wei_pop_en) || (update_data_valid_done_count));
 
             
             feeding_unpaused = (!pipeline_en_d && sauria_systolic_array_if.pipeline_en) && 
                             ((act_pop_en_d && sauria_systolic_array_if.act_pop_en) 
-                            || (wei_pop_en_d && sauria_systolic_array_if.wei_pop_en)) 
-                            && feeding_paused_hold;
+                            || (wei_pop_en_d && sauria_systolic_array_if.wei_pop_en) || 
+                            (update_data_valid_done_count)) && feeding_paused_hold;
 
             
             if (feeding_paused)
@@ -232,10 +225,7 @@ class sauria_systolic_array_monitor extends uvm_monitor;
             else if ((data_valid_sel == 1'b1) && (act_data_valid_q))
                 data_valid_sel <= 1'b0; 
 
-            if ((act_data_valid_d && !sauria_systolic_array_if.act_data_valid) && 
-               (wei_data_valid_d &&  !sauria_systolic_array_if.wei_data_valid) && (!feeding_paused)) 
-                data_valid_done_count++;
-            else if ((data_valid_done_count > 0) && ( data_valid_done_count < sauria_pkg::X)) //&& (!sauria_systolic_array_if.act_data_valid))
+            if (update_data_valid_done_count && !(feeding_paused || feeding_paused_hold)) 
                 data_valid_done_count++;
             else                                                                              //if (!act_data_valid_d && sauria_systolic_array_if.act_data_valid)
                 data_valid_done_count  = 0;

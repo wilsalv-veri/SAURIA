@@ -88,7 +88,7 @@ class sauria_core_ifmaps_reg_block extends uvm_reg_block;
         set_reg_base_addr();
 
         default_map = create_map("core_ifmaps_cfg_map", CFG_BASE_OFFSET,
-                                 CFG_AXI_DATA_WIDTH_BYTES, UVM_LITTLE_ENDIAN, 1);
+                                 CFG_AXI_BYTE_NUM, UVM_LITTLE_ENDIAN, 1);
 
         default_map.add_reg(core_ifmaps_cfg_reg_24, reg_24_base_offset, REG_CFG_ACCESS);
         default_map.add_reg(core_ifmaps_cfg_reg_25, reg_25_base_offset, REG_CFG_ACCESS);

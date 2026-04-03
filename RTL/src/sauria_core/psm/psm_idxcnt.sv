@@ -26,6 +26,7 @@
 // --------------------
 
 module psm_idxcnt #(
+    parameter X     = 16, //NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
     parameter IDX_W = 11,
     parameter WOFS_W = 3,
     parameter ADRC_W = 8,
@@ -66,6 +67,10 @@ module psm_idxcnt #(
 logic                   x_ov_flag, k_ov_flag, til_xy_ov_flag, til_k_ov_flag;
 logic [IDX_W-1:0]       x_idx, k_idx, til_xy_idx, til_k_idx;
 
+//NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
+logic [IDX_W-1:0]       shift_k_idx;
+
+
 // Index sums -> Must be able to stand an overflow (+1 bit)
 logic [IDX_W:0]         til_idx, kk_idx, sram_idx_d;
 logic [IDX_W:0]         idx_end, idx_zero_current;
@@ -74,6 +79,12 @@ logic                   last_pos_flag;
 // Intermediate flags
 logic                   x_flag, xk_flag, til_xy_flag, til_xyk_flag;
 logic                   transition_flag_d, transition_flag_q;
+
+//NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
+logic                   shift_k_flag, shift_kx_flag,shift_k_ov_flag;
+logic [IDX_W-1:0]		shift_cklim;
+
+
 
 // Addresses and Word Offsets -> Addresses must be able to stand an overflow (+1 bit)
 logic [ADRC_W:0]        sram_addr_d, sram_addr_q;
@@ -94,43 +105,97 @@ logic                   done_d, done_q, til_done_d, til_done_q, outbounds_q;
 // ---------------------------------------
 
 assign x_flag = x_ov_flag;
-assign xk_flag = x_ov_flag & k_ov_flag;
-assign til_xy_flag = x_ov_flag & k_ov_flag & til_xy_ov_flag;
-assign til_xyk_flag = x_ov_flag & k_ov_flag & til_xy_ov_flag & til_k_ov_flag;
+
+//NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
+assign shift_k_flag = shift_k_ov_flag;
+assign shift_cklim = i_ckstep * X;
+
+//NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
+//assign xk_flag = x_ov_flag & k_ov_flag;
+//assign til_xy_flag = x_ov_flag & k_ov_flag & til_xy_ov_flag;
+//assign til_xyk_flag = x_ov_flag & k_ov_flag & til_xy_ov_flag & til_k_ov_flag;
+
+assign shift_kx_flag = shift_k_flag & x_ov_flag;
+assign xk_flag = shift_k_flag & x_ov_flag & k_ov_flag;
+assign til_xy_flag = shift_k_flag & x_ov_flag & k_ov_flag & til_xy_ov_flag;
+assign til_xyk_flag = shift_k_flag & x_ov_flag & k_ov_flag & til_xy_ov_flag & til_k_ov_flag;
+
 
 // --------------------------
 // Counters instantiation
 // --------------------------
 
-// X counter
+//NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
+//Shift_K counter
 cnt_generic #(
+        .CNT_W(IDX_W)
+    ) shift_counter_i
+       (.i_clk  (i_clk),
+        .i_rstn (i_rstn),
+        .i_lim	(shift_cklim),
+        .i_step	(i_ckstep),
+        .i_en	(i_cnt_en),
+        
+        .i_clear(i_cnt_clear || (!i_cnt_en)),   // Clear when disabled to clean the value between RD and WR
+
+        .o_flag (shift_k_ov_flag),
+        .o_cnt  (shift_k_idx));
+
+
+// X counter
+//cnt_generic #(
+cnt_dualctx #(
         .CNT_W(IDX_W)
     ) x_counter_i
        (.i_clk  (i_clk),
         .i_rstn (i_rstn),
         .i_lim	(i_cxlim),
         .i_step	(i_cxstep),
-        .i_en	(i_cnt_en),
         
-        .i_clear(i_cnt_clear || (!i_cnt_en)),   // Clear when disabled to clean the value between RD and WR
+        //NOTE: wilsalv :ARCH_ID2 
+        //.i_en	(i_cnt_en),
+        .i_en	(i_cnt_en && shift_k_flag),
+        
+        //NOTE: wilsalv :ARCH_ID2 
+        //.i_clear(i_cnt_clear || (!i_cnt_en)),   // Clear when disabled to clean the value between RD and WR
+        .i_clear(i_cnt_clear),  
+        
+        //NOTE: wilsalv :ARCH_ID2
+        .i_sel(i_wr_flag),
+
         
         .o_flag (x_ov_flag),
         .o_cnt  (x_idx));
 
+//NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
 // K counter
-cnt_generic #(
+//cnt_generic #(
+cnt_dualctx #(
         .CNT_W(IDX_W)
     ) k_counter_i
        (.i_clk  (i_clk),
         .i_rstn (i_rstn),
-        .i_lim	(i_cklim),
-        .i_step	(i_ckstep),
-        .i_en	(i_cnt_en && x_flag),
         
-        .i_clear(i_cnt_clear || (!i_cnt_en)),   // Clear when disabled to clean the value between RD and WR
+        .i_lim	(i_cklim),
+        
+        //NOTE: wilsalv :ARCH_ID2 CORE_BUGID9        
+        //.i_step	(i_ckstep),
+        .i_step	(shift_cklim),
+        
+        //NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
+        //.i_en	(i_cnt_en && x_flag),
+        .i_en	(i_cnt_en && shift_kx_flag),
+        
+        //NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
+        //.i_clear(i_cnt_clear || (!i_cnt_en)),   // Clear when disabled to clean the value between RD and WR
+        .i_clear(i_cnt_clear),   // Clear when disabled to clean the value between RD and WR
+
+        //NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
+        .i_sel(i_wr_flag),
 
         .o_flag (k_ov_flag),
         .o_cnt  (k_idx));
+
 
 // Tiling XY counter
 cnt_dualctx #(
@@ -167,8 +232,15 @@ cnt_dualctx #(
 // ------------------------
 
 assign til_idx =    til_xy_idx + til_k_idx;
-assign kk_idx =     til_idx + k_idx;
+
+//NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
+//assign kk_idx =     til_idx + k_idx;
+assign kk_idx =     til_idx + k_idx + shift_k_idx;
+
+//NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
 assign sram_idx_d = x_idx + kk_idx;
+//assign sram_idx_d = shift_k_idx + x_idx + kk_idx;
+
 
 // Address & Word Offset
 assign sram_addr_d =        sram_idx_d[IDX_W:WOFS_W];
@@ -177,9 +249,12 @@ assign woffs_d =            sram_idx_d[WOFS_W-1:0];
 // ----------------------------------
 // Transition flag logic & register
 // ----------------------------------
+//NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
+//assign transition_flag_d = (x_flag && i_cnt_en);
+assign transition_flag_q = (sram_addr_d != sram_addr_q) && i_cnt_en && !i_start;
 
-assign transition_flag_d = (x_flag && i_cnt_en);
-
+//NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
+/* 
 // Register
 always_ff @(posedge i_clk or negedge i_rstn) begin : transition_reg
     if(~i_rstn) begin
@@ -188,11 +263,13 @@ always_ff @(posedge i_clk or negedge i_rstn) begin : transition_reg
 
         if (i_cnt_en && (!i_cnt_clear)) begin
             transition_flag_q <= transition_flag_d;
+        
         end else begin
             transition_flag_q <= 0;
         end
     end
 end
+*/
 
 // ------------------------
 // Mask generation logic
@@ -267,7 +344,9 @@ end
 // Registers
 // ------------------------
 
-assign done_d = xk_flag;
+//NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
+//assign done_d = xk_flag;
+assign done_d = shift_k_flag;
 
 assign til_done_d = til_xyk_flag;
 
@@ -281,7 +360,13 @@ always_ff @(posedge i_clk or negedge i_rstn) begin : gen_reg
 
         // Synchronous reset
         if (i_cnt_clear || (!i_cnt_en)) begin
-            sram_addr_q <= 0;
+            
+            //NOTE: wilsalv :ARCH_ID2 CORE_BUGID9
+            if (i_cnt_clear)
+                sram_addr_q <= 0;
+            else
+                sram_addr_q <= sram_addr_d;
+            
             mask_q <= 0;
             done_q <= 0;
             til_done_q <= 0;

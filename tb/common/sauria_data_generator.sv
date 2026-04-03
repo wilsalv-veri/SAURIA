@@ -46,7 +46,7 @@ class sauria_data_generator extends uvm_object;
     
 
     virtual function sauria_axi4_data_t gen_read_data();
-        int num_bytes    = 2**rd_txn_item.rd_addr_item.arsize;
+        int num_bytes    = DATA_AXI_BYTE_NUM; //2**rd_txn_item.rd_addr_item.arsize;
         int last_elem_idx;
         int elem_base_offset;
         rdata = sauria_axi4_data_t'(0);
@@ -80,7 +80,7 @@ class sauria_data_generator extends uvm_object;
                 end
             endcase
         end
-        byte_idx++;
+        byte_idx += 2;
         return rdata; 
     endfunction
  

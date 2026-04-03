@@ -33,10 +33,8 @@ def parse_args():
 
 def generate_hw_version_filelist_lines(hw_version):
     hw_file = HW_VERSION_FILES[hw_version]
-    return [
-        "buildconfig\n\n",
-        f"${{RTL_DIR}}/hw_versions/{hw_file}\n",
-    ]
+    return f"${{RTL_DIR}}/hw_versions/{hw_file}\n"
+    
 
 def generate_filelist(file_name, lines, filelists_directory):
     abs_path_file_name = f"{filelists_directory}/{file_name}"

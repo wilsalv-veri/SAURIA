@@ -5,21 +5,11 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
     uvm_status_e                           status;
     sauria_core_main_controller_reg_block  core_main_controller_reg_block;
 
-    rand sauria_axi4_lite_data_t total_macs;
-    rand sauria_axi4_lite_data_t act_reps;
-                        
-    rand sauria_axi4_lite_data_t weight_reps;
+    sauria_axi4_lite_data_t total_macs;
+    sauria_axi4_lite_data_t act_reps;                    
+    sauria_axi4_lite_data_t weight_reps;
     
     rand sauria_axi4_lite_data_t zero_negligence_threshold;                
-   
-    constraint total_macs_c {
-        total_macs == sauria_axi4_lite_data_t'('h10);
-    }
-    
-    constraint array_reps_c {
-        act_reps    == sauria_axi4_lite_data_t'('h1);                    
-        weight_reps == sauria_axi4_lite_data_t'('h1);
-    }
    
     constraint zero_neg_c{
         zero_negligence_threshold == sauria_axi4_lite_data_t'('h0);                
@@ -42,11 +32,16 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
 
     virtual task set_total_macs_params();
         wait_comp_params_shared();
-        
+        total_macs  = computation_params.ifmaps_C;
+        act_reps    = computation_params.weights_K / SRAMB_N;
+        weight_reps = (computation_params.ifmaps_X * computation_params.ifmaps_Y) 
+                    / SRAMA_N;
+
         computation_params.incntlim = total_macs;
         computation_params.main_controller_cfg_shared = 1'b1;
     endtask
   
+
     virtual function void set_unit_specific_cfg_CRs();
         set_core_main_controller_cfg_CRs();
     endfunction

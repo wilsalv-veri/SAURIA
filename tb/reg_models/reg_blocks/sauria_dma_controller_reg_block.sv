@@ -118,7 +118,7 @@ class sauria_dma_controller_reg_block extends uvm_reg_block;
 
     virtual function void create_mem_map();
         default_map = create_map("dma_controller_cfg_map", CFG_BASE_OFFSET,
-                                 CFG_AXI_DATA_WIDTH_BYTES, UVM_LITTLE_ENDIAN, 1);
+                                 CFG_AXI_BYTE_NUM, UVM_LITTLE_ENDIAN, 1);
 
         default_map.add_reg(dma_controller_cfg_reg_0,  get_cfg_addr_from_idx(CFG_REG_0_IDX),  REG_CFG_ACCESS);
         default_map.add_reg(dma_controller_cfg_reg_1,  get_cfg_addr_from_idx(CFG_REG_1_IDX),  REG_CFG_ACCESS);

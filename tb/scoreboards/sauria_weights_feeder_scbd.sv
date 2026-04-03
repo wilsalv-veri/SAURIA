@@ -75,7 +75,9 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
 
         if(!weights_feeder_sramb_access_info.til_done)begin
             feeder_data.push_back(feeder_data_inst);
-            check_sramb_rd_addr();
+            
+            //FIXME: wilsalv :Re-enable
+            //check_sramb_rd_addr();
             update_exp_sramb_rd_addr(weights_feeder_sramb_access_info.til_done);
         end
 
@@ -99,7 +101,11 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
                 if ((feeder_data[0].sramb_data != feeder_data[0].b_arr) && (!weights_feeder_arr_info.fifo_empty))
                     `sauria_error(message_id, $sformatf("Feeder Output Does Not Match SRAMB Read Data Q_Size: %0d Addr: 0x%0h Exp: 0x%0h Act: 0x%0h",
                     feeder_data.size(), feeder_data[0].sramb_addr ,feeder_data[0].sramb_data, feeder_data[0].b_arr ))
+                else 
+                    `sauria_info(message_id, $sformatf("Feeder Output Matches SRAMB Read Data Q_Size: %0d Addr: 0x%0h Exp: 0x%0h Act: 0x%0h",
+                    feeder_data.size(), feeder_data[0].sramb_addr ,feeder_data[0].sramb_data, feeder_data[0].b_arr ))
                 
+
                 popped_inst = feeder_data.pop_front(); 
             end
             

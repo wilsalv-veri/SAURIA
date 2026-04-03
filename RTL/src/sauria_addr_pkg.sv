@@ -42,7 +42,6 @@ package sauria_addr_pkg;
     parameter AXI_CONTROLLER_ADDR_MASK      = 32'hFFFF_FF00;
     parameter AXI_SAURIA_ADDR_MASK          = 32'hFFC0_0000;
     parameter AXI_DMA_ADDR_MASK             = 32'hFFFF_FFC0;
-
     parameter SAURIA_MEM_ADDR_MASK          = 32'h003C_0000;
     parameter SAURIA_REG_ADDR_MASK          = 32'h000F_FE00;
 

@@ -95,7 +95,7 @@ package sauria_pkg;
     parameter DMA_WADDR_OFFSET              = 0;        //offset of the DNA AXI master writer addresses; must be multiple of 4GB
     parameter DATA_ELM_BITS                 = 8;        // Width of the axi data bus elements (integer multiple of 8)
     
-    //NOTE: wilsalv :DMA_BUGID6 
+    //NOTE: wilsalv :DMA_BUGID5 
     //parameter DMA_SYNC_AW_W                 = 0;        // synchronize AW and W channels; adress is not valid until there is data availbale in the writer FIFO
     parameter DMA_SYNC_AW_W                 = 1;
 

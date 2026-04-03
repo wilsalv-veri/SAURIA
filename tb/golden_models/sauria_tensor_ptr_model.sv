@@ -59,7 +59,7 @@ class sauria_tensor_ptr_model extends sauria_base_model;
         rd_tensors_done = is_done_getting_tensors_addresses();
         if(rd_tensors_done) clear_done_signals();
         
-        return next_rd_addr;
+        return next_rd_addr & DATA_AXI_ADDR_MASK;
     endfunction
 
     virtual function sauria_axi4_addr_t get_next_exp_wr_address();
@@ -71,7 +71,7 @@ class sauria_tensor_ptr_model extends sauria_base_model;
         end
         if (rd_tensors_done) psums_tile_wr_n_minus_1 = 1'b1;
             
-        return get_next_wr_psums_address();
+        return get_next_wr_psums_address() & DATA_AXI_ADDR_MASK;
     endfunction
 
     virtual function sauria_axi4_addr_t get_next_tiles_address();    

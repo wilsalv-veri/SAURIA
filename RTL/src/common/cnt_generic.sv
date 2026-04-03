@@ -68,8 +68,9 @@ always_comb begin
     // Synchronous reset
     if (i_clear) begin
         cnt_d = 0;
-    end else begin
-        
+    //NOTE: wilsalv :COMMON_BUGID1
+    //end else begin 
+    end else if (i_en)begin    
         // Up counting
         cnt_d = cnt_q + i_step;
 

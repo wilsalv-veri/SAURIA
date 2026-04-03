@@ -76,6 +76,11 @@ logic [IDX_W-1:0]       xy_idx, glob_idx, chg_idx, sram_idx_d, sram_idx_q;
 logic                   x_flag, xy_flag, xyc_flag, tilx_flag, tilxy_flag;
 logic                   cnt_clear_q;
 
+//NOTE: wilsalv :ARCH_ID1
+logic                   c_flag, cx_flag;
+logic                   transition_flag, transition_q1, transition_q2;
+
+
 // Final shimming
 logic [WOFS_W-1:0]      woffs_outshim;
 logic                   x_ov_flag_outshim;
@@ -88,6 +93,11 @@ logic                   done_d, done_q, til_done_d, til_done_q, outbounds_q;
 // Activation flags (EN of next counter)
 // ---------------------------------------
 
+//NOTE: wilsalv :ARCH_ID1
+assign c_flag  = ch_ov_flag;
+assign cx_flag = ch_ov_flag && x_ov_flag;
+assign transition_flag = (sram_idx_q[IDX_W-1:WOFS_W] != sram_idx_d[IDX_W-1:WOFS_W]);
+ 
 assign x_flag = x_ov_flag;
 assign xy_flag = x_ov_flag & y_ov_flag;
 assign xyc_flag = x_ov_flag & y_ov_flag & ch_ov_flag;
@@ -98,6 +108,19 @@ assign tilxy_flag = x_ov_flag & y_ov_flag & ch_ov_flag & til_x_ov_flag & til_y_o
 // --------------------------
 // Counters instantiation
 // --------------------------
+//NOTE: wilsalv :ARCH_ID1
+cnt_generic #(
+        .CNT_W(IDX_W)
+    ) ch_counter_i
+       (.i_clk  (i_clk),
+        .i_rstn (i_rstn),
+        .i_lim	(i_chlim),
+        .i_step	(i_chstep),
+        .i_en	(i_cnt_en),
+        .i_clear(i_cnt_clear),
+
+        .o_flag (ch_ov_flag),
+        .o_cnt  (ch_idx));
 
 // X counter
 cnt_generic #(
@@ -107,7 +130,11 @@ cnt_generic #(
         .i_rstn (i_rstn),
         .i_lim	(i_xlim),
         .i_step	(i_xstep),
-        .i_en	(i_cnt_en),
+        
+        //NOTE: wilsalv :ARCH_ID1
+        //.i_en	(i_cnt_en),
+        .i_en	(i_cnt_en & c_flag),
+        
         .i_clear(i_cnt_clear),
 
         .o_flag (x_ov_flag),
@@ -121,12 +148,18 @@ cnt_generic #(
         .i_rstn (i_rstn),
         .i_lim	(i_ylim),
         .i_step	(i_ystep),
-        .i_en	(i_cnt_en && x_flag),
+        
+        //NOTE: wilsalv :ARCH_ID1
+        //.i_en	(i_cnt_en && x_flag),
+        .i_en	(i_cnt_en && cx_flag),
+        
         .i_clear(i_cnt_clear),
 
         .o_flag (y_ov_flag),
         .o_cnt  (y_idx));
 
+//NOTE: wilsalv :ARCH_ID1        
+/* 
 // Channel counter
 cnt_generic #(
         .CNT_W(IDX_W)
@@ -139,7 +172,7 @@ cnt_generic #(
         .i_clear(i_cnt_clear),
 
         .o_flag (ch_ov_flag),
-        .o_cnt  (ch_idx));
+        .o_cnt  (ch_idx));*/
 
 // Tiling X counter
 cnt_generic #(
@@ -192,6 +225,10 @@ always_ff @(posedge i_clk or negedge i_rstn) begin : woffs_reg
         x_ov_flag_q <= 0;
         done_q <= 0;
         til_done_q <= 0;
+
+        //NOTE: wilsalv :ARCH_ID1
+        transition_q1 <= 0;
+
     end else begin
 
         // Synchronous reset signal
@@ -201,12 +238,18 @@ always_ff @(posedge i_clk or negedge i_rstn) begin : woffs_reg
             done_q <= 0;
             til_done_q <= 0;
 
+            //NOTE: wilsalv :ARCH_ID1
+            transition_q1 <= 0;
+
         // SRAM index register & done flag are gated by counter enable (pipeline stall)
         end else if (i_cnt_en) begin
             sram_idx_q <= sram_idx_d;
             x_ov_flag_q <= x_ov_flag;
             done_q <= done_d;
             til_done_q <= til_done_d;
+
+            //NOTE: wilsalv :ARCH_ID1
+            transition_q1 <= transition_flag;
         end
     end
 end
@@ -219,6 +262,7 @@ always_ff @(posedge i_clk or negedge i_rstn) begin : outbounds_reg
     if(~i_rstn) begin
         cnt_clear_q <= 0;
         outbounds_q <= 0;
+
     end else begin
 
         cnt_clear_q <= i_cnt_clear;
@@ -230,6 +274,7 @@ always_ff @(posedge i_clk or negedge i_rstn) begin : outbounds_reg
         end else if (i_cnt_en && til_done_q && i_finalctx) begin
             outbounds_q <= 1;
         end
+
     end
 end
 
@@ -242,6 +287,10 @@ always_ff @(posedge i_clk or negedge i_rstn) begin : out_shimming_reg
         woffs_outshim <= 0;
         x_ov_flag_outshim <= 0;
         outbounds_outshim <= 0;
+
+        //NOTE: wilsalv :ARCH_ID1
+        transition_q2 <= 0;
+    
     end else begin
 
         // Synchronous reset signal
@@ -250,11 +299,17 @@ always_ff @(posedge i_clk or negedge i_rstn) begin : out_shimming_reg
             x_ov_flag_outshim <= 0;
             outbounds_outshim <= 0;       // Should not be reset by cnt_clear
 
+            //NOTE: wilsalv :ARCH_ID1
+            transition_q2 <= 0;
+    
         // SRAM index register & done flag are gated by counter enable (pipeline stall)
         end else if (i_cnt_en) begin
             woffs_outshim <=        sram_idx_q[WOFS_W-1:0];
             x_ov_flag_outshim <=    x_ov_flag_q;
             outbounds_outshim <=    outbounds_q;
+
+            //NOTE: wilsalv :ARCH_ID1 
+            transition_q2 <= transition_q1;
         end
     end
 end
@@ -269,7 +324,11 @@ assign o_woffs =        woffs_outshim;
 
 // Flags
 assign o_outbounds =    outbounds_q;
-assign o_x_ov_flag =    x_ov_flag_outshim   & i_cnt_en;
+
+//NOTE: wilsalv :ARCH_ID1
+//assign o_x_ov_flag =    x_ov_flag_outshim   & i_cnt_en;
+assign o_x_ov_flag =    transition_q1   & i_cnt_en;
+
 assign o_done =         done_q              & i_cnt_en;
 assign o_til_done =     til_done_q          & i_cnt_en;
 

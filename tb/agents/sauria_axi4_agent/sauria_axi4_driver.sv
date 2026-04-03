@@ -14,6 +14,10 @@ class sauria_axi4_driver extends uvm_driver #(sauria_tensor_mem_seq_item);
     sauria_axi4_rd_txn_seq_item  rd_txn_item;
 
     sauria_computation_params   computation_params;
+    sauria_axi4_addr_t          prev_addr;
+    sauria_axi4_data_t          prev_data;
+
+    bit gen_new_data;
 
     function new(string name="sauria_axi4_driver", uvm_component parent=null);
         super.new(name, parent);
@@ -66,8 +70,12 @@ class sauria_axi4_driver extends uvm_driver #(sauria_tensor_mem_seq_item);
     virtual task get_rd_addr();
                 
         sauria_axi4_mem_if.axi4_rd_addr_ch.arready <= 1'b0;
+        rd_txn_item.rd_addr_item.araddr <= sauria_axi4_mem_if.axi4_rd_addr_ch.araddr;
         rd_txn_item.rd_addr_item.arlen  <= sauria_axi4_mem_if.axi4_rd_addr_ch.arlen;
         rd_txn_item.rd_addr_item.arsize <= sauria_axi4_mem_if.axi4_rd_addr_ch.arsize;
+        
+        gen_new_data <= (prev_addr != sauria_axi4_mem_if.axi4_rd_addr_ch.araddr) || 
+                        (sauria_axi4_mem_if.axi4_rd_addr_ch.arlen > 0);  
         
         data_generator.set_tensor_type(sauria_axi4_mem_if.axi4_rd_addr_ch.araddr);
     
@@ -85,29 +93,33 @@ class sauria_axi4_driver extends uvm_driver #(sauria_tensor_mem_seq_item);
             `sauria_error(message_id, "Failed to get access to computation_params")
  
         data_generator.configure_generator(tensor_item, rd_txn_item, computation_params);
-        data_generator.set_int_data_gen_mode(SING_NIB_INCR_PATTERN, SING_NIB_INCR_PATTERN, ALL_TWOS);
-        data_generator.set_fp_data_gen_mode(FP_ONE_W_FRAC_COMP, FP_NEG_ONE, FP_ONE); 
+        if (INT_ARITHMETIC)
+            data_generator.set_int_data_gen_mode(SING_NIB_INCR_PATTERN, SING_NIB_INCR_PATTERN, ALL_TWOS);
+        else
+            data_generator.set_fp_data_gen_mode(FP_ONE_W_FRAC_COMP, FP_NEG_ONE, FP_ONE); 
     endfunction
 
     virtual task set_rd_data();
-           
         @ (posedge sauria_ss_if.i_system_clk);
          
+
         for(int chunk_id=0; chunk_id <= rd_txn_item.rd_addr_item.arlen; chunk_id++)begin
             
             sauria_axi4_mem_if.axi4_rd_data_ch.rvalid <= 1'b1;
             sauria_axi4_mem_if.axi4_rd_data_ch.rresp  <= sauria_axi_resp_t'('h0);            
-            sauria_axi4_mem_if.axi4_rd_data_ch.rdata  <= data_generator.gen_read_data(); 
+            sauria_axi4_mem_if.axi4_rd_data_ch.rdata  <= gen_new_data ? data_generator.gen_read_data() : prev_data; 
             sauria_axi4_mem_if.axi4_rd_data_ch.rlast  <= chunk_id == rd_txn_item.rd_addr_item.arlen;
             wait (sauria_axi4_mem_if.axi4_rd_data_ch.rready);
             
             @ (posedge sauria_ss_if.i_system_clk);
+            prev_data                                 <= sauria_axi4_mem_if.axi4_rd_data_ch.rdata;
             sauria_axi4_mem_if.axi4_rd_data_ch.rvalid <= 1'b0;
             @ (posedge sauria_ss_if.i_system_clk);
              
         end
         
         sauria_axi4_mem_if.axi4_rd_data_ch.rlast  <= 1'b0;
+        prev_addr                                 <= rd_txn_item.rd_addr_item.araddr;
     endtask
 
     virtual task receive_axi4_mem_wr_req();

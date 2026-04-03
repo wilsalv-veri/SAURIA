@@ -46,7 +46,7 @@ class sauria_core_main_controller_reg_block extends uvm_reg_block;
         set_reg_base_addr();
 
         default_map = create_map("core_main_controller_cfg_map", CFG_BASE_OFFSET,
-                                 CFG_AXI_DATA_WIDTH_BYTES, UVM_LITTLE_ENDIAN, 1);
+                                 CFG_AXI_BYTE_NUM, UVM_LITTLE_ENDIAN, 1);
 
         default_map.add_reg(core_main_controller_cfg_reg_22, reg_22_base_offset, REG_CFG_ACCESS);
         default_map.add_reg(core_main_controller_cfg_reg_23, reg_23_base_offset, REG_CFG_ACCESS);

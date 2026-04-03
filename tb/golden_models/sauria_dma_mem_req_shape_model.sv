@@ -30,23 +30,6 @@ class sauria_dma_mem_req_shape_model extends sauria_base_model;
         endcase;
     endfunction
 
-    /* 
-    virtual function sauria_axi_len_t get_ifmaps_beats();
-        int ett = ifmap_X;
-        return get_num_beats(ett, IFMAPS);
-    endfunction
-
-    virtual function sauria_axi_len_t get_weights_beats();
-        int ett = Ck_eq ? weights_tile_size : weights_K;
-        return get_num_beats(ett, WEIGHTS);
-    endfunction
-
-    virtual function sauria_axi_len_t get_psums_beats();
-        int ett = (Cw_eq && Ch_eq) ? psums_tile_size: psums_X;
-        return get_num_beats(ett, PSUMS);
-    endfunction
-    */
-
     virtual function sauria_axi_len_t get_num_beats();
         int ett = get_ett();
         int btt = get_btt(ett);

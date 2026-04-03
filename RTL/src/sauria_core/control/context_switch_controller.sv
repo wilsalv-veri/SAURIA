@@ -132,7 +132,9 @@ end
 // Cdone trigger value is max(i_incntlim-2, 0)
 //NOTE: wilsalv :CORE_BUGID6 CORE_BUGID7
 //assign cdone_val = (i_incntlim>1)? (i_incntlim-2) : 0;
-assign cdone_val = (i_incntlim>1)? (first_context ? (i_incntlim - 3) : (i_incntlim - 4)) : 0;
+//assign cdone_val = (i_incntlim>1)? (first_context ? (i_incntlim - 3) : (i_incntlim - 4)) : 0;
+assign cdone_val = (i_incntlim>1)? i_incntlim - 3 : 0;
+
 
 // In two special situations we raise these flags
 assign cdone_force_q1 = (i_incntlim==1)? 1 : 0;
@@ -148,7 +150,11 @@ always_comb begin
         cdone = 1;
     end
 
-    if (incnt_q == i_incntlim) begin
+    //NOTE: wilsalv :CORE_BUGID6
+    //if (incnt_q == i_incntlim) begin
+    if ((incnt_q == i_incntlim) || 
+    ((i_incntlim > 1) && (incnt_q == i_incntlim - 1)))
+      begin
     
         incnt_d = 0;
     end else begin

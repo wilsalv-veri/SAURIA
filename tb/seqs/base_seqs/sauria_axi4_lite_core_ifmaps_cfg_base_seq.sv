@@ -7,20 +7,20 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
     uvm_status_e                  status;
     sauria_core_ifmaps_reg_block  core_ifmaps_reg_block;
 
-    rand sauria_axi4_lite_data_t ifmaps_x_lim;
-    rand sauria_axi4_lite_data_t ifmaps_x_step;
-    rand sauria_axi4_lite_data_t ifmaps_y_lim;
+    sauria_axi4_lite_data_t ifmaps_x_lim;
+    sauria_axi4_lite_data_t ifmaps_x_step;
+    sauria_axi4_lite_data_t ifmaps_y_lim;
                             
-    rand sauria_axi4_lite_data_t ifmaps_y_step;
-    rand sauria_axi4_lite_data_t ifmaps_ch_lim;
+    sauria_axi4_lite_data_t ifmaps_y_step;
+    sauria_axi4_lite_data_t ifmaps_ch_lim;
                           
-    rand sauria_axi4_lite_data_t ifmaps_ch_step;
-    rand sauria_axi4_lite_data_t ifmaps_tile_x_lim;
+    sauria_axi4_lite_data_t ifmaps_ch_step;
+    sauria_axi4_lite_data_t ifmaps_tile_x_lim;
                            
-    rand sauria_axi4_lite_data_t ifmaps_tile_x_step;
-    rand sauria_axi4_lite_data_t ifmaps_tile_y_lim;
+    sauria_axi4_lite_data_t ifmaps_tile_x_step;
+    sauria_axi4_lite_data_t ifmaps_tile_y_lim;
                          
-    rand sauria_axi4_lite_data_t ifmaps_tile_y_step;
+    sauria_axi4_lite_data_t ifmaps_tile_y_step;
     rand logic[63:0]             dilation_pattern;
                               
     rand sauria_axi4_lite_data_t ifmaps_rows_active;
@@ -35,28 +35,6 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
     rand sauria_axi4_lite_data_t ifmaps_loc_woffs_6;
     rand sauria_axi4_lite_data_t ifmaps_loc_woffs_7;
    
-    constraint ifmaps_dimensions_c{
-        ifmaps_x_lim   == sauria_axi4_lite_data_t'('h0);
-        ifmaps_y_lim   == sauria_axi4_lite_data_t'('h0);
-        ifmaps_ch_lim  == sauria_axi4_lite_data_t'('h0);
-    }
-    
-    constraint ifmaps_dimension_steps_c{
-        ifmaps_x_step  == sauria_axi4_lite_data_t'('h0);
-        ifmaps_y_step  == sauria_axi4_lite_data_t'('h0);
-        ifmaps_ch_step == sauria_axi4_lite_data_t'('h0);
-    }
-                         
-    constraint ifmaps_tile_dimensions_c{
-        ifmaps_tile_x_lim == sauria_axi4_lite_data_t'('h0);                       
-        ifmaps_tile_y_lim == sauria_axi4_lite_data_t'('h0);
-    }
-    
-    constraint ifmaps_tile_dimension_steps_c{
-        ifmaps_tile_x_step == sauria_axi4_lite_data_t'('h0);
-        ifmaps_tile_y_step == sauria_axi4_lite_data_t'('h0);
-    }
-
     constraint dilation_pattern_c{
         if(DV_GEMM_BYPASS){
             dilation_pattern == 64'h8000000000000000;
@@ -216,13 +194,13 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
         wait_comp_params_shared();
        
         ifmaps_x_step  = SRAMA_N;                     
-        ifmaps_x_lim   = ifmaps_x_step;                 
+        ifmaps_x_lim   = computation_params.ifmaps_X;   
+                                                                          
+        ifmaps_y_step  = computation_params.ifmaps_y_step;  
+        ifmaps_y_lim   = ifmaps_y_step * computation_params.ifmaps_Y;          
         
-        ifmaps_y_step  = ifmaps_x_lim;   
-        ifmaps_y_lim   = ifmaps_y_step * sauria_pkg::X;       
-        
-        ifmaps_ch_step = ifmaps_y_lim;                  
-        ifmaps_ch_lim  = ifmaps_ch_step * computation_params.ifmaps_C;        
+        ifmaps_ch_step = computation_params.ifmaps_c_step;                
+        ifmaps_ch_lim  = ifmaps_ch_step * computation_params.ifmaps_C;             
 
         //Single Tile
         ifmaps_tile_x_lim  = ifmaps_ch_lim;       
@@ -230,7 +208,6 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
         
         ifmaps_tile_y_step = ifmaps_ch_lim;            
         ifmaps_tile_y_lim  = ifmaps_ch_lim;             
-    
     endtask
 
     virtual task share_ifmaps_cfg();
