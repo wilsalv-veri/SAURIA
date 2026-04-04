@@ -9,18 +9,19 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
 
     sauria_axi4_lite_data_t ifmaps_x_lim;
     sauria_axi4_lite_data_t ifmaps_x_step;
-    sauria_axi4_lite_data_t ifmaps_y_lim;
-                            
+    
     sauria_axi4_lite_data_t ifmaps_y_step;
-    sauria_axi4_lite_data_t ifmaps_ch_lim;
+    sauria_axi4_lite_data_t ifmaps_y_lim;
                           
     sauria_axi4_lite_data_t ifmaps_ch_step;
-    sauria_axi4_lite_data_t ifmaps_tile_x_lim;
+    sauria_axi4_lite_data_t ifmaps_ch_lim;
                            
     sauria_axi4_lite_data_t ifmaps_tile_x_step;
-    sauria_axi4_lite_data_t ifmaps_tile_y_lim;
+    sauria_axi4_lite_data_t ifmaps_tile_x_lim;
                          
     sauria_axi4_lite_data_t ifmaps_tile_y_step;
+    sauria_axi4_lite_data_t ifmaps_tile_y_lim;
+    
     rand logic[63:0]             dilation_pattern;
                               
     rand sauria_axi4_lite_data_t ifmaps_rows_active;
@@ -193,24 +194,51 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
 
         wait_comp_params_shared();
        
-        ifmaps_x_step  = SRAMA_N;                     
-        ifmaps_x_lim   = computation_params.ifmaps_X;   
-                                                                          
-        ifmaps_y_step  = computation_params.ifmaps_y_step;  
-        ifmaps_y_lim   = ifmaps_y_step * computation_params.ifmaps_Y;          
-        
-        ifmaps_ch_step = computation_params.ifmaps_c_step;                
-        ifmaps_ch_lim  = ifmaps_ch_step * computation_params.ifmaps_C;             
+        ifmaps_ch_step = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_c_step;                
+        ifmaps_ch_lim  = ifmaps_ch_step * computation_params.df_controller_ifmaps_params.tile_params.ifmaps_C;             
 
+        ifmaps_x_step  = SRAMA_N;                     
+        ifmaps_x_lim   = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_X;   
+                                                                          
+        ifmaps_y_step  = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_y_step;  
+        ifmaps_y_lim   = ifmaps_y_step * computation_params.df_controller_ifmaps_params.tile_params.ifmaps_Y;          
+        
         //Single Tile
-        ifmaps_tile_x_lim  = ifmaps_ch_lim;       
         ifmaps_tile_x_step = ifmaps_ch_lim;             
+        ifmaps_tile_x_lim  = ifmaps_ch_lim;       
         
         ifmaps_tile_y_step = ifmaps_ch_lim;            
         ifmaps_tile_y_lim  = ifmaps_ch_lim;             
     endtask
 
     virtual task share_ifmaps_cfg();
+        
+        computation_params.core_ifmaps_params.tile_params.ifmaps_x_step 
+                    = ifmaps_x_step; 
+        computation_params.core_ifmaps_params.tile_params.ifmaps_X      
+                    = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_X;
+        
+        computation_params.core_ifmaps_params.tile_params.ifmaps_y_step 
+                    = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_y_step; 
+        computation_params.core_ifmaps_params.tile_params.ifmaps_Y      
+                    = ifmaps_y_lim;
+
+        computation_params.core_ifmaps_params.tile_params.ifmaps_c_step 
+                    = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_c_step; 
+        computation_params.core_ifmaps_params.tile_params.ifmaps_C           
+                    = ifmaps_ch_lim;  
+
+        computation_params.core_ifmaps_params.tensor_params.tile_ifmaps_x_step 
+                    = ifmaps_tile_x_step;
+        computation_params.core_ifmaps_params.tensor_params.tile_ifmaps_X
+                    = ifmaps_tile_x_lim;  
+
+        computation_params.core_ifmaps_params.tensor_params.tile_ifmaps_y_step 
+                    = ifmaps_tile_y_step;  
+        computation_params.core_ifmaps_params.tensor_params.tile_ifmaps_Y      
+                    = ifmaps_tile_y_lim;  
+        
+
         computation_params.ifmaps_rows_active = ifmaps_rows_active;
         computation_params.ifmaps_cfg_shared  = 1'b1;
     endtask

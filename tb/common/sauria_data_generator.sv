@@ -66,17 +66,17 @@ class sauria_data_generator extends uvm_object;
                 IFMAPS: begin
                     if ((elem_idx % sauria_pkg::SRAMA_N == 0) && (elem_idx > 0)) byte_idx++; 
                     elem_base_offset = elem_idx*$bits(sauria_ifmaps_elem_data_t);
-                    rdata[elem_base_offset +: $bits(sauria_ifmaps_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data(fp_ifmaps_data_mode) : get_int_elem_data(int_ifmaps_data_mode);
+                    rdata[elem_base_offset +: $bits(sauria_ifmaps_elem_data_t)] = INT_ARITHMETIC ?  get_int_elem_data(int_ifmaps_data_mode) : get_fp_elem_data(fp_ifmaps_data_mode);
                 end
                 WEIGHTS: begin
                     if ((elem_idx % sauria_pkg::SRAMB_N == 0) && (elem_idx > 0)) byte_idx++; 
                     elem_base_offset = elem_idx*$bits(sauria_weights_elem_data_t);
-                    rdata[elem_base_offset +: $bits(sauria_weights_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data(fp_weights_data_mode) : get_int_elem_data(int_weights_data_mode);
+                    rdata[elem_base_offset +: $bits(sauria_weights_elem_data_t)] = INT_ARITHMETIC ? get_int_elem_data(int_weights_data_mode) : get_fp_elem_data(fp_weights_data_mode);
                 end
                 PSUMS: begin
                     if ((elem_idx % sauria_pkg::SRAMC_N == 0) && (elem_idx > 0)) byte_idx++; 
                     elem_base_offset = elem_idx*$bits(sauria_psums_elem_data_t);
-                    rdata[elem_base_offset +: $bits(sauria_psums_elem_data_t)] = `ARITHMETIC ? get_fp_elem_data(fp_psums_data_mode) : get_int_elem_data(int_psums_data_mode);
+                    rdata[elem_base_offset +: $bits(sauria_psums_elem_data_t)] = INT_ARITHMETIC ? get_int_elem_data(int_psums_data_mode) : get_fp_elem_data(fp_psums_data_mode);
                 end
             endcase
         end

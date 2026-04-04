@@ -17,10 +17,12 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
     string message_id = "SAURIA_PSUMS_MGR_SCBD";
 
     sauria_computation_params computation_params;
+    psums_params_t   psums_params;
+
     virtual sauria_psums_mgr_shift_reg_ifc sauria_psums_mgr_shift_reg_if;
 
-    localparam RD_LAT    = 3;
-    localparam SHIFT_LAT = 2;
+    localparam RD_LAT    = 2;
+    localparam SHIFT_LAT = 1;
     localparam PSUM_ELEM_LEN = $bits(sauria_psums_elem_data_t);
 
     sramc_data_t              shift_reg_data[$];     
@@ -33,7 +35,7 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
     int                       curr_read_context_num,  next_read_context_num;
     int                       curr_write_context_num, next_write_context_num;
 
-    sramc_addr_t              sramc_read_addr, sramc_write_addr;
+    sramc_addr_t              exp_next_rd_sramc_addr, exp_next_wr_sramc_addr;
     int                       shift_count;
 
     bit                       new_context;
@@ -52,6 +54,17 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
 
     arr_row_data_t             psums_inactive_cols;
     arr_col_data_t             psums_rows_active;
+
+    sauria_axi4_lite_data_t    rd_shift_k_idx, rd_k_idx,rd_x_idx;
+    sauria_axi4_lite_data_t    wr_shift_k_idx, wr_k_idx,wr_x_idx;
+    sauria_axi4_lite_data_t       shift_k_idx,    k_idx,   x_idx;
+    
+    sauria_axi4_lite_data_t    shift_k_lim;
+    sauria_axi4_lite_data_t    act_reps, wei_reps;
+    
+    sauria_axi4_lite_data_t    rd_act_rep_idx, rd_wei_rep_idx;
+    sauria_axi4_lite_data_t    wr_act_rep_idx, wr_wei_rep_idx;
+    sauria_axi4_lite_data_t       act_rep_idx, wei_rep_idx;
 
     function new(string name="sauria_psums_mgr_scbd", uvm_component parent=null);
         super.new(name,parent);
@@ -74,37 +87,63 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
 
     virtual task run_phase(uvm_phase phase);
         super.run_phase(phase);
-        wait(computation_params.shared);
-        sramc_acceses_per_tile =  computation_params.psums_CK / computation_params.psums_ck_step;
-        num_tiles              =  (computation_params.tile_psums_CY / computation_params.tile_psums_cy_step) 
-                                * (computation_params.tile_psums_CK / computation_params.tile_psums_ck_step);
-
+       
+        wait(computation_params.main_controller_cfg_shared);
+        act_reps         = computation_params.act_reps;
+        wei_reps         = computation_params.wei_reps;
+       
         wait(computation_params.ifmaps_cfg_shared);
         psums_rows_active = arr_col_data_t'(computation_params.ifmaps_rows_active);
         
         wait(computation_params.psums_mgr_cfg_shared);
+        psums_params = computation_params.core_psums_params;
+
+        sramc_acceses_per_tile = sauria_pkg::X; 
+        shift_k_lim            = psums_params.tile_params.psums_ck_step * sramc_acceses_per_tile;
+        num_tiles              = (psums_params.tile_params.psums_CX / SRAMA_N) * (psums_params.tile_params.psums_K  / SRAMB_N);
+    
         psums_inactive_cols = arr_row_data_t'(computation_params.psums_inactive_cols);
+         
+        `sauria_info(message_id, $sformatf("SRAMC_Acceses_Per_Tile: %0d Num_Tiles: %0d", sramc_acceses_per_tile, num_tiles))
+
     endtask
 
     function write_psums_mgr_sramc_read_info(sauria_psums_mgr_seq_item psums_mgr_info);
         
+        `sauria_info(message_id, $sformatf("Received SRAMC Read Info: Context Num: %0d, SRAMC Addr: 0x%0h, SRAMC RData: 0x%0h", 
+                                psums_mgr_info.context_num, psums_mgr_info.sramc_addr, psums_mgr_info.sramc_rdata))
+
         this.psums_mgr_info = psums_mgr_info;
         next_read_context_num =  this.psums_mgr_info.context_num;
-        if(!rd_done_count) check_next_read_address();
-        if(!new_context)   update_exp_read_addr();
         
-        if (rd_done_count <= RD_LAT)begin
+        if(shift) begin
+                
             pending_shift_reg_check      = 1'b1;
             pending_scan_chain_bus_check = 1'b1;
             shift_sram_data              = 1'b1;
+                
+            if (rd_done_count == RD_LAT) begin
+                shift_count   = -1; //Will become 0 
+                rd_done_count =  0;
+            end
+            else if (shift_count < sauria_pkg::X) begin
+                `sauria_info(message_id, "Pushing SRAMC Data")
+                
+                check_next_read_address();
+                update_exp_sramc_addr(RD_TXN);
 
-            if(shift) begin
                 if(shift_reg_data.size() == sauria_pkg::X) shift_reg_entry = shift_reg_data.pop_back();
                 shift_reg_data.push_front(psums_mgr_info.sramc_rdata);
+                    
             end
-            else set_shift();
-        end 
+            else 
+                rd_done_count++;
+
+            shift_count++;
             
+        end
+        else set_shift();
+           
         curr_read_context_num =  next_read_context_num;
         
     endfunction
@@ -147,9 +186,9 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
         next_write_context_num = this.psums_mgr_info.context_num;
         
         //FIXME: wilsalv :Re-enable
-        //check_next_write_address();
-        
-        update_exp_write_addr();
+        check_next_write_address();
+        update_exp_sramc_addr(WR_TXN);
+
         if (shift_reg_data.size() > 0)
             check_write_data();
         else `sauria_error(message_id, "Empty Shift Register Fifo At Time of SRAMC Write")
@@ -157,22 +196,13 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
     endfunction
 
     virtual function void check_next_read_address();
-        if(curr_read_context_num != next_read_context_num) begin
-            sramc_read_addr = sramc_addr_t'(0);
-            new_context = 1'b1;
-            return;
-        end
-        else if (new_context) 
-            new_context = 1'b0;
-
-        //FIXME: wilsalv :Re-enable
-        //else if(sramc_read_addr != psums_mgr_info.sramc_addr)
-        //    `sauria_error(message_id, $sformatf("Incorrect Read SRAMC Address Accessed From Partial Sums Manager Exp: %0h Act: %0h  RD_DONE_Count: %0d", sramc_read_addr, psums_mgr_info.sramc_addr, rd_done_count))
+        if(exp_next_rd_sramc_addr != psums_mgr_info.sramc_addr) 
+            `sauria_error(message_id, $sformatf("Incorrect Read SRAMC Address Accessed From Partial Sums Manager Exp: %0h Act: %0h  RD_DONE_Count: %0d", exp_next_rd_sramc_addr, psums_mgr_info.sramc_addr, rd_done_count))
     endfunction
 
     virtual function void check_next_write_address();
-        if (sramc_write_addr != psums_mgr_info.sramc_addr)
-            `sauria_error(message_id, $sformatf("Incorrect Write SRAMC Address Accessed From Partial Sums Manager Exp: %0h Act: %0h", sramc_write_addr, psums_mgr_info.sramc_addr)) 
+        if (exp_next_wr_sramc_addr != psums_mgr_info.sramc_addr)
+            `sauria_error(message_id, $sformatf("Incorrect Write SRAMC Address Accessed From Partial Sums Manager Exp: %0h Act: %0h", exp_next_wr_sramc_addr, psums_mgr_info.sramc_addr)) 
     endfunction
 
     virtual function void check_write_data();
@@ -205,38 +235,44 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
         end
     endfunction
     
-    virtual function void update_exp_read_addr();
-        if( (((sramc_read_addr % sramc_acceses_per_tile) == (sramc_acceses_per_tile - 1)) || (rd_done_count > 0)) && (rd_done_count <= RD_LAT) )begin      
-            rd_done_count++;
-        end
-        else if (rd_done_count == (RD_LAT + 1)) begin
-            sramc_read_addr = 0;
-            rd_done_count   = 0;
-            read_tile_idx   = (read_tile_idx == num_tiles - 1) ? 0 : read_tile_idx + 1;
-        end
-        else begin
-            sramc_read_addr++;
-        end
-        
-        sramc_read_addr = (rd_done_count > 1) ? 0 : (read_tile_idx*sramc_acceses_per_tile) + (sramc_read_addr % sramc_acceses_per_tile);
+    virtual function void update_exp_sramc_addr(sauria_axi_txn_type_t operation);
+        select_operation_counters(operation);
+        update_counters();
+        set_counter_based_exp_addr(operation);
+        update_operation_counters(operation);
     endfunction
 
-    virtual function void update_exp_write_addr();
-        sramc_write_addr++;
-        sramc_write_addr = (write_tile_idx * sramc_acceses_per_tile) + (sramc_write_addr % sramc_acceses_per_tile);
+    virtual function void select_operation_counters(sauria_axi_txn_type_t operation);
+        act_rep_idx = (operation == RD_TXN) ? rd_act_rep_idx : wr_act_rep_idx;
+        shift_k_idx = (operation == RD_TXN) ? rd_shift_k_idx : wr_shift_k_idx;
+        k_idx       = (operation == RD_TXN) ? rd_k_idx       : wr_k_idx;
+        x_idx       = (operation == RD_TXN) ? rd_x_idx       : wr_x_idx;
+    endfunction
 
-        if((sramc_write_addr % sramc_acceses_per_tile) == sramc_acceses_per_tile - 1) 
-            write_tile_idx   = (write_tile_idx == num_tiles - 1) ? 0 : write_tile_idx + 1;
-        
+    virtual function void update_operation_counters(sauria_axi_txn_type_t operation);
+        case(operation)
+            RD_TXN: begin
+                rd_act_rep_idx  = act_rep_idx;
+                rd_shift_k_idx  = shift_k_idx;
+                rd_k_idx        = k_idx; 
+                rd_x_idx        = x_idx; 
+            end
+            WR_TXN: begin
+                wr_act_rep_idx  = act_rep_idx; 
+                wr_shift_k_idx  = shift_k_idx; 
+                wr_k_idx        = k_idx;
+                wr_x_idx        = x_idx;
+            end
+        endcase
     endfunction
 
     virtual function void set_shift();
         if (addr_zero_count == 0)begin
             addr_zero_count++;
         end
-        else if (addr_zero_count == RD_LAT) begin
-        
+        else if (addr_zero_count == RD_LAT - 1) begin
             addr_zero_count = 0;
+            shift_count = 0;
             shift = 1'b1;
         end
         else if ((addr_zero_count > 0) && (addr_zero_count < RD_LAT)) begin
@@ -280,5 +316,48 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
         
     endfunction
 
+    virtual function void set_counter_based_exp_addr(sauria_axi_txn_type_t operation);
+        case(operation)
+            RD_TXN: exp_next_rd_sramc_addr = (shift_k_idx + k_idx + x_idx) / SRAMC_N; 
+            WR_TXN: exp_next_wr_sramc_addr = (shift_k_idx + k_idx + x_idx) / SRAMC_N;
+        endcase
+    endfunction
+
+    virtual function void update_counters();
+
+        if ((shift_k_idx + psums_params.tile_params.psums_ck_step) 
+            < shift_k_lim)begin
+            shift_k_idx += psums_params.tile_params.psums_ck_step;
+        end
+        else if ((x_idx + psums_params.tile_params.psums_cx_step) 
+            < psums_params.tile_params.psums_CX)begin
+            shift_k_idx = 0;
+            x_idx      += psums_params.tile_params.psums_cx_step;
+        end
+        else if ((shift_k_idx + k_idx + psums_params.tile_params.psums_ck_step)
+            < psums_params.tile_params.psums_CK) begin
+            act_rep_idx++;
+            shift_k_idx = 0;
+            x_idx       = 0;
+            k_idx       = act_rep_idx * shift_k_lim;
+        end
+        else begin
+            act_rep_idx = 0;
+            shift_k_idx = 0;
+            k_idx       = 0;
+            x_idx       = 0;
+        end
+
+        `sauria_info(message_id, $sformatf("Updated PSUMS Counters SHIFT_K: %0d K:%0d X:%0d Act_Rep_Idx: %0d Wei_Rep_Idx: %0d", 
+        shift_k_idx, k_idx, x_idx, act_rep_idx, wei_rep_idx))
+
+    endfunction
+
+    virtual function void clear_counters();
+        act_rep_idx = 0;
+        shift_k_idx = 0;
+        k_idx       = 0;
+        x_idx       = 0;
+    endfunction
 
 endclass

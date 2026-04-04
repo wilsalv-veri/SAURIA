@@ -22,6 +22,12 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
 
     arr_row_data_t             weights_cols_active;
 
+    weights_params_t           weights_params;
+    sauria_axi4_lite_data_t    w_idx,k_idx;
+    
+    sauria_axi4_lite_data_t    act_reps, wei_reps;
+    sauria_axi4_lite_data_t    act_rep_idx, wei_rep_idx;
+
     int                        incntlim, comp_feeding_len;
     int                        idx_curr_comp, idx_next_comp;
     sauria_computation_params  computation_params;
@@ -47,10 +53,16 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
     virtual task run_phase(uvm_phase phase);
         super.run_phase(phase);
         wait(computation_params.main_controller_cfg_shared);
+        act_reps         = computation_params.act_reps;
+        wei_reps         = computation_params.wei_reps;
+
+        `sauria_info(message_id, $sformatf("Wei Reps: %0d Act_Reps: %0d", wei_reps, act_reps))
+
         incntlim         = computation_params.incntlim;
         comp_feeding_len = incntlim + sauria_pkg::X;
 
         wait(computation_params.weights_cfg_shared);
+        weights_params   = computation_params.core_weights_params;
         weights_cols_active = computation_params.weights_cols_active;
     endtask
     
@@ -63,6 +75,7 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
             idx_next_comp       = 0;
             overlapping_comps   = 0;
             exp_next_sramb_addr = sramb_addr_t'(0);
+            clear_counters();
         end
     endfunction
 
@@ -73,19 +86,18 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
         `sauria_info(message_id, $sformatf("Got SRAMB Access Addr: 0x%0h Data: 0x%0h Q_Size: %0d",
         feeder_data_inst.sramb_addr ,feeder_data_inst.sramb_data, feeder_data.size()))
 
-        if(!weights_feeder_sramb_access_info.til_done)begin
-            feeder_data.push_back(feeder_data_inst);
-            
-            //FIXME: wilsalv :Re-enable
-            //check_sramb_rd_addr();
-            update_exp_sramb_rd_addr(weights_feeder_sramb_access_info.til_done);
-        end
-
+        check_sramb_rd_addr();
+        update_exp_sramb_rd_addr();
+        feeder_data.push_back(feeder_data_inst);
+        
+        if (weights_feeder_sramb_access_info.til_done && 
+            !(w_idx == srama_addr_t'(0) && k_idx == srama_addr_t'(0)))
+            `sauria_error(message_id, $sformatf("Tile Done Condition And Counters Mismatch W_IDX: 0x%0h K_IDX: 0x%0h", w_idx, k_idx))
+    
     endfunction 
 
     function write_weights_feeder_arr_info(sauria_weights_feeder_seq_item weights_feeder_arr_info);
-        `sauria_info(message_id, $sformatf("Size Coming In %0d", feeder_data.size()))
-
+        
         wei_feeding_not_done = (idx_curr_comp >= incntlim) && (idx_curr_comp < (comp_feeding_len - 1));
 
         if (weights_feeder_arr_info.start_feeding) begin
@@ -158,11 +170,11 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
         exp_next_sramb_addr, feeder_data_inst.sramb_addr))
     endfunction
 
-    virtual function void update_exp_sramb_rd_addr(bit til_done);
-        if (til_done) exp_next_sramb_addr = sramb_addr_t'(0);
-        else exp_next_sramb_addr++;
+    virtual function void update_exp_sramb_rd_addr();
+        update_counters();
+        set_counter_based_exp_addr();
     endfunction
-   
+    
     virtual function void update_comp_indeces();
         idx_curr_comp = ((overlapping_comps == 1'b1) && (idx_curr_comp == (comp_feeding_len - 2))) ? idx_next_comp + 1 : (idx_curr_comp + 1) % comp_feeding_len;
         idx_next_comp = (overlapping_comps == 1'b1) ? idx_next_comp + 1 : 0;
@@ -200,6 +212,41 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
             if (weights_cols_active[col] == 1'b1) `sauria_info(message_id, $sformatf("WEIGHTS_COLS_ACTIVE COL: %0d", col))
         end
         return masked_col_data;
+    endfunction
+
+    virtual function void set_counter_based_exp_addr();
+        exp_next_sramb_addr = (w_idx + k_idx) / SRAMB_N;    
+    endfunction
+
+    virtual function void update_counters();
+        if ((w_idx + weights_params.tile_params.weights_w_step) 
+            < weights_params.tile_params.weights_C)begin
+            w_idx += weights_params.tile_params.weights_w_step;
+        end
+        else if (wei_rep_idx < wei_reps - 1)begin
+                wei_rep_idx++;
+                w_idx  = 0;
+        end
+        else if ((k_idx + weights_params.tile_params.weights_k_step) 
+            < weights_params.tile_params.weights_K)begin
+            w_idx       = 0;
+            wei_rep_idx = 0;
+            k_idx      += weights_params.tile_params.weights_k_step;
+        end
+        else begin
+            wei_rep_idx = 0;
+            w_idx       = 0;
+            k_idx       = 0;
+        end
+
+        `sauria_info(message_id, $sformatf("Updated WEIGHT Counters W:%0d K:%0d", w_idx, k_idx))
+    
+    endfunction
+
+    virtual function void clear_counters();
+        wei_rep_idx = 0;
+        w_idx       = 0;
+        k_idx       = 0;
     endfunction
 
 endclass

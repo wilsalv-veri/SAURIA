@@ -250,6 +250,99 @@
     
     typedef bit [sauria_pkg::TH_W-1:0]                                        threshold_t;
 
+
+    typedef struct {
+        sauria_axi4_lite_data_t ifmaps_c_step;
+        sauria_axi4_lite_data_t ifmaps_C;
+
+        sauria_axi4_lite_data_t ifmaps_x_step;
+        sauria_axi4_lite_data_t ifmaps_X;
+        
+        sauria_axi4_lite_data_t ifmaps_y_step;
+        sauria_axi4_lite_data_t ifmaps_Y;
+
+    } ifmaps_tile_params_t;
+
+    typedef struct {
+        sauria_axi4_lite_data_t tile_ifmaps_x_step;
+        sauria_axi4_lite_data_t tile_ifmaps_X;
+
+        sauria_axi4_lite_data_t tile_ifmaps_y_step;
+        sauria_axi4_lite_data_t tile_ifmaps_Y;
+        
+        sauria_axi4_lite_data_t tile_ifmaps_c_step;
+        sauria_axi4_lite_data_t tile_ifmaps_C;
+        
+    } ifmaps_tensor_params_t;
+
+    typedef struct {
+        ifmaps_tile_params_t   tile_params;
+        ifmaps_tensor_params_t tensor_params;
+
+    } ifmaps_params_t;
+
+    typedef struct {
+
+        sauria_axi4_lite_data_t weights_w_step;
+        sauria_axi4_lite_data_t weights_W;
+        sauria_axi4_lite_data_t weights_C;
+
+        sauria_axi4_lite_data_t weights_k_step;
+        sauria_axi4_lite_data_t weights_K;
+        
+    } weights_tile_params_t;
+
+    typedef struct {
+
+        sauria_axi4_lite_data_t tile_weights_c_step;
+        sauria_axi4_lite_data_t tile_weights_C;
+        
+        sauria_axi4_lite_data_t tile_weights_k_step;
+        sauria_axi4_lite_data_t tile_weights_K;
+        
+    } weights_tensor_params_t;
+
+    typedef struct {
+
+        weights_tile_params_t   tile_params;
+        weights_tensor_params_t tensor_params;
+
+    } weights_params_t;
+
+    
+    //Inter-Tile
+    
+    typedef struct {
+
+        sauria_axi4_lite_data_t psums_K;    
+        sauria_axi4_lite_data_t psums_Y;
+        sauria_axi4_lite_data_t psums_X;
+
+        sauria_axi4_lite_data_t psums_ck_step;
+        sauria_axi4_lite_data_t psums_CK;     
+        
+        sauria_axi4_lite_data_t psums_cx_step;
+        sauria_axi4_lite_data_t psums_CX;    
+        
+    } psums_tile_params_t;
+
+    typedef struct {
+
+        sauria_axi4_lite_data_t tile_psums_cy_step;
+        sauria_axi4_lite_data_t tile_psums_CY;    
+        
+        sauria_axi4_lite_data_t tile_psums_ck_step;
+        sauria_axi4_lite_data_t tile_psums_CK;    
+        
+    } psums_tensor_params_t;
+
+    typedef struct {
+
+        psums_tile_params_t   tile_params;
+        psums_tensor_params_t tensor_params;
+
+    } psums_params_t;
+
     typedef struct {
         srama_addr_t               srama_addr;   
         srama_data_t               srama_data;

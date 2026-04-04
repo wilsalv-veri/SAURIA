@@ -51,7 +51,7 @@ class sauria_psums_mgr_monitor extends uvm_monitor;
             psums_mgr_item.context_num  = next_read_context_num;
             psums_mgr_item.sramc_addr   = sauria_psums_mgr_if.sramc_read_cb.sramc_addr;     
             psums_mgr_item.sramc_wmask  = sauria_psums_mgr_if.sramc_read_cb.sramc_wmask; 
-            psums_mgr_item.sramc_rdata  = sauria_psums_mgr_if.sramc_read_cb.sramc_rdata;
+            psums_mgr_item.sramc_rdata  = sauria_psums_mgr_if.sramc_rdata;
             send_psums_mgr_sramc_read_info.write(psums_mgr_item);  
         end
     endtask

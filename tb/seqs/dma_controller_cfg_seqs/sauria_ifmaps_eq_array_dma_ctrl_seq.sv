@@ -13,7 +13,7 @@ class sauria_ifmaps_eq_array_dma_ctrl_cfg_seq extends sauria_axi4_lite_dma_contr
         Y               == `Y;
         W               ==  2;
         C               ==  8;
-        K               == `X;
+        K               == `X*2;
     }
 
     constraint tensor_dimensions_c {

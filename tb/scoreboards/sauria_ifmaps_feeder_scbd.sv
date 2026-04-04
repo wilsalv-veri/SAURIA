@@ -21,8 +21,11 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
     arr_col_data_t             ifmaps_rows_active;
 
     sauria_computation_params  computation_params;
+
+    ifmaps_params_t ifmaps_params;
+
+    sauria_axi4_lite_data_t c_idx,x_idx, y_idx;
     
-   
     string message_id = "SAURIA_IFMAPS_FEEDER_SCBD";
 
     function new(string name="sauria_ifmaps_feeder_scbd", uvm_component parent=null);
@@ -44,6 +47,8 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
     virtual task run_phase(uvm_phase phase);
         super.run_phase(phase);
         wait(computation_params.ifmaps_cfg_shared);
+
+        ifmaps_params = computation_params.core_ifmaps_params;
         ifmaps_rows_active         = computation_params.ifmaps_rows_active;
     endtask
 
@@ -63,10 +68,14 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
         `sauria_info(message_id, $sformatf("Got SRAMA Access Addr: 0x%0h Data: 0x%0h",
         ifmaps_feeder_srama_access_info.srama_addr ,ifmaps_feeder_srama_access_info.srama_data))
         
-        //FIXME: wilsalv :Re-enable
-        //check_srama_rd_addr();
-        update_exp_srama_rd_addr(ifmaps_feeder_srama_access_info.til_done);
+        check_srama_rd_addr();
+        update_exp_srama_rd_addr();
         feeder_data.push_back(feeder_data_inst);
+
+        if (ifmaps_feeder_srama_access_info.til_done && 
+            !(c_idx == srama_addr_t'(0) && x_idx == srama_addr_t'(0) && y_idx == srama_addr_t'(0)))
+            `sauria_error(message_id, $sformatf("Tile Done Condition And Counters Mismatch C_IDX: 0x%0h X_IDX: 0x%0h Y_IDX: 0x%0h", c_idx, x_idx, y_idx))
+    
     endfunction 
 
     function write_ifmaps_feeder_arr_info(sauria_ifmaps_feeder_seq_item ifmaps_feeder_arr_info);
@@ -118,9 +127,9 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
         exp_next_srama_addr, feeder_data_inst.srama_addr))
     endfunction
 
-    virtual function void update_exp_srama_rd_addr(bit til_done);
-        if (til_done) exp_next_srama_addr = srama_addr_t'(0);
-        else exp_next_srama_addr++;
+    virtual function void update_exp_srama_rd_addr();
+        update_counters();
+        set_counter_based_exp_addr();
     endfunction
     
     virtual function void clear_arr_byte_valids();
@@ -151,6 +160,35 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
         end
         return masked_row_data;
     
+    endfunction
+
+    virtual function void set_counter_based_exp_addr();
+        exp_next_srama_addr = (c_idx + x_idx + y_idx) / SRAMA_N;    
+    endfunction
+
+    virtual function void update_counters();
+        if ((c_idx + ifmaps_params.tile_params.ifmaps_c_step) 
+            < ifmaps_params.tile_params.ifmaps_C)begin
+            c_idx += ifmaps_params.tile_params.ifmaps_c_step;
+        
+        end
+        else if ((x_idx + ifmaps_params.tile_params.ifmaps_x_step) 
+            < ifmaps_params.tile_params.ifmaps_X)begin
+            c_idx = 0;
+            x_idx += ifmaps_params.tile_params.ifmaps_x_step;
+        end
+        else if ((y_idx + ifmaps_params.tile_params.ifmaps_y_step) 
+            < ifmaps_params.tile_params.ifmaps_Y)begin
+            c_idx = 0;
+            x_idx = 0;    
+            y_idx += ifmaps_params.tile_params.ifmaps_y_step;
+        end
+        else begin
+            c_idx = 0;
+            x_idx = 0;
+            y_idx = 0;
+        end
+
     endfunction
 
 endclass

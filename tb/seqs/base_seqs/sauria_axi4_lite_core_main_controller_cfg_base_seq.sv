@@ -26,22 +26,24 @@ class sauria_axi4_lite_core_main_controller_cfg_base_seq extends sauria_axi4_lit
     endtask
 
     virtual task body();
-        set_total_macs_params();
+        share_main_controller_cfg();
         super.body();
     endtask
 
-    virtual task set_total_macs_params();
+    virtual task share_main_controller_cfg();
         wait_comp_params_shared();
-        total_macs  = computation_params.ifmaps_C;
-        act_reps    = computation_params.weights_K / SRAMB_N;
-        weight_reps = (computation_params.ifmaps_X * computation_params.ifmaps_Y) 
-                    / SRAMA_N;
+        total_macs  = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_C;
+        act_reps    = computation_params.df_controller_weights_params.tile_params.weights_K / SRAMB_N;
+        weight_reps = (computation_params.df_controller_ifmaps_params.tile_params.ifmaps_X 
+                        * computation_params.df_controller_ifmaps_params.tile_params.ifmaps_Y) 
+                        / SRAMA_N;
 
+        computation_params.act_reps = act_reps;
+        computation_params.wei_reps = weight_reps;
         computation_params.incntlim = total_macs;
         computation_params.main_controller_cfg_shared = 1'b1;
     endtask
   
-
     virtual function void set_unit_specific_cfg_CRs();
         set_core_main_controller_cfg_CRs();
     endfunction

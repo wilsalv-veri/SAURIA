@@ -129,7 +129,10 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
         share_ifmaps_params();
         share_weights_params();
         share_psums_params();
-        `sauria_info(message_id, $sformatf("Sharing Computation Params X: %0d Y: %0d C: %0d",computation_params.ifmaps_X, computation_params.ifmaps_Y, computation_params.ifmaps_C))
+        `sauria_info(message_id, $sformatf("Sharing Computation Params X: %0d Y: %0d C: %0d",
+        computation_params.df_controller_ifmaps_params.tile_params.ifmaps_X, 
+        computation_params.df_controller_ifmaps_params.tile_params.ifmaps_Y, 
+        computation_params.df_controller_ifmaps_params.tile_params.ifmaps_C))
         
         computation_params.shared  = 1'b1;
     endfunction
@@ -142,37 +145,57 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
     endfunction
 
     virtual function void share_ifmaps_params();
-        computation_params.ifmaps_X            = dma_ifmaps_ett;
+        computation_params.df_controller_ifmaps_params.tile_params.ifmaps_X        
+                            = dma_ifmaps_ett;
         
-        computation_params.ifmaps_y_step       = dma_ifmaps_y_step;
-        computation_params.ifmaps_Y            = dma_ifmaps_y_lim + 1;
-        
-        computation_params.ifmaps_c_step       = dma_ifmaps_c_step;
-        computation_params.ifmaps_C            = dma_ifmaps_c_lim + 1;
+        computation_params.df_controller_ifmaps_params.tile_params.ifmaps_y_step      
+                            = dma_ifmaps_y_step;
 
-        computation_params.tile_ifmaps_x_step  = dma_tile_ifmaps_x_step;
+        computation_params.df_controller_ifmaps_params.tile_params.ifmaps_Y            
+                            = dma_ifmaps_y_lim + 1;
+        
+        computation_params.df_controller_ifmaps_params.tile_params.ifmaps_c_step       
+                            = dma_ifmaps_c_step;
+        computation_params.df_controller_ifmaps_params.tile_params.ifmaps_C            
+                            = dma_ifmaps_c_lim + 1;
+
+        computation_params.df_controller_ifmaps_params.tensor_params.tile_ifmaps_x_step  
+                            = dma_tile_ifmaps_x_step;
     endfunction
 
     virtual function void share_weights_params();
 
-        computation_params.weights_K           = dma_weights_w_step;           
+        computation_params.df_controller_weights_params.tile_params.weights_K      
+                            = dma_weights_w_step;           
        
-        computation_params.weights_w_step      = dma_weights_w_step;
-        computation_params.weights_w_lim       = dma_tile_weights_c_step;
-        computation_params.weights_W           = dma_tile_weights_c_step / dma_weights_w_step; 
+        computation_params.df_controller_weights_params.tile_params.weights_w_step  
+                            = dma_weights_w_step;
+        computation_params.df_controller_weights_params.tile_params.weights_C       
+                            = dma_tile_weights_c_step;
+        computation_params.df_controller_weights_params.tile_params.weights_W       
+                            = dma_tile_weights_c_step / dma_weights_w_step; 
         
-        computation_params.tile_weights_c_step = dma_tile_weights_c_step;
+        computation_params.df_controller_weights_params.tensor_params.tile_weights_c_step 
+                            = dma_tile_weights_c_step;
     endfunction
 
     virtual function void share_psums_params();
         
-        computation_params.psums_K             = dma_weights_w_step;
-        computation_params.psums_Y             = dma_ifmaps_y_lim + 1;
-        computation_params.psums_X             = dma_ifmaps_ett;
+        computation_params.df_controller_psums_params.tile_params.psums_K   
+                            = dma_weights_w_step;
+        computation_params.df_controller_psums_params.tile_params.psums_Y   
+                            = dma_ifmaps_y_lim + 1;
+        computation_params.df_controller_psums_params.tile_params.psums_X  
+                            = dma_ifmaps_ett;
     
-        computation_params.psums_CX            = computation_params.psums_X * computation_params.psums_Y;
-        computation_params.tile_psums_x_step   = dma_tile_psums_x_step;
-    
+        computation_params.df_controller_psums_params.tile_params.psums_CX            
+                            = computation_params.df_controller_psums_params.tile_params.psums_X 
+                            * computation_params.df_controller_psums_params.tile_params.psums_Y;   
+       
+        computation_params.df_controller_psums_params.tensor_params.tile_psums_cy_step  
+                            = dma_tile_psums_x_step;
+        computation_params.df_controller_psums_params.tensor_params.tile_psums_ck_step  
+                            = dma_tile_psums_k_step;
     endfunction
 
     virtual function void set_dma_controller_cfg_CRs();

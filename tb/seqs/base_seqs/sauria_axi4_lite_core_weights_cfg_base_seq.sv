@@ -60,11 +60,11 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
     
         wait_comp_params_shared();
 
+        weights_w_step      = computation_params.df_controller_weights_params.tile_params.weights_w_step;                           
+        weights_w_lim       = computation_params.df_controller_weights_params.tile_params.weights_C;           
+
         weights_k_step      = SRAMB_N;
-        weights_k_lim       = computation_params.weights_K;      
-       
-        weights_w_step      = computation_params.weights_w_step;                              
-        weights_w_lim       = computation_params.weights_w_lim;           
+        weights_k_lim       = computation_params.df_controller_weights_params.tile_params.weights_K;      
 
         //Single Tile
         weights_tile_k_step = weights_w_lim; 
@@ -73,6 +73,28 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
 
     
     virtual task share_weights_cfg();    
+
+        computation_params.core_weights_params.tile_params.weights_w_step 
+                        = computation_params.df_controller_weights_params.tile_params.weights_w_step; 
+
+        computation_params.core_weights_params.tile_params.weights_C 
+                        = computation_params.df_controller_weights_params.tile_params.weights_C;
+        
+        
+        computation_params.core_weights_params.tile_params.weights_k_step 
+                        = weights_k_step; 
+ 
+
+        computation_params.core_weights_params.tile_params.weights_K 
+                        = computation_params.df_controller_weights_params.tile_params.weights_K; 
+
+           
+        computation_params.core_weights_params.tensor_params.tile_weights_k_step 
+                        = weights_tile_k_step;
+        
+        computation_params.core_weights_params.tensor_params.tile_weights_K 
+                        = weights_tile_k_lim;
+        
         computation_params.weights_cols_active = weights_cols_active;
         computation_params.weights_cfg_shared = 1'b1;
     endtask

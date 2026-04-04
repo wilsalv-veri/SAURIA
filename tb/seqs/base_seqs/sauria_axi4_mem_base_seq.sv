@@ -107,16 +107,16 @@ class sauria_axi4_mem_base_seq extends uvm_sequence #(sauria_tensor_mem_seq_item
      
         `sauria_info(message_id, "Getting Computation Params")
         wait(computation_params.shared);
-        ifmap_X   = computation_params.ifmaps_X;
-        ifmap_Y   = computation_params.ifmaps_Y; 
-        ifmap_C   = computation_params.ifmaps_C; 
+        ifmap_X   = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_X;
+        ifmap_Y   = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_Y; 
+        ifmap_C   = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_C; 
 
-        weights_W = computation_params.weights_W;
-        weights_K = computation_params.weights_K;
+        weights_W = computation_params.df_controller_weights_params.tile_params.weights_W;
+        weights_K = computation_params.df_controller_weights_params.tile_params.weights_K;
 
-        psums_X   = computation_params.psums_X;
-        psums_Y   = computation_params.psums_Y; 
-        psums_K   = computation_params.psums_K;
+        psums_X   = computation_params.df_controller_psums_params.tile_params.psums_X;
+        psums_Y   = computation_params.df_controller_psums_params.tile_params.psums_Y; 
+        psums_K   = computation_params.df_controller_psums_params.tile_params.psums_K;
 
         tile_X    = computation_params.tile_X;
         tile_Y    = computation_params.tile_Y;

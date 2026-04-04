@@ -298,7 +298,7 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
         for(int row=0; row < sauria_pkg::Y; row++)begin
             for(int col=0; col < sauria_pkg::X; col++)begin
                 for(int c=0; c < incntlim; c++)begin
-                    if (ARITHMETIC) begin
+                    if (FP_ARITHMETIC) begin
                         fp_ifmaps_data = fp16_to_shortreal(ifmaps_feeder_data[row].ifmaps_data[c]);
                         fp_weights_data = fp16_to_shortreal(weights_feeder_data[col].weights_data[c]);
                         fp_accum += fp_ifmaps_data * fp_weights_data;

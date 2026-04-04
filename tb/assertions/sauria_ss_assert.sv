@@ -137,16 +137,16 @@ module sauria_ss_assert #(AXI_LITE_DATA_WIDTH,
                 tile_C = computation_params.tile_C;
                 tile_K = computation_params.tile_K;
                 
-                ifmaps_X = computation_params.ifmaps_X;
-                ifmaps_Y = computation_params.ifmaps_Y;
-                ifmaps_C = computation_params.ifmaps_C;
+                ifmaps_X = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_X;
+                ifmaps_Y = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_Y;
+                ifmaps_C = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_C;
                 
-                weights_W = computation_params.Ck_eq ? 1 : computation_params.weights_W;
-                weights_K = computation_params.weights_K;
+                weights_W = computation_params.Ck_eq ? 1 : computation_params.df_controller_weights_params.tile_params.weights_W;
+                weights_K = computation_params.df_controller_weights_params.tile_params.weights_K;
                 
-                psums_X = computation_params.psums_X; 
-                psums_Y = computation_params.Cw_eq ? 1 : computation_params.psums_Y; //From limit
-                psums_K = computation_params.Cw_eq & computation_params.Ch_eq ? 1 : computation_params.psums_K;
+                psums_X = computation_params.df_controller_psums_params.tile_params.psums_X; 
+                psums_Y = computation_params.Cw_eq ? 1 : computation_params.df_controller_psums_params.tile_params.psums_Y; //From limit
+                psums_K = computation_params.Cw_eq & computation_params.Ch_eq ? 1 : computation_params.df_controller_psums_params.tile_params.psums_K;
         
                 exp_reads_set          = 1'b1;
                 

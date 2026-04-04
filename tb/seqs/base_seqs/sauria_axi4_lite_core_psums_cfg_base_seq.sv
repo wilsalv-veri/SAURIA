@@ -22,7 +22,7 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     rand sauria_axi4_lite_data_t psums_preload_en;
        
     constraint psums_preload_en_c{
-        psums_preload_en == sauria_axi4_lite_data_t'('h0);
+        psums_preload_en == sauria_axi4_lite_data_t'('h1);
     }
     
     constraint psums_inactive_cols_c{
@@ -123,10 +123,11 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
         wait_comp_params_shared();
 
         psums_cx_step       = SRAMC_N;                    
-        psums_cx_lim        = computation_params.psums_CX; 
+        psums_cx_lim        = computation_params.df_controller_psums_params.tile_params.psums_CX; 
                  
         psums_ck_step       = psums_cx_lim;   
-        psums_ck_lim        = psums_ck_step * computation_params.psums_K; 
+        psums_ck_lim        = psums_ck_step 
+                            * computation_params.df_controller_psums_params.tile_params.psums_K; 
         
         //Single Tile
         psums_tile_cy_step  = psums_ck_lim; 
@@ -135,11 +136,39 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
         psums_tile_ck_step  = psums_ck_lim; 
         psums_tile_ck_lim   = psums_ck_lim; 
            
-        psums_reps          = (computation_params.psums_CX / SRAMA_N) 
-                            * (computation_params.psums_K  / SRAMB_N);
+        psums_reps          = (computation_params.df_controller_psums_params.tile_params.psums_CX 
+                                / SRAMA_N) 
+                            * (computation_params.df_controller_psums_params.tile_params.psums_K  
+                                / SRAMB_N);
     endtask
 
     virtual task share_psums_cfg();
+
+        computation_params.core_psums_params.tile_params.psums_cx_step 
+                            = psums_cx_step;
+
+        computation_params.core_psums_params.tile_params.psums_CX 
+                            = computation_params.df_controller_psums_params.tile_params.psums_CX;
+
+        computation_params.core_psums_params.tile_params.psums_ck_step
+                            =  psums_cx_lim;
+
+        computation_params.core_psums_params.tile_params.psums_CK
+                            = psums_ck_lim;
+
+
+        computation_params.core_psums_params.tensor_params.tile_psums_cy_step
+                            = psums_ck_lim;
+
+        computation_params.core_psums_params.tensor_params.tile_psums_CY
+                            = psums_ck_lim;
+
+        computation_params.core_psums_params.tensor_params.tile_psums_ck_step
+                            = psums_ck_lim;
+
+        computation_params.core_psums_params.tensor_params.tile_psums_CK
+                            = psums_ck_lim;
+
         computation_params.psums_preload_en     = psums_preload_en;
         computation_params.psums_inactive_cols  = psums_inactive_cols;
         computation_params.psums_mgr_cfg_shared = 1'b1;
