@@ -81,16 +81,15 @@ class sauria_systolic_array_monitor extends uvm_monitor;
                 systolic_array_info.act_start_feeding = act_start_feeding;
                 systolic_array_info.wei_start_feeding = wei_start_feeding;
 
-                systolic_array_info.scan_cswitch_valid = pipeline_en_q; //!feeding_unpaused;
+                systolic_array_info.cscan_valid        = pipeline_en_q;
+                systolic_array_info.cswitch_valid      = (cswitch_arr_q != arr_row_data_t'(0)) || (cswitch_done_count != 0);
 
                 systolic_array_info.act_data_valid = ( (data_valid_done_count != 0) || (feeding_unpaused == 1'b1)) ? 1'b1 : 
                                                      ((feeding_paused == 1'b1) || (feeding_paused_hold)) ? 1'b0 : ((data_valid_sel == 1'b1) ? act_data_valid_q : act_data_valid_d); 
                                                      
-                
 
                 systolic_array_info.wei_data_valid = ((data_valid_done_count != 0) || (feeding_unpaused == 1'b1)) ? 1'b1 : 
                                                      ((feeding_paused == 1'b1) || (feeding_paused_hold))  ? 1'b0 : ((data_valid_sel == 1'b1) ? wei_data_valid_q : wei_data_valid_d);
-                
                 
 
                 if (feeding_unpaused)
@@ -102,8 +101,6 @@ class sauria_systolic_array_monitor extends uvm_monitor;
                     `sauria_info(message_id, $sformatf("FEEDING_PAUSED Normal: %0d Enabling: %0d", normal_operation_pipeline_en, enabling_pipeline))
                 
                 
-                `sauria_info(message_id, $sformatf("Data_Valid_Done_Count: %0d", data_valid_done_count))
-
                 systolic_array_info.cswitch_arr =  cswitch_arr_q;
                 systolic_array_info.cswitch_done_count = cswitch_done_count;
                 
@@ -126,7 +123,7 @@ class sauria_systolic_array_monitor extends uvm_monitor;
 
         forever @(posedge sauria_systolic_array_if.clk)begin
             
-            cswitch_arr_d          <= sauria_systolic_array_if.cswitch_arr;
+            cswitch_arr_d         <= sauria_systolic_array_if.cswitch_arr;
             cswitch_arr_q         <= cswitch_arr_d;
 
             arr_psum_reserve_reg_d <= sauria_systolic_array_if.arr_psum_reserve_reg;

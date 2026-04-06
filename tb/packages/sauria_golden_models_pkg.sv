@@ -14,6 +14,7 @@ package sauria_golden_model_pkg;
     `include "sauria_ifmaps_feeder_model.sv"
     `include "sauria_weights_feeder_model.sv"
     `include "sauria_psums_mgr_model.sv"
+    `include "sauria_systolic_array_model.sv"
 
 endpackage
 

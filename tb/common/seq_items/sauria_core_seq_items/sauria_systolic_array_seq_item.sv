@@ -8,8 +8,9 @@ class sauria_systolic_array_seq_item extends uvm_sequence_item;
 	// Control Inputs
     bit                 reg_clear;   // PE Register clear
 	
-    bit                 scan_cswitch_valid;
-
+    bit                 cscan_valid;
+    bit                 cswitch_valid;
+    
     bit                 act_start_feeding;
     bit                 wei_start_feeding;
     bit					pipeline_en; // Global pipeline enable (for stalls)

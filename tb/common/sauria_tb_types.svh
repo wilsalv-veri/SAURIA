@@ -238,7 +238,8 @@
     typedef bit [0:sauria_pkg::SRAMC_N-1]                                     sramc_data_mask_t;
     typedef bit [0:sauria_pkg::Y-1][sauria_pkg::OC_W-1:0]                     scan_chain_data_t;
     typedef bit [sauria_pkg::Y-1:0][sauria_pkg::OC_W-1:0]                     scan_chain_data_rev_t;
-    
+    typedef scan_chain_data_t                                                 scan_chain_data_q_t [$];
+
     typedef bit [sauria_pkg::Y-1:0][sauria_pkg::X-1:0][sauria_pkg::OC_W-1:0]  arr_psum_reg_t ;
     typedef bit [sauria_pkg::Y-1:0][sauria_pkg::X-1:0]                        arr_cswitch_en_t ;
 
