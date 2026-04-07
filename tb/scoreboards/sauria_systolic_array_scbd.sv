@@ -49,10 +49,18 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
             systolic_array_model.reset();
         else begin
             //Normal Operation
-            if (systolic_array_info.cscan_valid)
-                process_scan_chain(systolic_array_info.cscan_en, systolic_array_info.i_c_arr, 
-                                   systolic_array_info.o_c_arr, systolic_array_info.arr_psum_reserve_reg);
-                
+            if (systolic_array_info.cscan_valid) begin
+
+                if ((systolic_array_info.cscan_en || systolic_array_model.is_cscan_last_shift()) && 
+                    systolic_array_model.is_scan_chain_out_data_valid()) 
+                    check_scan_chain_out_data(systolic_array_info.o_c_arr);
+                else if (systolic_array_model.is_cscan_done())
+                    check_array_psum_reg(systolic_array_info.arr_psum_reserve_reg);
+            
+                systolic_array_model.observe_scan_chain(systolic_array_info.cscan_en, systolic_array_info.i_c_arr, 
+                                   systolic_array_info.arr_psum_reserve_reg);
+            end
+
             if (systolic_array_info.cswitch_valid)begin
                 first_ctx_switch = systolic_array_info.cswitch_arr == CS_FIRST_IDX;
                 
@@ -60,37 +68,23 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
                 cswitch_done_count = systolic_array_info.cswitch_done_count;
                 cswitch_idx = (cswitch_done_count > 0) ? sauria_pkg::X - 1 + cswitch_done_count : cswitch_arr_en_idx;
                 
+                
                 process_context_switch(first_ctx_switch, cswitch_idx, systolic_array_info.pre_cswitch_arr_psum_reserve_reg,
                                     systolic_array_info.arr_psum_accum_in, systolic_array_info.arr_psum_accum_out,systolic_array_info.arr_psum_reserve_reg);
+            
+            
             end
             
             start_data_feed = systolic_array_info.act_start_feeding || systolic_array_info.wei_start_feeding;
             data_feed_valid = systolic_array_info.act_data_valid    || systolic_array_info.wei_data_valid;
-            process_mac(start_data_feed, data_feed_valid, systolic_array_info.a_arr, systolic_array_info.b_arr);
+            systolic_array_model.observe_mac_context_data(start_data_feed, data_feed_valid, systolic_array_info.a_arr, systolic_array_info.b_arr);
 
             
         end
 
     endfunction
 
-    virtual function void process_scan_chain(bit cscan_en, ref scan_chain_data_t i_c_arr, 
-                                            ref scan_chain_data_t o_c_arr, ref arr_psum_reg_t arr_psum_reserve_reg);
-
-        if (cscan_en || systolic_array_model.is_cscan_last_shift()) begin
-
-            if (systolic_array_model.is_scan_chain_out_data_valid() 
-            && !systolic_array_model.is_scan_chain_fifo_empty())
-                check_scan_chain_out_data(o_c_arr);
-            
-            systolic_array_model.add_scan_chain_in_data(i_c_arr);
-        end
-        else if (systolic_array_model.is_cscan_done())begin
-            systolic_array_model.save_preload_values(arr_psum_reserve_reg);
-            check_array_psum_reg(arr_psum_reserve_reg);
-            systolic_array_model.reset_cscan();
-        end
-    endfunction
-
+    
     virtual function void process_context_switch(bit first_ctx_switch, int cswitch_idx, ref arr_psum_reg_t pre_cswitch_arr_psum_reserve_reg,
                                                 ref arr_psum_reg_t arr_psum_accum_in,   ref arr_psum_reg_t arr_psum_accum_out, 
                                                 ref arr_psum_reg_t arr_psum_reserve_reg);
@@ -102,20 +96,6 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
         pre_cswitch_arr_psum_reserve_reg = systolic_array_model.get_pre_cswitch_arr_psums_reserve_reg();
         check_accum_psum_reserve_swap(cswitch_idx, pre_cswitch_arr_psum_reserve_reg, 
                                     arr_psum_accum_in, arr_psum_accum_out, arr_psum_reserve_reg);
-    endfunction
-
-    virtual function void process_mac(bit start_data_feed, bit data_feed_valid, a_arr_data_t a_arr, b_arr_data_t b_arr);
-        if (systolic_array_model.is_first_mac_elem_done())
-            systolic_array_model.update_context_count();
-
-        if (start_data_feed)
-            systolic_array_model.start_context();
-    
-        if (systolic_array_model.is_context_MAC_done())
-            systolic_array_model.compute_context();    
-        
-        if (data_feed_valid)
-            systolic_array_model.feed_context(a_arr, b_arr); 
     endfunction
 
     virtual function void check_scan_chain_out_data(ref scan_chain_data_t o_c_arr);

@@ -4,8 +4,8 @@ class sauria_systolic_array_model extends uvm_object;
 
     string message_id = "SAURIA_SYSTOLIC_ARRAY_MODEL";
 
-    a_arr_data_t      a_arr_entries[$];	 // Activation operands
-	b_arr_data_t      b_arr_entries[$];	 // Weight operands
+    a_arr_data_t                            a_arr_entries[$];	 // Activation operands
+	b_arr_data_t                            b_arr_entries[$];	 // Weight operands
 	
     bit                                     psums_preload_en;
     bit                                     first_preload_context;
@@ -39,17 +39,17 @@ class sauria_systolic_array_model extends uvm_object;
     ifmaps_feeder_row_data_t                ifmaps_feeder_data[sauria_pkg::Y];
     weights_feeder_col_data_t               weights_feeder_data[sauria_pkg::X];
 
-    ifmaps_feeder_data_t       ifmaps_feeder_out_data[$];
-    ifmaps_feeder_data_t       ifmaps_feeder_out_data_inst, ifmaps_feeder_out_data_entry;
+    ifmaps_feeder_data_t                    ifmaps_feeder_out_data[$];
+    ifmaps_feeder_data_t                    ifmaps_feeder_out_data_inst, ifmaps_feeder_out_data_entry;
 
-    weights_feeder_data_t      weights_feeder_out_data[$];
-    weights_feeder_data_t      weights_feeder_out_data_inst, weights_feeder_out_data_entry;
+    weights_feeder_data_t                   weights_feeder_out_data[$];
+    weights_feeder_data_t                   weights_feeder_out_data_inst, weights_feeder_out_data_entry;
 
-    a_arr_data_t               ifmaps_entry;
-    b_arr_data_t               weights_entry;
+    a_arr_data_t                            ifmaps_entry;
+    b_arr_data_t                            weights_entry;
 
-    a_arr_data_t               popped_a_entry;
-    b_arr_data_t               popped_b_entry;
+    a_arr_data_t                            popped_a_entry;
+    b_arr_data_t                            popped_b_entry;
 
     function new(string name="sauria_systolic_array_model");
         super.new(name);
@@ -72,6 +72,18 @@ class sauria_systolic_array_model extends uvm_object;
         this.psums_preload_en = psums_preload_en;
     endfunction
 
+    virtual function void observe_scan_chain(bit cscan_en, ref scan_chain_data_t i_c_arr, 
+                                         ref arr_psum_reg_t arr_psum_reserve_reg);
+
+        if (cscan_en || is_cscan_last_shift()) begin
+            add_scan_chain_in_data(i_c_arr);
+        end
+        else if (is_cscan_done())begin
+            save_preload_values(arr_psum_reserve_reg);
+            reset_cscan();
+        end
+    endfunction
+
     virtual function void add_scan_chain_in_data(scan_chain_data_t i_c_arr);
         if (cscan_idx == sauria_pkg::X - 1) begin
             cscan_last_shift = 1'b1;
@@ -83,6 +95,13 @@ class sauria_systolic_array_model extends uvm_object;
 
         psum_shift_reg.push_back(i_c_arr);
         cscan_idx++;
+    endfunction
+
+    virtual function void save_preload_values(ref arr_psum_reg_t arr_psum_reserve_reg);
+        for(int col=0; col < sauria_pkg::X; col++)begin
+            for(int row=0; row < sauria_pkg::Y; row++)
+                preload_psums_reg[row][col] = arr_psum_reserve_reg[row][col];
+        end
     endfunction
 
     virtual function void update_context_count();
@@ -119,7 +138,8 @@ class sauria_systolic_array_model extends uvm_object;
     endfunction
 
     virtual function bit is_scan_chain_out_data_valid();
-        return  (!cscan_last_shift && (!psums_preload_en || !is_first_preload_context()));
+        return  (!cscan_last_shift && (!psums_preload_en || !is_first_preload_context())) && 
+                !is_scan_chain_fifo_empty();
     endfunction
 
     virtual function bit is_scan_chain_fifo_empty();
@@ -178,6 +198,21 @@ class sauria_systolic_array_model extends uvm_object;
     endfunction
 
     /***********COMPUTATION FUNCTIONS************************* */
+
+    virtual function void observe_mac_context_data(bit start_data_feed, bit data_feed_valid, a_arr_data_t a_arr, b_arr_data_t b_arr);
+        if (start_data_feed)
+            start_context();
+    
+        if (is_first_mac_elem_done())
+            update_context_count();
+
+        if (data_feed_valid)
+            feed_context(a_arr, b_arr); 
+    
+        if (is_context_MAC_done())
+            compute_context();    
+        
+    endfunction
 
     virtual function void start_context();
         overlapping_contexts = is_array_feeding_done();
@@ -366,19 +401,37 @@ class sauria_systolic_array_model extends uvm_object;
         end
     endfunction
 
-    virtual function void save_preload_values(ref arr_psum_reg_t arr_psum_reserve_reg);
-        for(int col=0; col < sauria_pkg::X; col++)begin
-            for(int row=0; row < sauria_pkg::Y; row++)
-                preload_psums_reg[row][col] = arr_psum_reserve_reg[row][col];
-        end
-    endfunction
-
     virtual function void preload_mac_psums();
         for(int row=0; row < sauria_pkg::Y; row++)begin
             for(int col=0; col < sauria_pkg::X; col++)
                 mac_psum_reg[row][col] = preload_psums_reg[row][col];
             
         end
+    endfunction
+
+    virtual function void add_ifmaps_feeder_out_data(a_arr_data_t a_arr);
+        `sauria_info(message_id, "Adding IFMAPS Feed  Out Data")
+        ifmaps_feeder_out_data.push_back(ifmaps_feeder_out_data_inst);
+        update_ifmaps_feeder_data(a_arr);
+    endfunction
+
+    virtual function void add_weights_feeder_out_data(b_arr_data_t b_arr);
+        `sauria_info(message_id, "Adding WEIGHTS Feed  Out Data")
+        weights_feeder_out_data.push_back(weights_feeder_out_data_inst);
+        update_weights_feeder_data(b_arr);
+    endfunction
+
+    virtual function void feed_valid_ifmaps_column();
+        ifmaps_feeder_out_data_entry = ifmaps_feeder_out_data.pop_front();
+        a_arr_entries.push_back(ifmaps_feeder_out_data_entry.a_arr);  
+        `sauria_info(message_id, $sformatf("Add Valid IFMAPS Column 0x%0h", ifmaps_feeder_out_data_entry.a_arr))  
+    endfunction
+
+    virtual function void feed_valid_weights_row();
+        weights_feeder_out_data_entry = weights_feeder_out_data.pop_front();
+        `sauria_info(message_id, $sformatf("B_ARR_ENTRY_READY FEEDER_OUT_DATA_SIZE: %0d CURR_Q_SIZE: %0d Ones: %0d Val: 0x%0h IDX_Curr_Comp: %0d", 
+        weights_feeder_out_data.size() + 1, b_arr_entries.size(), $countones(weights_feeder_out_data_entry.b_arr), weights_feeder_out_data_entry.b_arr, idx_curr_comp))
+        b_arr_entries.push_back(weights_feeder_out_data_entry.b_arr);    
     endfunction
 
     virtual function void clear_all_queues();
@@ -434,31 +487,6 @@ class sauria_systolic_array_model extends uvm_object;
 
     virtual function bit has_weights_feeder_valid_entry();
         return $countones(weights_feeder_out_data[0].arr_byte_valid) == sauria_pkg::X;
-    endfunction
-
-    virtual function void add_ifmaps_feeder_out_data(a_arr_data_t a_arr);
-        `sauria_info(message_id, "Adding IFMAPS Feed  Out Data")
-        ifmaps_feeder_out_data.push_back(ifmaps_feeder_out_data_inst);
-        update_ifmaps_feeder_data(a_arr);
-    endfunction
-
-    virtual function void add_weights_feeder_out_data(b_arr_data_t b_arr);
-        `sauria_info(message_id, "Adding WEIGHTS Feed  Out Data")
-        weights_feeder_out_data.push_back(weights_feeder_out_data_inst);
-        update_weights_feeder_data(b_arr);
-    endfunction
-
-    virtual function void feed_valid_ifmaps_column();
-        ifmaps_feeder_out_data_entry = ifmaps_feeder_out_data.pop_front();
-        a_arr_entries.push_back(ifmaps_feeder_out_data_entry.a_arr);  
-        `sauria_info(message_id, $sformatf("Add Valid IFMAPS Column 0x%0h", ifmaps_feeder_out_data_entry.a_arr))  
-    endfunction
-
-    virtual function void feed_valid_weights_row();
-        weights_feeder_out_data_entry = weights_feeder_out_data.pop_front();
-        `sauria_info(message_id, $sformatf("B_ARR_ENTRY_READY FEEDER_OUT_DATA_SIZE: %0d CURR_Q_SIZE: %0d Ones: %0d Val: 0x%0h IDX_Curr_Comp: %0d", 
-        weights_feeder_out_data.size() + 1, b_arr_entries.size(), $countones(weights_feeder_out_data_entry.b_arr), weights_feeder_out_data_entry.b_arr, idx_curr_comp))
-        b_arr_entries.push_back(weights_feeder_out_data_entry.b_arr);    
     endfunction
 
     virtual function void update_current_context();
