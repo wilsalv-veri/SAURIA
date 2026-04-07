@@ -10,6 +10,7 @@ class sauria_systolic_array_model extends uvm_object;
     bit                                     psums_preload_en;
     bit                                     first_preload_context;
     int                                     context_count;
+    int unsigned                            popped_psum_col_entry_count;
 
     int                                     cscan_idx;
     bit                                     cscan_done;
@@ -32,7 +33,7 @@ class sauria_systolic_array_model extends uvm_object;
     int                                     comp_feeding_len;
 
     bit                                     arr_feeding_done;
-    bit                                     count_next_comp;
+    bit                                     overlapping_contexts;
     int                                     idx_curr_comp, idx_next_comp;
 
     ifmaps_feeder_row_data_t                ifmaps_feeder_data[sauria_pkg::Y];
@@ -84,6 +85,18 @@ class sauria_systolic_array_model extends uvm_object;
         cscan_idx++;
     endfunction
 
+    virtual function void update_context_count();
+        context_count++;
+    endfunction
+
+    virtual function void update_popped_psums_col_entry_count();
+        popped_psum_col_entry_count++;
+    endfunction
+
+    virtual function bit is_first_mac_elem_done();
+        return (idx_curr_comp == incntlim);
+    endfunction
+
     virtual function bit is_first_preload_context();
         return (context_count < 2) && psums_preload_en;
     endfunction
@@ -115,22 +128,31 @@ class sauria_systolic_array_model extends uvm_object;
     endfunction
 
     virtual function scan_chain_data_t get_scan_chain_out_col();
+        scan_chain_data_t scan_chain_out_col;
+        
         case(rd_ptr)
-            0: return psum_scan_chain_out_a.pop_front();
-            1: return psum_scan_chain_out_b.pop_front();
+            0: scan_chain_out_col = psum_scan_chain_out_a.pop_front();
+            1: scan_chain_out_col = psum_scan_chain_out_b.pop_front();
         endcase
+
+        update_popped_psums_col_entry_count();
+        
+        if (all_curr_ctx_psum_cols_popped()) begin
+            `sauria_info(message_id, $sformatf("All Cols Popped Flipping RD PTR %0d", rd_ptr))
+            flip_rd_ptr();
+        end
+        return scan_chain_out_col;
     endfunction
 
     virtual function int get_curr_scan_chain_out_col_idx();
-        int ret_val;
         case(rd_ptr)
-            0: ret_val = sauria_pkg::X  - psum_scan_chain_out_a.size();
-            1: ret_val = sauria_pkg::X  - psum_scan_chain_out_b.size();
+            0: return sauria_pkg::X  - psum_scan_chain_out_a.size();
+            1: return sauria_pkg::X  - psum_scan_chain_out_b.size();
         endcase
+    endfunction
 
-        if (!ret_val) flip_rd_ptr();
-
-        return ret_val;
+    virtual function bit all_curr_ctx_psum_cols_popped();
+        return (popped_psum_col_entry_count != 0) && ((popped_psum_col_entry_count % sauria_pkg::X) == 0);
     endfunction
 
     virtual function void flip_rd_ptr();
@@ -156,6 +178,64 @@ class sauria_systolic_array_model extends uvm_object;
     endfunction
 
     /***********COMPUTATION FUNCTIONS************************* */
+
+    virtual function void start_context();
+        overlapping_contexts = is_array_feeding_done();
+        idx_next_comp = 0;
+        `sauria_info(message_id, $sformatf("Started Feeding Overlapping Contexts: %0d", overlapping_contexts))
+    endfunction
+
+    virtual function void feed_context(a_arr_data_t a_arr,b_arr_data_t b_arr);
+
+        `sauria_info (message_id, "Feeder Data Valid")
+            
+        if(is_ifmaps_feeding_in_progress())
+            add_ifmaps_feeder_out_data(a_arr);
+        
+            
+        if (is_weights_feeding_in_progress())
+            add_weights_feeder_out_data(b_arr);
+        
+            
+        if (is_context_in_progress())begin
+            
+            if (has_ifmaps_feeder_valid_entry())
+                feed_valid_ifmaps_column();
+            
+
+            if (has_weights_feeder_valid_entry())
+                feed_valid_weights_row();
+            
+            if(overlapping_contexts) update_next_context();
+            update_current_context();
+        end
+
+    endfunction
+
+    virtual function void compute_context();
+        `sauria_info(message_id, $sformatf("IDX_NEXT_COMP: %0d", idx_next_comp))
+                
+        idx_curr_comp   = idx_next_comp;
+
+        if (idx_next_comp == 0 )begin
+            ifmaps_feeder_out_data.delete();
+            weights_feeder_out_data.delete();
+        end
+
+        idx_next_comp   = 0;
+        overlapping_contexts = 0;
+
+        get_ifmaps_rows();
+        get_weights_cols();
+            
+        if(psums_preload_en)
+            preload_mac_psums();
+
+        calculate_mac();
+        clear_feeder_data();
+        set_scan_chain_out_cols();
+        
+    endfunction
 
     virtual function void get_ifmaps_rows();
         for(int c=0; c < incntlim; c++)begin
@@ -229,7 +309,8 @@ class sauria_systolic_array_model extends uvm_object;
             endcase
         end
 
-        wr_ptr = !wr_ptr;
+        flip_wr_ptr();        
+    
     endfunction
 
     virtual function void update_ifmaps_feeder_data(a_arr_data_t a_arr);
@@ -237,7 +318,7 @@ class sauria_systolic_array_model extends uvm_object;
         
         for(int i=0; i < last_valid_queue_elem; i++)begin 
             
-            if ((i == sauria_pkg::Y - 1 -  (idx_curr_comp - incntlim)) && (idx_curr_comp >= incntlim) && (!count_next_comp))
+            if ((i == sauria_pkg::Y - 1 -  (idx_curr_comp - incntlim)) && (idx_curr_comp >= incntlim) && (!overlapping_contexts))
                 break;
 
             for(int row=0; row < sauria_pkg::Y; row++)begin
@@ -261,7 +342,7 @@ class sauria_systolic_array_model extends uvm_object;
         
         for(int i=0; i < last_valid_queue_elem; i++)begin 
             
-            if ((i == sauria_pkg::X - 1 -  (idx_curr_comp - incntlim)) && (idx_curr_comp >= incntlim) && (!count_next_comp))
+            if ((i == sauria_pkg::X - 1 -  (idx_curr_comp - incntlim)) && (idx_curr_comp >= incntlim) && (!overlapping_contexts))
                 break;
 
             for(int col=0; col < sauria_pkg::X; col++)begin
@@ -273,7 +354,7 @@ class sauria_systolic_array_model extends uvm_object;
                     
                     if ((i == 0)  && (col < last_valid_queue_elem)) 
                         last_valid_queue_elem  = col + 1;
-                    else if (count_next_comp)
+                    else if (overlapping_contexts)
                         last_valid_queue_elem = i + col + 1;
 
                     `sauria_info(message_id, $sformatf("Valid elem_idx: %0d b_arr_col[%0d]: 0x%0h Entry_Val: 0x%0h Last_Valid_Elem: %0d",
@@ -325,6 +406,67 @@ class sauria_systolic_array_model extends uvm_object;
         for(int col=0; col < sauria_pkg::X; col++)begin
             weights_feeder_data[col].weights_data.delete();
         end
+    endfunction
+
+    virtual function bit is_array_feeding_done();
+        return (idx_curr_comp >= incntlim) && (idx_curr_comp <= comp_feeding_len);
+    endfunction
+
+    virtual function bit is_context_MAC_done();
+        return idx_curr_comp == (comp_feeding_len - 1);
+    endfunction
+
+    virtual function bit is_context_in_progress();
+        return idx_curr_comp < comp_feeding_len;
+    endfunction
+
+    virtual function bit is_ifmaps_feeding_in_progress();
+        return (idx_curr_comp < (incntlim + sauria_pkg::Y)) || (overlapping_contexts);
+    endfunction
+
+    virtual function bit is_weights_feeding_in_progress();
+        return (idx_curr_comp < (incntlim + sauria_pkg::X)) || (overlapping_contexts);
+    endfunction
+
+    virtual function bit has_ifmaps_feeder_valid_entry();
+        return $countones(ifmaps_feeder_out_data[0].arr_byte_valid) == sauria_pkg::Y;
+    endfunction
+
+    virtual function bit has_weights_feeder_valid_entry();
+        return $countones(weights_feeder_out_data[0].arr_byte_valid) == sauria_pkg::X;
+    endfunction
+
+    virtual function void add_ifmaps_feeder_out_data(a_arr_data_t a_arr);
+        `sauria_info(message_id, "Adding IFMAPS Feed  Out Data")
+        ifmaps_feeder_out_data.push_back(ifmaps_feeder_out_data_inst);
+        update_ifmaps_feeder_data(a_arr);
+    endfunction
+
+    virtual function void add_weights_feeder_out_data(b_arr_data_t b_arr);
+        `sauria_info(message_id, "Adding WEIGHTS Feed  Out Data")
+        weights_feeder_out_data.push_back(weights_feeder_out_data_inst);
+        update_weights_feeder_data(b_arr);
+    endfunction
+
+    virtual function void feed_valid_ifmaps_column();
+        ifmaps_feeder_out_data_entry = ifmaps_feeder_out_data.pop_front();
+        a_arr_entries.push_back(ifmaps_feeder_out_data_entry.a_arr);  
+        `sauria_info(message_id, $sformatf("Add Valid IFMAPS Column 0x%0h", ifmaps_feeder_out_data_entry.a_arr))  
+    endfunction
+
+    virtual function void feed_valid_weights_row();
+        weights_feeder_out_data_entry = weights_feeder_out_data.pop_front();
+        `sauria_info(message_id, $sformatf("B_ARR_ENTRY_READY FEEDER_OUT_DATA_SIZE: %0d CURR_Q_SIZE: %0d Ones: %0d Val: 0x%0h IDX_Curr_Comp: %0d", 
+        weights_feeder_out_data.size() + 1, b_arr_entries.size(), $countones(weights_feeder_out_data_entry.b_arr), weights_feeder_out_data_entry.b_arr, idx_curr_comp))
+        b_arr_entries.push_back(weights_feeder_out_data_entry.b_arr);    
+    endfunction
+
+    virtual function void update_current_context();
+        idx_curr_comp++;
+    endfunction
+
+    virtual function void update_next_context();
+        idx_next_comp++;
     endfunction
 
     virtual function shortreal fp16_to_shortreal (sauria_fp_elem_data_t fp_elem_data);

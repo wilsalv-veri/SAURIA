@@ -18,6 +18,7 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
                                     cswitch_idx;
 
     bit                             first_ctx_switch;
+    bit                             start_data_feed, data_feed_valid;
             
     function new(string name="sauria_systolic_array_scbd", uvm_component parent=null);
         super.new(name, parent);
@@ -62,8 +63,12 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
                 process_context_switch(first_ctx_switch, cswitch_idx, systolic_array_info.pre_cswitch_arr_psum_reserve_reg,
                                     systolic_array_info.arr_psum_accum_in, systolic_array_info.arr_psum_accum_out,systolic_array_info.arr_psum_reserve_reg);
             end
-            //FIXME: wilsalv :Re-enable
-            //process_mac();
+            
+            start_data_feed = systolic_array_info.act_start_feeding || systolic_array_info.wei_start_feeding;
+            data_feed_valid = systolic_array_info.act_data_valid    || systolic_array_info.wei_data_valid;
+            process_mac(start_data_feed, data_feed_valid, systolic_array_info.a_arr, systolic_array_info.b_arr);
+
+            
         end
 
     endfunction
@@ -99,96 +104,31 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
                                     arr_psum_accum_in, arr_psum_accum_out, arr_psum_reserve_reg);
     endfunction
 
-    //FIXME: wilsalv :Re-enable
-    /* 
-    virtual function void process_mac();
+    virtual function void process_mac(bit start_data_feed, bit data_feed_valid, a_arr_data_t a_arr, b_arr_data_t b_arr);
+        if (systolic_array_model.is_first_mac_elem_done())
+            systolic_array_model.update_context_count();
 
-        arr_feeding_done = (idx_curr_comp >= incntlim) && (idx_curr_comp <= comp_feeding_len);
-
-        if (idx_curr_comp == incntlim)
-            context_count++;
+        if (start_data_feed)
+            systolic_array_model.start_context();
+    
+        if (systolic_array_model.is_context_MAC_done())
+            systolic_array_model.compute_context();    
         
-        if (systolic_array_item.act_start_feeding || systolic_array_item.wei_start_feeding)begin
-            count_next_comp = arr_feeding_done;
-            idx_next_comp = 0;
-            `sauria_info(message_id, $sformatf("Started Feeding Count_Next_Comp: %0d", count_next_comp))
-        end
-
-        if (idx_curr_comp == (comp_feeding_len - 1))begin
-            `sauria_info(message_id, $sformatf("IDX_NEXT_COMP: %0d", idx_next_comp))
-                
-            idx_curr_comp   = idx_next_comp;
-
-            if (idx_next_comp == 0 )begin
-                ifmaps_feeder_out_data.delete();
-                weights_feeder_out_data.delete();
-            end
-
-            idx_next_comp   = 0;
-            count_next_comp = 0;
-
-            get_ifmaps_rows();
-            get_weights_cols();
-            
-            if(psums_preload_en)
-                preload_mac_psums();
-
-            calculate_mac();
-            clear_feeder_data();
-            set_scan_chain_out_cols();
-            
-        end
-
-        if (systolic_array_item.act_data_valid || systolic_array_item.wei_data_valid)begin
-            
-            `sauria_info (message_id, "Feeder Data Valid")
-            
-            if((idx_curr_comp < (incntlim + sauria_pkg::Y)) || (count_next_comp))begin
-                ifmaps_feeder_out_data.push_back(ifmaps_feeder_out_data_inst);
-                update_ifmaps_feeder_data(systolic_array_item.a_arr);
-            end
-            
-            weights_feeder_out_data.push_back(weights_feeder_out_data_inst);
-            update_weights_feeder_data(systolic_array_item.b_arr);
-            
-            if (idx_curr_comp < comp_feeding_len)begin
-            
-                if ($countones(ifmaps_feeder_out_data[0].arr_byte_valid) == sauria_pkg::Y) begin
-                    ifmaps_feeder_out_data_entry = ifmaps_feeder_out_data.pop_front();
-                    a_arr_entries.push_back(ifmaps_feeder_out_data_entry.a_arr);
-                end
-
-                if ($countones(weights_feeder_out_data[0].arr_byte_valid) == sauria_pkg::X) begin
-                    weights_feeder_out_data_entry = weights_feeder_out_data.pop_front();
-                    `sauria_info(message_id, $sformatf("B_ARR_ENTRY_READY FEEDER_OUT_DATA_SIZE: %0d CURR_Q_SIZE: %0d Ones: %0d Val: 0x%0h IDX_Curr_Comp: %0d", 
-                    weights_feeder_out_data.size() + 1, b_arr_entries.size(), $countones(weights_feeder_out_data_entry.b_arr), weights_feeder_out_data_entry.b_arr, idx_curr_comp))
-                    b_arr_entries.push_back(weights_feeder_out_data_entry.b_arr);
-                end
-
-                if(count_next_comp) idx_next_comp++;
-                idx_curr_comp++;
-            end
-        end
-
-    endfunction*/
+        if (data_feed_valid)
+            systolic_array_model.feed_context(a_arr, b_arr); 
+    endfunction
 
     virtual function void check_scan_chain_out_data(ref scan_chain_data_t o_c_arr);
-
-        psum_col = systolic_array_model.get_scan_chain_out_col();
+        int col_idx = systolic_array_model.get_curr_scan_chain_out_col_idx() - 1;
+        psum_col    = systolic_array_model.get_scan_chain_out_col();
 
         if (psum_col != o_c_arr)begin
             `sauria_error(message_id, "Mismatch Mac PSUMS and Scan Chain Outputs")
             for(int row=0; row < sauria_pkg::Y; row++)
                 `sauria_error(message_id, $sformatf("Col: %0d Row: %0d MAC_PSUMS: 0x%0h  Scan_Chain_Out: 0x%0h",
-                systolic_array_model.get_curr_scan_chain_out_col_idx(), row, psum_col[row],o_c_arr[row] ))
+                col_idx , row, psum_col[row],o_c_arr[row] ))
         end
-        /*else begin
-            if (rd_ptr)
-                `sauria_info(message_id, $sformatf("MAC PSUM and Scan Chain Out Match  PSUM_SCAN_CHAIN_OUT_SIZE: %0d", psum_scan_chain_out_b.size()))
-            else
-                `sauria_info(message_id, $sformatf("MAC PSUM and Scan Chain Out Match  PSUM_SCAN_CHAIN_OUT_SIZE: %0d", psum_scan_chain_out_a.size()))
-        end*/
-
+    
     endfunction
 
     virtual function void check_array_psum_reg(ref arr_psum_reg_t arr_psum_reserve_reg);
