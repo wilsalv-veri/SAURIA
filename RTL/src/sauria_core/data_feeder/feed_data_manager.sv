@@ -122,7 +122,6 @@ logic fifo_push;
 // Output reshape and muxing
 logic [FIFO_W-1:0] regs_obus;
 
-
 // ------------------------------------------------------------
 // General pipeline reg enable
 // ------------------------------------------------------------
@@ -170,17 +169,17 @@ end
 // ------------------------
 // Word Offset computation
 // ------------------------
-
 assign woffs_init_d = i_glob_woffs + i_loc_woffs;
 
 // Register
 always_ff @(posedge i_clk or negedge i_rstn) begin : woffs_reg
     if(~i_rstn) begin
-        woffs_init_q <= 0;
+        woffs_init_q <= 0;      
     end else begin
 
         if (i_clearbuff) begin
             woffs_init_q <= 0;
+  
         end else if (pipeline_regs_en && (i_x_ov_flag)) begin
             woffs_init_q <= woffs_init_d;
         end
@@ -442,7 +441,7 @@ always_comb begin
 
         // New Active Registers achieved by simpli ORing the old and the new
         regs_active_d = regs_active_d | regs_active_new;
-
+        
     end
 end
 

@@ -10,6 +10,7 @@ class sauria_weights_feeder_model extends uvm_object;
     weights_feeder_data_t      popped_inst;
 
     arr_row_data_t             weights_cols_active;
+    arr_row_data_t             weights_gwoff_cols_active;
 
     weights_params_t           weights_params;
     sauria_axi4_lite_data_t    w_idx,k_idx;
@@ -33,8 +34,9 @@ class sauria_weights_feeder_model extends uvm_object;
     endfunction
 
     virtual function void configure(weights_params_t weights_params, arr_row_data_t weights_cols_active);
-        this.weights_params       = weights_params;
-        this.weights_cols_active = weights_cols_active;
+        this.weights_params            = weights_params;
+        this.weights_gwoff_cols_active = get_bitmask(weights_params.tile_params.weights_k_step);
+        this.weights_cols_active       = weights_cols_active;
     endfunction
 
     virtual function void set_incntlim(sauria_axi4_lite_data_t incntlim);
@@ -193,7 +195,7 @@ class sauria_weights_feeder_model extends uvm_object;
 
     virtual function b_arr_data_t get_masked_inactive_cols_data(b_arr_data_t b_arr);
         b_arr_data_t       masked_col_data;
-        arr_row_data_rev_t rev_weights_cols_active  = weights_cols_active;
+        arr_row_data_rev_t rev_weights_cols_active  = weights_cols_active & weights_gwoff_cols_active;
 
         for(int col=0; col < sauria_pkg::X; col++)begin
             masked_col_data[col] = (rev_weights_cols_active[col] == 1'b1) ? b_arr[col] : 0;
@@ -252,6 +254,20 @@ class sauria_weights_feeder_model extends uvm_object;
         end
     endfunction
 
+    virtual function arr_row_data_t get_bitmask(sauria_axi4_lite_data_t k_step);
+        //bit set_mask = 1'b1;
+        //arr_row_data_t set_mask = {{sauria_pkg::X{set_mask}}}
+        arr_row_data_t set_mask = {1'b1, {($bits(arr_row_data_t) - 1 ){1'b0}}};
+        arr_row_data_t bitmask;
 
-    
+        for(int i=0; i < k_step; i++)begin
+            bitmask |= set_mask; //1'b1;
+            
+            if (i != (k_step - 1))
+                bitmask >>= 1;
+        end
+
+        return bitmask;
+    endfunction
+
 endclass

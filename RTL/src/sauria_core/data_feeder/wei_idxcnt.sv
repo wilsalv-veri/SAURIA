@@ -76,7 +76,7 @@ logic [IDX_W-1:0]       sram_idx_d, sram_idx_q;
 logic                   transition_flag, transition_q1, transition_q2;
 
 // Final shimming
-logic [WOFS_W-1:0]      woffs_outshim;
+logic [IDX_W - WOFS_W - 1:0] woffs_outshim;
 logic                   outbounds_outshim;
 
 // Output registers
@@ -267,7 +267,7 @@ always_ff @(posedge i_clk or negedge i_rstn) begin : out_shimming_reg
 
         // SRAM index register & done flag are gated by counter enable (pipeline stall)
         end else if (i_cnt_en) begin
-            woffs_outshim <=        sram_idx_q[WOFS_W-1:0];
+            woffs_outshim <=  sram_idx_q[WOFS_W-1:0];
             transition_q2 <=        transition_q1;
             outbounds_outshim <=    outbounds_q;
         end

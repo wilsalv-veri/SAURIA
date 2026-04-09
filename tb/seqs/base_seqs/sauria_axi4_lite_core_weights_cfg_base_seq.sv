@@ -63,7 +63,9 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
         weights_w_step      = computation_params.df_controller_weights_params.tile_params.weights_w_step;                           
         weights_w_lim       = computation_params.df_controller_weights_params.tile_params.weights_C;           
 
-        weights_k_step      = SRAMB_N;
+        weights_k_step      = (computation_params.df_controller_weights_params.tile_params.weights_K >= SRAMB_N) ? 
+                                SRAMB_N : computation_params.df_controller_weights_params.tile_params.weights_K;
+        
         weights_k_lim       = computation_params.df_controller_weights_params.tile_params.weights_K;      
 
         //Single Tile

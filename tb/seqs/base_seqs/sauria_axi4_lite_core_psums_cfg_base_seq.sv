@@ -5,7 +5,10 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     uvm_status_e                 status;
     sauria_core_psums_reg_block  core_psums_reg_block;
 
+    sauria_axi4_lite_data_t act_reps;
+    sauria_axi4_lite_data_t wei_reps;
     sauria_axi4_lite_data_t psums_reps;
+
     sauria_axi4_lite_data_t psums_cx_lim;
     sauria_axi4_lite_data_t psums_cx_step;
                        
@@ -135,11 +138,18 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
         
         psums_tile_ck_step  = psums_ck_lim; 
         psums_tile_ck_lim   = psums_ck_lim; 
-           
-        psums_reps          = (computation_params.df_controller_psums_params.tile_params.psums_CX 
-                                / SRAMA_N) 
-                            * (computation_params.df_controller_psums_params.tile_params.psums_K  
+        
+        act_reps            = (computation_params.df_controller_psums_params.tile_params.psums_K  
                                 / SRAMB_N);
+
+        act_reps            = (act_reps > 0) ? act_reps : 1;
+        
+        wei_reps            = (computation_params.df_controller_psums_params.tile_params.psums_CX 
+                                / SRAMA_N);
+
+        wei_reps            = (wei_reps > 0) ? wei_reps : 1;
+        
+        psums_reps          = act_reps * wei_reps;
     endtask
 
     virtual task share_psums_cfg();

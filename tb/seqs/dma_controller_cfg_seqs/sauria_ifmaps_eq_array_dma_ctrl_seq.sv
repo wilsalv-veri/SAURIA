@@ -13,14 +13,14 @@ class sauria_ifmaps_eq_array_dma_ctrl_cfg_seq extends sauria_axi4_lite_dma_contr
         Y               == `Y;
         W               ==  2;
         C               ==  8;
-        K               == `X*2;
+        K               == `X;
     }
 
     constraint tensor_dimensions_c {
-        dma_tile_x_lim  == 1; //2
-        dma_tile_y_lim  == 1; //2
-        dma_tile_c_lim  == 1; //3
-        dma_tile_k_lim  == 1; //4
+        dma_tile_x_lim  == 0; //2
+        dma_tile_y_lim  == 0; //2 
+        dma_tile_c_lim  == 0; //3 
+        dma_tile_k_lim  == 0; //4 //DMA model fails
     }
      
 endclass

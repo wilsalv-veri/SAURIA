@@ -24,14 +24,34 @@ Key aspects of the verification effort include:
 - Full subsystem instantiation enabling validation of control, data movement, and array execution interactions
 
 ---
+## Design Feedback and RTL Corrections
+
+The verification environment is used not only to detect defects, but to drive design corrections and validate architectural intent.
+
+For each defect identified:
+- Root cause analysis is performed at both RTL and architectural levels
+- Corrective fixes are proposed and implemented directly in the RTL
+- Fixes are validated through targeted stimulus and full regression to ensure behavioral correctness
+
+This establishes a closed-loop workflow from bug detection to design correction, ensuring that verification directly improves RTL quality.
+
+Representative defects and fixes are documented in the [bug report](docs/tb_docs/bug_report.md).
+
+---
 
 ## Architecture
 
+### Sauria Subsystem
 <p align="center">
   <img src="docs/rtl_docs/diagram.svg" width="500" >
 </p>
 
 ###### Author: Jordi Fornt Mas (jordi.fornt@bsc.es)
+
+### UVM Testbench
+
+![Image of TB Architecture](/docs/tb_docs/Sauria_TB.png)
+###### Author: Wilfredo Salvador (wilsalv@gmail.com)
 
 ### Control Overview
 
@@ -77,7 +97,8 @@ behavior.
 On-chip SRAM structures used for buffering activations, weights, or partial results are excluded from verification. These memories are treated as ideal storage elements without attempting to validate internal memory behavior or arbitration logic.
 
 - **Convolution Lowering**
-The ifmaps data feeder performs on-the-fly convolution lowering (e.g., im2col-style transformation) to generate streamed input data for the systolic array. This functionality introduces convolution-specific data transformation semantics that are orthogonal to tile management, control sequencing, and array execution correctness. Excluding convolution semantics allows the verification effort to remain focused on validating control-driven tiled execution rather than data layout transformation logic.
+The IFMAPS feeder performs on-the-fly convolution lowering (e.g., im2col-style transformation) to generate streamed input data for the systolic array. Verification of convolution-specific data transformation is excluded. Instead, a verification configuration allows bypassing convolution semantics, treating inputs as pre-lowered and GEMM-compatible.
+This enables the verification effort to focus on control sequencing, tile management, and array execution correctness without dependence on convolution data layout behavior.
 
 ---
 
@@ -108,9 +129,29 @@ The dataflow controller operates at the tensor-tile level, while the Sauria core
 
 This execution model drives both stimulus construction and architectural checking within the verification environment.
 
+#### Verification Abstraction of Convolution Semantics
+
+While Sauria is architecturally designed as a convolution-native accelerator, the verification environment intentionally abstracts execution into a GEMM-equivalent model.
+
+At the architectural level:
+- The dataflow controller assumes convolution semantics in memory, including tensor traversal consistent with convolutional workloads
+- The IFMAPS feeder performs on-the-fly convolution lowering (im2col-style transformation), converting spatial activation windows into streamed data aligned with the reduction dimension
+
+To decouple verification of control-driven execution from convolution-specific data transformation:
+
+- A minimally intrusive verification knob in the dataflow controller and IFMAPS feeder bypasses RTL convolution semantics
+- Inputs are treated as pre-lowered, enabling GEMM-compatible execution and verification under a pure GEMM interpretation
+
+This approach allows the verification environment to:
+- Focus on correctness of tile sequencing, control orchestration, and accumulation behavior
+- Avoid introducing ambiguity from convolution-specific data layout transformations
+- Preserve fidelity of the RTL architecture while simplifying verification modeling
+
+As a result, all architectural models, scoreboards, and reference computations operate under GEMM-equivalent semantics, even though the underlying RTL remains convolution-native.
+
 #### GEMM Interpretation
 
-![Image of Tiling Mental Model](/docs/tb_docs//tiling_mental_model.png)
+![Image of Tiling Mental Model](/docs/tb_docs/tiling_mental_model.png)
 ###### Author: Wilfredo Salvador (wilsalv@gmail.com)
 
 
@@ -139,6 +180,10 @@ Mapping to generic GEMM:
 - n ↔ output-channel dimension k
 - k ↔ reduction dimension c
 
+#### Tile Computation
+
+![Image of Tile MAC Compute](/docs/tb_docs/systolic_array_compute.png)
+###### Author: Wilfredo Salvador (wilsalv@gmail.com)
 
 ---
 
@@ -185,7 +230,6 @@ The verification environment focuses on detecting these classes of issues throug
 - `/output`        : Compilation logs
 - `/test_runs`     : Test execution logs
 
-For representative debug findings and root-cause analysis, see the [bug report](docs/tb_docs/bug_report.md).
 
 ---
 ## Quick Start

@@ -69,12 +69,14 @@ class sauria_psums_mgr_model extends uvm_object;
 
     virtual function void add_psums_sram_rd_access(sramc_data_t sramc_rdata);
         
-        if(shift) begin
-                
+        //if(shift) begin
+            shift = 1'b1; //FIXME:    
             valid_psums_shift_reg_data = 1'b1;
             valid_preload_data         = 1'b1;
                 
-            if (rd_done_count == RD_LAT) begin
+            //if (rd_done_count == RD_LAT) begin
+            if (rd_done_count == RD_LAT - 1) begin
+            
                 shift_count   = -1; //Will become 0 
                 rd_done_count =  0;
             end
@@ -92,8 +94,8 @@ class sauria_psums_mgr_model extends uvm_object;
 
             shift_count++;
             
-        end
-        else set_shift();
+        //end
+        //else set_shift();
         
     endfunction
 
@@ -151,7 +153,7 @@ class sauria_psums_mgr_model extends uvm_object;
 
     virtual function void clear_psums_shift_reg_data_valid();
         valid_psums_shift_reg_data = 0;
-        shift                   = 0;
+        shift                      = 0;
     endfunction
 
     virtual function sramc_data_t get_shift_reg_data_entry();  

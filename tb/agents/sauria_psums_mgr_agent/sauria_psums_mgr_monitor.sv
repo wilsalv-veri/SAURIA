@@ -14,6 +14,10 @@ class sauria_psums_mgr_monitor extends uvm_monitor;
 
     int curr_read_context_num,  next_read_context_num;
     int curr_write_context_num, next_write_context_num;
+    
+    sramc_addr_t          sramc_addr_d, sramc_addr_q;       
+    bit                   sramc_rden_i, sramc_rden_d, sramc_rden_q;  
+   
 
     function new(string name="sauria_psums_mgr_monitor", uvm_component parent=null);
         super.new(name, parent);
@@ -47,12 +51,24 @@ class sauria_psums_mgr_monitor extends uvm_monitor;
     endtask
 
     virtual task get_sramc_read_info();
-        forever @ (sauria_psums_mgr_if.sramc_read_cb)begin
-            psums_mgr_item.context_num  = next_read_context_num;
-            psums_mgr_item.sramc_addr   = sauria_psums_mgr_if.sramc_read_cb.sramc_addr;     
-            psums_mgr_item.sramc_wmask  = sauria_psums_mgr_if.sramc_read_cb.sramc_wmask; 
-            psums_mgr_item.sramc_rdata  = sauria_psums_mgr_if.sramc_rdata;
-            send_psums_mgr_sramc_read_info.write(psums_mgr_item);  
+        //forever @ (sauria_psums_mgr_if.sramc_read_cb)begin
+        forever @ (posedge sauria_psums_mgr_if.clk)begin
+            
+            sramc_addr_d <= sauria_psums_mgr_if.sramc_addr;
+            sramc_addr_q <= sramc_addr_d;    
+
+            sramc_rden_i <= sauria_psums_mgr_if.sramc_rden;
+            sramc_rden_d <= sramc_rden_i;
+            sramc_rden_q <= sramc_rden_d;
+            
+            if (sramc_rden_q && sauria_psums_mgr_if.sramc_rden)begin
+                psums_mgr_item.context_num  = next_read_context_num;
+                psums_mgr_item.sramc_addr   = sramc_addr_q;     
+                psums_mgr_item.sramc_wmask  = sauria_psums_mgr_if.sramc_wmask; 
+                psums_mgr_item.sramc_rdata  = sauria_psums_mgr_if.sramc_rdata;
+                send_psums_mgr_sramc_read_info.write(psums_mgr_item); 
+            end
+            
         end
     endtask
 

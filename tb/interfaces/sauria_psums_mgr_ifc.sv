@@ -30,7 +30,6 @@ interface sauria_psums_mgr_ifc import sauria_pkg::*;();
 	logic [Y-1:0][OC_W-1:0]  	 o_c_arr;             // MAC preload values (scan chain)
 
     clocking sramc_read_cb @(posedge clk iff (sramc_rden == 1'b1) ); 
-        input sramc_rden; 
         input sramc_addr; 
         input sramc_rdata;
         input sramc_wmask;
