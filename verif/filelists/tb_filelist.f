@@ -51,6 +51,7 @@ $SAURIA/tb/assertions/sauria_psums_assert.sv
 +incdir+$SAURIA/tb/seqs/df_controller_cfg_seqs/
 +incdir+$SAURIA/tb/seqs/base_seqs/
 +incdir+$SAURIA/tb/seqs/dma_controller_cfg_seqs/
++incdir+$SAURIA/tb/seqs/dma_controller_cfg_seqs/dma_tile_cfg_seqs/
 +incdir+$SAURIA/tb/seqs/core_psums_cfg_seqs/
 +incdir+$SAURIA/tb/seqs/core_ifmaps_cfg_seqs/
 +incdir+$SAURIA/tb/seqs/core_main_controller_cfg_seqs/

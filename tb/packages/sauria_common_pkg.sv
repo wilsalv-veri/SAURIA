@@ -12,8 +12,8 @@ package sauria_common_pkg;
     parameter INT_ARITHMETIC         = !ARITHMETIC;
     parameter FP_ARITHMETIC          = ARITHMETIC;
     parameter COLS_ACTIVE_SIZE       = sauria_pkg::X;
-    parameter ROWS_ACTIVE_SIZE       = sauria_pkg::Y;
-    
+    parameter ROWS_ACTIVE_SIZE       = sauria_pkg::Y; 
+   
     parameter  BYTE = 8;
     
     parameter SAURIA_CLK_HALF_PERIOD = 1000; // in picoseconds (based on timescale)
@@ -77,6 +77,11 @@ package sauria_common_pkg;
 
     `include "sauria_tb_defines.svh"
     `include "sauria_tb_types.svh"
+    `include "sauria_plusarg_utils.sv"
+
+    parameter IFMAPS_DATA_MODE  = INT_ARITHMETIC ? SING_NIB_INCR_PATTERN : FP_ONE_W_FRAC_COMP;
+    parameter WEIGHTS_DATA_MODE = INT_ARITHMETIC ? SING_NIB_INCR_PATTERN : FP_NEG_ONE;
+    parameter PSUMS_DATA_MODE   = INT_ARITHMETIC ? ALL_TWOS              : FP_ONE;
     
     parameter CS_FIRST_IDX = arr_row_data_t'('h8000);
     parameter CS_LAST_IDX  = arr_row_data_t'('h0001);

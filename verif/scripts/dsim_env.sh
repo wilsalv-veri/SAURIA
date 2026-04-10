@@ -44,6 +44,9 @@ function compile_sauria(){
 #Run Function
 function run_sauria(){
 
+    local TEST_NAME="$1"
+    shift
+
     # Check that $SAURIA is set before proceeding
     if [ -z "$SAURIA" ]; then
         echo "Error: SAURIA environment variable is not set."
@@ -53,8 +56,13 @@ function run_sauria(){
     #Ensure the test_runs directory exists
     mkdir -p $SAURIA/test_runs
 
+    if [ -z "$TEST_NAME" ]; then
+        echo "Error: Please provide a test name."
+        return 1
+    fi
+
     #Create directory for current test run
-    make_incremental_dir $SAURIA/test_runs/"$1"
+    make_incremental_dir $SAURIA/test_runs/"$TEST_NAME"
     
     local DIR_NAME=$(basename "$LAST_CREATED_DIR")
     mkdir $LAST_CREATED_DIR/cov_reports
@@ -64,11 +72,24 @@ function run_sauria(){
     mkdir $LAST_CREATED_DIR/cov_reports/funct_reports
     
     echo "Starting $DIR_NAME"
+    local EXTRA_SIM_ARGS=()
+    for arg in "$@"; do
+        if [[ "$arg" == *=* && "$arg" != +* && "$arg" != -* ]]; then
+            EXTRA_SIM_ARGS+=("+$arg")
+        else
+            EXTRA_SIM_ARGS+=("$arg")
+        fi
+    done
 
+    if [ ${#EXTRA_SIM_ARGS[@]} -gt 0 ]; then
+        echo "Extra simulator args: ${EXTRA_SIM_ARGS[*]}"
+    fi
+    
     #Run the dsim test run command on compiled image
     dsim -image sauria_subsystem -work $SAURIA/output/dsim_work \
         -uvm 2020.3.1      \
-        -dump-agg -waves SAURIA_waves.vcd +UVM_TESTNAME="$1" \
+        -dump-agg -waves SAURIA_waves.vcd +UVM_TESTNAME="$TEST_NAME" \
+        "${EXTRA_SIM_ARGS[@]}" \
         &> "SAURIA_run.log" \
     
     echo "Finished $DIR_NAME"

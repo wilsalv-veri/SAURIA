@@ -93,10 +93,6 @@ class sauria_axi4_driver extends uvm_driver #(sauria_tensor_mem_seq_item);
             `sauria_error(message_id, "Failed to get access to computation_params")
  
         data_generator.configure_generator(tensor_item, rd_txn_item, computation_params);
-        if (INT_ARITHMETIC)
-            data_generator.set_int_data_gen_mode(SING_NIB_INCR_PATTERN, SING_NIB_INCR_PATTERN, ALL_TWOS);
-        else
-            data_generator.set_fp_data_gen_mode(FP_ONE_W_FRAC_COMP, FP_NEG_ONE, FP_ONE); 
     endfunction
 
     virtual task set_rd_data();

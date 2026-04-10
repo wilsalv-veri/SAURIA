@@ -256,6 +256,11 @@ For full setup instructions, see the [Setup and Usage Guide](docs/tb_docs/setup_
   ```bash
    run_sauria testname
   ```
+   Optional data mode override examples:
+  ```bash
+   run_sauria testname IFMAPS_DATA_MODE=ALL_TWOS
+   run_sauria testname IFMAPS_DATA_MODE=6
+  ```
 ---
 ## Sauria Repository
 

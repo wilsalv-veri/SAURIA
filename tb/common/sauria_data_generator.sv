@@ -19,17 +19,59 @@ class sauria_data_generator extends uvm_object;
     fp_data_gen_mode_t           fp_ifmaps_data_mode;
     fp_data_gen_mode_t           fp_weights_data_mode;
     fp_data_gen_mode_t           fp_psums_data_mode;
-   
     int                          byte_idx;
 
+    bit                          plusarg_registry_is_configured;
+
+    string data_mode_plusargs[$] = '{"IFMAPS_DATA_MODE", 
+                                    "WEIGHTS_DATA_MODE", 
+                                    "PSUMS_DATA_MODE"};
+
+    
     function new(string name="sauria_data_generator");
         super.new(name);
+        plusarg_registry_is_configured = 0;
     endfunction
 
     virtual function void configure_generator(sauria_tensor_mem_seq_item tensor_item, sauria_axi4_rd_txn_seq_item  rd_txn_item, sauria_computation_params computation_params);
         this.tensor_item        = tensor_item;
         this.rd_txn_item        = rd_txn_item;
         this.computation_params = computation_params;
+        register_data_mode_plusargs();
+        set_data_gen_mode();
+    endfunction
+
+    virtual function void register_data_mode_plusargs();
+        string data_mode_values[$];
+        int min_numeric_value;
+        int max_numeric_value;
+
+        if (plusarg_registry_is_configured)
+            return;
+
+        if (INT_ARITHMETIC)
+            sauria_plusarg_utils::get_int_data_mode_values(data_mode_values, min_numeric_value, max_numeric_value);
+        else
+            sauria_plusarg_utils::get_fp_data_mode_values(data_mode_values, min_numeric_value, max_numeric_value);
+
+        foreach (data_mode_plusargs[idx]) begin
+            sauria_plusarg_utils::register_plusarg(data_mode_plusargs[idx]);
+            sauria_plusarg_utils::register_plusarg_values(data_mode_plusargs[idx], data_mode_values, min_numeric_value, max_numeric_value);
+        end
+
+        plusarg_registry_is_configured = 1;
+    endfunction
+
+    virtual function void set_data_gen_mode();
+        int mode_values[3];
+        initialize_mode_values(mode_values);
+        plusarg_override_mode_values(mode_values);
+
+        if (INT_ARITHMETIC) begin
+            set_int_data_gen_mode(int_data_gen_mode_t'(mode_values[0]), int_data_gen_mode_t'(mode_values[1]), int_data_gen_mode_t'(mode_values[2]));
+        end else begin
+            set_fp_data_gen_mode(fp_data_gen_mode_t'(mode_values[0]), fp_data_gen_mode_t'(mode_values[1]), fp_data_gen_mode_t'(mode_values[2]));
+        end
     endfunction
 
     virtual function void set_int_data_gen_mode(int_data_gen_mode_t int_ifmaps_data_mode, int_data_gen_mode_t int_weights_data_mode, int_data_gen_mode_t int_psums_data_mode);
@@ -44,7 +86,6 @@ class sauria_data_generator extends uvm_object;
         this.fp_psums_data_mode   = fp_psums_data_mode;
     endfunction
     
-
     virtual function sauria_axi4_data_t gen_read_data();
         int num_bytes    = DATA_AXI_BYTE_NUM; //2**rd_txn_item.rd_addr_item.arsize;
         int last_elem_idx;
@@ -86,7 +127,8 @@ class sauria_data_generator extends uvm_object;
  
     virtual function longint unsigned get_int_elem_data(int_data_gen_mode_t int_data_mode);
         case(int_data_mode)
-            RAND:                  return get_rand_int_elem_data();
+            RAND_INT_DATA_MODE:    return get_rand_int_data_mode();
+            RAND_INT:              return get_rand_int_elem_data();
             ADDR_AS_DATA:          return get_addr_int_elem_data();
             BAD_PATTERN:           return get_bad_pattern_int_elem_data();
             INCR_PATTERN:          return get_incr_count_int_elem_data();
@@ -98,6 +140,8 @@ class sauria_data_generator extends uvm_object;
 
     virtual function sauria_fp_elem_data_t get_fp_elem_data(fp_data_gen_mode_t fp_data_mode);
         case(fp_data_mode)
+            RAND_FP_DATA_MODE:  return get_rand_fp_elem_data();
+            RAND_FP:            return get_rand_fp_elem_data();
             FP_ONE:             return get_one_fp_elem_data();
             FP_ONE_W_FRAC_COMP: return get_one_w_frac_comp_fp_elem_data();
             FP_NEG_ONE:         return get_neg_one_fp_elem_data();
@@ -105,6 +149,20 @@ class sauria_data_generator extends uvm_object;
             FP_TWO:             return get_two_fp_elem_data(); 
         endcase
     endfunction
+
+    virtual function longint unsigned get_rand_int_data_mode();
+        int rand_val = $urandom_range(1,7);
+        case(rand_val)
+            0: return get_rand_int_elem_data();
+            1: return get_addr_int_elem_data();
+            2: return get_addr_int_elem_data();
+            3: return get_bad_pattern_int_elem_data();
+            4: return get_incr_count_int_elem_data(); 
+            5: return get_single_nib_incr_count_int_elem_data();
+            6: return get_ones_int_elem_data();
+            7: return get_twos_int_elem_data();
+        endcase
+    endfunction 
 
     virtual function longint unsigned get_rand_int_elem_data();
         int elem_size      = get_elem_size();
@@ -148,6 +206,17 @@ class sauria_data_generator extends uvm_object;
         return 2;
     endfunction
 
+    virtual function sauria_fp_elem_data_t get_rand_fp_elem_data();
+        int rand_val = $urandom_range(0,4);
+        case(rand_val)
+            0: return get_one_fp_elem_data();
+            1: return get_one_w_frac_comp_fp_elem_data();
+            2: return get_neg_one_fp_elem_data();
+            3: return get_half_fp_elem_data();
+            4: return get_two_fp_elem_data(); 
+        endcase
+    endfunction 
+
     virtual function sauria_fp_elem_data_t get_one_fp_elem_data();
         return sauria_fp_elem_data_t'('h3c00);
     endfunction
@@ -185,4 +254,34 @@ class sauria_data_generator extends uvm_object;
             tensor_item.tensor_type = PSUMS;      
     endfunction
 
+    virtual function void initialize_mode_values(ref int mode_values[3]);
+        mode_values[0] = int'(IFMAPS_DATA_MODE);
+        mode_values[1] = int'(WEIGHTS_DATA_MODE);
+        mode_values[2] = int'(PSUMS_DATA_MODE);
+    endfunction
+
+    virtual function void plusarg_override_mode_values(ref int mode_values[3]);
+        string plusarg_raw_value;
+        sauria_plusarg_utils::plusarg_override_status_t override_status;
+        int_data_gen_mode_t int_mode;
+        fp_data_gen_mode_t fp_mode;
+
+        for (int idx = 0; idx < data_mode_plusargs.size(); idx++) begin
+            override_status = sauria_plusarg_utils::apply_registered_plusarg_override(data_mode_plusargs[idx], mode_values[idx], plusarg_raw_value);
+            if (INT_ARITHMETIC) begin
+                int_mode = int_data_gen_mode_t'(mode_values[idx]);
+                if (override_status == sauria_plusarg_utils::PLUSARG_APPLIED)
+                    `sauria_info(message_id, $sformatf("Override applied: %s=%s (%0d)", data_mode_plusargs[idx], int_mode.name(), mode_values[idx]))
+                else if (override_status == sauria_plusarg_utils::PLUSARG_INVALID)
+                    `sauria_warning(message_id, $sformatf("Invalid %s override value '%s'. Keeping default mode %s (%0d)", data_mode_plusargs[idx], plusarg_raw_value, int_mode.name(), mode_values[idx]))
+            end else begin
+                fp_mode = fp_data_gen_mode_t'(mode_values[idx]);
+                if (override_status == sauria_plusarg_utils::PLUSARG_APPLIED)
+                    `sauria_info(message_id, $sformatf("Override applied: %s=%s (%0d)", data_mode_plusargs[idx], fp_mode.name(), mode_values[idx]))
+                else if (override_status == sauria_plusarg_utils::PLUSARG_INVALID)
+                    `sauria_warning(message_id, $sformatf("Invalid %s override value '%s'. Keeping default mode %s (%0d)", data_mode_plusargs[idx], plusarg_raw_value, fp_mode.name(), mode_values[idx]))
+            end
+        end
+    endfunction
+    
 endclass

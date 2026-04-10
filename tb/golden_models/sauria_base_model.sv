@@ -31,7 +31,9 @@ class sauria_base_model extends uvm_object;
     sauria_axi4_lite_data_t psums_tile_size;
 
     sauria_axi4_lite_data_t loop_order;
-
+    sauria_axi4_lite_data_t cr_loop_order;
+    sauria_axi4_lite_data_t tile_dim_loop_order;
+    
     bit                     Cw_eq;   
     bit                     Ch_eq;   
     bit                     Ck_eq;   
@@ -70,6 +72,8 @@ class sauria_base_model extends uvm_object;
         tile_C      = computation_params.tile_C;
         tile_K      = computation_params.tile_K;
 
+        tile_dim_loop_order = get_tile_dime_loop_order();
+    
         single_tile = is_single_tile();
     endfunction
 
@@ -86,7 +90,12 @@ class sauria_base_model extends uvm_object;
     endfunction
 
     virtual function void set_loop_order(sauria_computation_params computation_params);
-        loop_order = computation_params.loop_order;
+        cr_loop_order = computation_params.loop_order;
+        loop_order = (tile_dim_loop_order == sauria_axi4_lite_data_t'(3)) ? cr_loop_order : tile_dim_loop_order;
+        
+        show_tensor_dimensions();
+        `sauria_info(message_id, $sformatf("Loop Order: %d Tile_Dim_Loop_Order: %0d Is Single Dim: %0d", 
+        loop_order, tile_dim_loop_order, is_single_dim_multi_tile()))
     endfunction
 
     virtual function void set_tensor_modifiers(sauria_computation_params computation_params);
@@ -105,6 +114,37 @@ class sauria_base_model extends uvm_object;
 
     virtual function bit is_single_tile();
         return (tile_K == 0) && (tile_C == 0) && (tile_Y == 0) && (tile_X == 0);
+    endfunction
+
+    virtual function sauria_axi4_lite_data_t get_tile_dime_loop_order();
+        if (is_single_dim_multi_tile())begin
+
+            if (x_only_multi_dim) return 0;
+            else if (y_only_multi_dim) return 0;
+            else if (c_only_multi_dim) return 1;
+            else if (k_only_multi_dim) return 2;
+        end
+        else return 3; //Non-Valid Value
+    endfunction
+
+    virtual function bit is_single_dim_multi_tile();
+        return x_only_multi_dim() || y_only_multi_dim() || c_only_multi_dim() || k_only_multi_dim();
+    endfunction
+
+    virtual function bit x_only_multi_dim();
+        return (tile_X > 1) && (tile_Y == 1) && (tile_C == 1) && (tile_K == 1);
+    endfunction
+
+    virtual function bit y_only_multi_dim();
+        return (tile_X == 1) && (tile_Y > 1) && (tile_C == 1) && (tile_K == 1);
+    endfunction
+
+    virtual function bit c_only_multi_dim();
+        return (tile_X == 1) && (tile_Y == 1) && (tile_C > 1) && (tile_K == 1);
+    endfunction
+
+    virtual function bit k_only_multi_dim();
+        return (tile_X == 1) && (tile_Y == 1) && (tile_C == 1) && (tile_K > 1);
     endfunction
 
 endclass

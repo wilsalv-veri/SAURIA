@@ -40,7 +40,7 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
     }
 
     constraint loop_order_c {
-        loop_order == sauria_axi4_lite_data_t'('h0);
+        loop_order == sauria_axi4_lite_data_t'('h0); 
     }
     
     constraint wxfer_op_c {

@@ -6,8 +6,6 @@ class sauria_base_test extends uvm_test;
     sauria_env                    env;
     sauria_axi4_lite_cfg_seq_lib  seq;
     
-    
-
     virtual sauria_subsystem_ifc sauria_ss_if;
 
     function new(string name="sauria_base_test", uvm_component parent=null);

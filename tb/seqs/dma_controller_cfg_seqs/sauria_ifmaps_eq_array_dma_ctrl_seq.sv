@@ -9,18 +9,9 @@ class sauria_ifmaps_eq_array_dma_ctrl_cfg_seq extends sauria_axi4_lite_dma_contr
 
    //Independent Constraints
    constraint tile_dimensions_c {
-        X               == `X;
-        Y               == `Y;
-        W               ==  2;
-        C               ==  8;
+        X * Y           == `Y;
+        C  inside {[MIN_COMP_LEN:MAX_COMP_LEN]};
         K               == `X;
-    }
-
-    constraint tensor_dimensions_c {
-        dma_tile_x_lim  == 0; //2
-        dma_tile_y_lim  == 0; //2 
-        dma_tile_c_lim  == 0; //3 
-        dma_tile_k_lim  == 0; //4 //DMA model fails
     }
      
 endclass

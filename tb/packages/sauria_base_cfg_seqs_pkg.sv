@@ -12,7 +12,17 @@ package sauria_base_cfg_seqs_pkg;
     function sauria_axi4_lite_addr_t get_cfg_addr_from_idx(int cfg_cr_idx);
         return sauria_axi4_lite_addr_t'('h10 + cfg_cr_idx*4);
     endfunction
-  
+
+    parameter SINGLE_TILE_DIM_VAL    = 0;
+    parameter MIN_MULTI_TILE_DIM_VAL = 1;
+    parameter MAX_MULTI_TILE_DIM_VAL = 4; 
+
+    parameter MIN_COMP_LEN           = 1;
+    parameter MAX_COMP_LEN           = 32;
+
+    parameter MIN_MULTIPLE           = 1;
+    parameter MAX_MULTIPLE           = 8;
+    
     `include "sauria_cfg_seq_params.sv"
     `include "sauria_axi4_lite_cfg_base_seq.sv"
     `include "sauria_axi4_lite_df_controller_cfg_base_seq.sv"

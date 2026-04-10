@@ -218,11 +218,11 @@
         DMA_SEND_C
     } df_ctrl_substate_t;
 
-    typedef enum {RAND, ADDR_AS_DATA, BAD_PATTERN, 
+    typedef enum {RAND_INT_DATA_MODE, RAND_INT, ADDR_AS_DATA, BAD_PATTERN, 
                 INCR_PATTERN, SING_NIB_INCR_PATTERN, 
                 ALL_ONES, ALL_TWOS} int_data_gen_mode_t;
         
-    typedef enum {FP_ONE, FP_ONE_W_FRAC_COMP, FP_NEG_ONE,         
+    typedef enum {RAND_FP_DATA_MODE, RAND_FP, FP_ONE, FP_ONE_W_FRAC_COMP, FP_NEG_ONE,         
                 FP_HALF, FP_TWO} fp_data_gen_mode_t;
 
     typedef bit [sauria_pkg::ADRA_W-1:0]                                      srama_addr_t;

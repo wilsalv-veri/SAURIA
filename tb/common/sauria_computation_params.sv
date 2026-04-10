@@ -26,29 +26,6 @@ class sauria_computation_params extends uvm_object;
     psums_params_t   df_controller_psums_params;
     psums_params_t   core_psums_params;
 
-    //PSUMS
-    //Intra-Tile/* 
-    /* 
-    sauria_axi4_lite_data_t psums_K;    
-    sauria_axi4_lite_data_t psums_Y;
-    sauria_axi4_lite_data_t psums_X;
-
-    sauria_axi4_lite_data_t tile_psums_x_step;
-
-    sauria_axi4_lite_data_t psums_CX;    
-    sauria_axi4_lite_data_t psums_cx_step;
-   
-    sauria_axi4_lite_data_t psums_CK;     
-    sauria_axi4_lite_data_t psums_ck_step;
-    
-    //Inter-Tile
-    sauria_axi4_lite_data_t tile_psums_CY;    
-    sauria_axi4_lite_data_t tile_psums_cy_step;
-   
-    sauria_axi4_lite_data_t tile_psums_CK;    
-    sauria_axi4_lite_data_t tile_psums_ck_step;
-    */
-
     sauria_axi4_lite_data_t act_reps;
     sauria_axi4_lite_data_t wei_reps;
     sauria_axi4_lite_data_t incntlim;

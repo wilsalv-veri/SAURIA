@@ -5,11 +5,14 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
     uvm_status_e                     status;
     sauria_dma_controller_reg_block  dma_controller_reg_block;
 
-    rand int X;
-    rand int Y;
-    rand int C;
-    rand int K;
-    rand int W;
+    rand int unsigned cols_multiple;
+    rand int unsigned rows_multiple;
+
+    rand int unsigned X;
+    rand int unsigned Y;
+    rand int unsigned C;
+    rand int unsigned K;
+    rand int unsigned W;
 
     rand sauria_axi4_lite_data_t  dma_tile_x_lim;
     rand sauria_axi4_lite_data_t  dma_tile_y_lim;
@@ -39,11 +42,18 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
     
     //Independent Constraints
     constraint tile_dimensions_c {
-      X == 0;
-      Y == 0;
-      W == 0;
-      C == 0;
-      K == 0;
+        solve rows_multiple before X, Y;
+        solve cols_multiple before K;
+
+        rows_multiple inside {[MIN_MULTIPLE : MAX_MULTIPLE]};
+        cols_multiple inside {[MIN_MULTIPLE : MAX_MULTIPLE]};
+
+        X               <= sauria_pkg::Y * MAX_MULTIPLE;
+        Y               <= sauria_pkg::Y * MAX_MULTIPLE;
+
+        X * Y           == sauria_pkg::Y * rows_multiple;
+        C  inside {[MIN_COMP_LEN:MAX_COMP_LEN]};
+        K               == sauria_pkg::X * cols_multiple;
     }
 
     constraint tensor_dimensions_c {

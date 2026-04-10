@@ -86,3 +86,9 @@ Run any test from the test list below using the following command:
 run_sauria testname
 ```
 
+To override default tensor data generation mode from the command line:
+```bash
+run_sauria testname IFMAPS_DATA_MODE=ALL_TWOS
+run_sauria testname IFMAPS_DATA_MODE=6
+```
+
