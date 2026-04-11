@@ -1,11 +1,11 @@
 // Done Interrupt Enable register (offset 0x8)
-class sauria_ctrl_status_reg_2 extends uvm_reg;
+class sauria_df_controller_ctrl_status_reg_2 extends uvm_reg;
 
-    `uvm_object_utils(sauria_ctrl_status_reg_2)
+    `uvm_object_utils(sauria_df_controller_ctrl_status_reg_2)
 
     uvm_reg_field done_interrupt_en;
 
-    function new(string name="sauria_ctrl_status_reg_2");
+    function new(string name="sauria_df_controller_ctrl_status_reg_2");
         super.new(name, SAURIA_REG_SIZE, REG_COVERAGE);
     endfunction
 

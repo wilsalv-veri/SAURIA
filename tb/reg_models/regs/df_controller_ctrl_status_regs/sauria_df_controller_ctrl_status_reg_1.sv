@@ -1,11 +1,11 @@
 // Global Interrupt Enable register (offset 0x4)
-class sauria_ctrl_status_reg_1 extends uvm_reg;
+class sauria_df_controller_ctrl_status_reg_1 extends uvm_reg;
 
-    `uvm_object_utils(sauria_ctrl_status_reg_1)
+    `uvm_object_utils(sauria_df_controller_ctrl_status_reg_1)
 
     uvm_reg_field global_interrupt_en;
 
-    function new(string name="sauria_ctrl_status_reg_1");
+    function new(string name="sauria_df_controller_ctrl_status_reg_1");
         super.new(name, SAURIA_REG_SIZE, REG_COVERAGE);
     endfunction
 

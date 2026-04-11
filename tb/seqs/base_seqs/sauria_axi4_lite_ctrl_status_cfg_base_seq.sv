@@ -3,7 +3,7 @@ class sauria_axi4_lite_ctrl_status_cfg_base_seq extends sauria_axi4_lite_cfg_bas
     `uvm_object_utils(sauria_axi4_lite_ctrl_status_cfg_base_seq)
 
     uvm_status_e                  status;
-    sauria_ctrl_status_reg_block  ctrl_status_reg_block;
+    sauria_df_controller_ctrl_status_reg_block  ctrl_status_reg_block;
 
     function new(string name="sauria_axi4_lite_ctrl_status_cfg_base_seq");
         super.new(name);
@@ -12,7 +12,7 @@ class sauria_axi4_lite_ctrl_status_cfg_base_seq extends sauria_axi4_lite_cfg_bas
 
     virtual task pre_start();
         super.pre_start();
-        this.ctrl_status_reg_block = subsystem_reg_block.ctrl_status_reg_block;
+        this.ctrl_status_reg_block = subsystem_reg_block.df_controller_ctrl_status_reg_block;
     endtask
 
     virtual function void set_unit_specific_cfg_CRs();

@@ -27,13 +27,17 @@ package sauria_cfg_regs_pkg;
   
     `include "sauria_cfg_regs_params.sv"
 
-    `include "sauria_ctrl_status_reg_0.sv"
-    `include "sauria_ctrl_status_reg_1.sv"
-    `include "sauria_ctrl_status_reg_2.sv"
-    `include "sauria_ctrl_status_reg_3.sv"
-    `include "sauria_ctrl_status_reg_4.sv"
-    `include "sauria_ctrl_status_reg_5.sv"
-    `include "sauria_ctrl_status_reg_6.sv"
+    `include "../reg_models/regs/df_controller_ctrl_status_regs/sauria_df_controller_ctrl_status_reg_0.sv"
+    `include "../reg_models/regs/df_controller_ctrl_status_regs/sauria_df_controller_ctrl_status_reg_1.sv"
+    `include "../reg_models/regs/df_controller_ctrl_status_regs/sauria_df_controller_ctrl_status_reg_2.sv"
+
+    `include "../reg_models/regs/core_controller_regs/sauria_core_ctrl_status_reg_0.sv"
+    `include "../reg_models/regs/core_controller_regs/sauria_core_ctrl_status_reg_1.sv"
+    `include "../reg_models/regs/core_controller_regs/sauria_core_ctrl_status_reg_2.sv"
+    `include "../reg_models/regs/core_controller_regs/sauria_core_ctrl_status_reg_3.sv"
+    `include "../reg_models/regs/core_controller_regs/sauria_core_ctrl_status_reg_4.sv"
+    `include "../reg_models/regs/core_controller_regs/sauria_core_ctrl_status_reg_5.sv"
+    `include "../reg_models/regs/core_controller_regs/sauria_core_ctrl_status_reg_6.sv"
     
     `include "sauria_dma_controller_cfg_reg_0.sv"
     `include "sauria_dma_controller_cfg_reg_1.sv"
@@ -83,7 +87,8 @@ package sauria_cfg_regs_pkg;
     `include "sauria_core_psums_cfg_reg_40.sv"
     `include "sauria_core_psums_cfg_reg_41.sv"
 
-    `include "sauria_ctrl_status_reg_block.sv"
+    `include "sauria_df_controller_ctrl_status_reg_block.sv"
+    `include "sauria_core_ctrl_status_reg_block.sv"
     `include "sauria_dma_controller_reg_block.sv"
     `include "sauria_df_controller_reg_block.sv"
     `include "sauria_core_main_controller_reg_block.sv"

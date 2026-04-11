@@ -69,34 +69,29 @@ class sauria_psums_mgr_model extends uvm_object;
 
     virtual function void add_psums_sram_rd_access(sramc_data_t sramc_rdata);
         
-        //if(shift) begin
-            shift = 1'b1; //FIXME:    
-            valid_psums_shift_reg_data = 1'b1;
-            valid_preload_data         = 1'b1;
+        shift = 1'b1;   
+        valid_psums_shift_reg_data = 1'b1;
+        valid_preload_data         = 1'b1;
                 
-            //if (rd_done_count == RD_LAT) begin
-            if (rd_done_count == RD_LAT - 1) begin
+        if (rd_done_count == RD_LAT - 1) begin
             
-                shift_count   = -1; //Will become 0 
-                rd_done_count =  0;
-            end
-            else if (shift_count < sauria_pkg::X) begin
-                `sauria_info(message_id, "Pushing SRAMC Data")
+            shift_count   = -1; //Will become 0 
+            rd_done_count =  0;
+        end
+        else if (shift_count < sauria_pkg::X) begin
+            `sauria_info(message_id, "Pushing SRAMC Data")
                 
-                update_exp_sramc_addr(RD_TXN);
+            update_exp_sramc_addr(RD_TXN);
 
-                if(shift_reg_data.size() == sauria_pkg::X) shift_reg_entry = shift_reg_data.pop_back();
-                shift_reg_data.push_front(sramc_rdata);
-                    
-            end
-            else 
-                rd_done_count++;
+            if(shift_reg_data.size() == sauria_pkg::X) shift_reg_entry = shift_reg_data.pop_back();
+            shift_reg_data.push_front(sramc_rdata);
+                
+        end
+        else 
+            rd_done_count++;
 
-            shift_count++;
+        shift_count++;
             
-        //end
-        //else set_shift();
-        
     endfunction
 
     virtual function void add_psums_sram_wr_access();

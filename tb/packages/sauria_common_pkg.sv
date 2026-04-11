@@ -93,6 +93,7 @@ package sauria_common_pkg;
     //AXI4_LITE_SEQ_ITEMS
     `include "sauria_axi4_lite_rd_addr_seq_item.sv"
     `include "sauria_axi4_lite_rd_data_seq_item.sv"
+    `include "sauria_axi4_lite_rd_txn_seq_item.sv"
     `include "sauria_axi4_lite_wr_addr_seq_item.sv"
     `include "sauria_axi4_lite_wr_data_seq_item.sv"
     `include "sauria_axi4_lite_wr_rsp_seq_item.sv"

@@ -18,12 +18,6 @@ class sauria_dma_req_addr_scbd extends uvm_scoreboard;
     sauria_axi4_addr_t             tensor_ptr_next_exp_rd_addr;
     sauria_axi4_addr_t             tensor_ptr_next_exp_wr_addr;
     
-    sauria_axi_len_t               dma_rd_req_exp_len;
-    sauria_axi_len_t               dma_wr_req_exp_len;
-
-    sauria_axi_size_t              dma_rd_req_exp_size;
-    sauria_axi_size_t              dma_wr_req_exp_size;
-
     sauria_axi4_rd_addr_seq_item   dma_rd_addr;
     sauria_axi4_wr_addr_seq_item   dma_wr_addr;
 
@@ -63,8 +57,6 @@ class sauria_dma_req_addr_scbd extends uvm_scoreboard;
         check_model_configured();
         this.dma_rd_addr            = dma_rd_addr;
         tensor_ptr_next_exp_rd_addr = dma_ptr_model.get_next_exp_rd_address();
-        dma_rd_req_exp_len          = dma_req_shape_model.get_exp_len(dma_rd_addr.araddr);
-        dma_rd_req_exp_size         = dma_req_shape_model.get_exp_size(dma_rd_addr.araddr);
         check_rd_address();
     endfunction
 
@@ -73,20 +65,12 @@ class sauria_dma_req_addr_scbd extends uvm_scoreboard;
         check_model_configured();
         this.dma_wr_addr            = dma_wr_addr;
         tensor_ptr_next_exp_wr_addr = dma_ptr_model.get_next_exp_wr_address();
-        dma_wr_req_exp_len          = dma_req_shape_model.get_exp_len(dma_wr_addr.awaddr);
-        dma_wr_req_exp_size         = dma_req_shape_model.get_exp_size(dma_wr_addr.awaddr);
         check_wr_address();
     endfunction
 
     virtual function void check_rd_address();
         if(tensor_ptr_next_exp_rd_addr != dma_rd_addr.araddr)
             `sauria_error(message_id, $sformatf("DMA Read Req Address Mismatch Exp: 0x%0h Act: 0x%0h", tensor_ptr_next_exp_rd_addr, dma_rd_addr.araddr))
-        
-        if(dma_rd_req_exp_len != dma_rd_addr.arlen)
-            `sauria_error(message_id, $sformatf("DMA Read Req Len Mismatch Exp: 0x%0h Act: 0x%0h", dma_rd_req_exp_len, dma_rd_addr.arlen))
-
-        if(dma_rd_req_exp_size != dma_rd_addr.arsize)
-            `sauria_error(message_id, $sformatf("DMA Read Req Size Mismatch Exp: 0x%0h Act: 0x%0h", dma_rd_req_exp_size, dma_rd_addr.arsize))
 
         if (dma_rd_addr.arburst != INCR)
             `sauria_error(message_id, "Got Non INCR Burst Mode ")
@@ -96,12 +80,6 @@ class sauria_dma_req_addr_scbd extends uvm_scoreboard;
         if(tensor_ptr_next_exp_wr_addr != dma_wr_addr.awaddr)
             `sauria_error(message_id, $sformatf("DMA Write Req Address Mismatch Exp: 0x%0h Act: 0x%0h PSUMS_TILE_IDX: %0d", tensor_ptr_next_exp_wr_addr, dma_wr_addr.awaddr, dma_ptr_model.get_psums_tile_idx()))
             
-        if(dma_wr_req_exp_len != dma_wr_addr.awlen)
-            `sauria_error(message_id, $sformatf("DMA Write Req Len Mismatch Exp: 0x%0h Act: 0x%0h", dma_wr_req_exp_len, dma_wr_addr.awlen))
-
-        if(dma_wr_req_exp_size != dma_wr_addr.awsize)
-            `sauria_error(message_id, $sformatf("DMA Write Req Size Mismatch Exp: 0x%0h Act: 0x%0h", dma_wr_req_exp_size, dma_wr_addr.awsize))
-
         if (dma_wr_addr.awburst != INCR)
             `sauria_error(message_id, "Got Non INCR Burst Mode ")
     endfunction

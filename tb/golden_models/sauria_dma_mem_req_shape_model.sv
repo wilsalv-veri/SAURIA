@@ -45,7 +45,7 @@ class sauria_dma_mem_req_shape_model extends sauria_base_model;
         case(elem_type)
             IFMAPS : return ifmap_X;
             WEIGHTS: return Ck_eq ? weights_tile_size : weights_K;
-            PSUMS  : return (Cw_eq && Ch_eq) ? psums_tile_size: psums_X;
+            PSUMS  : return (Cw_eq && Ch_eq) ? psums_tile_size : psums_X;
         endcase
     endfunction
 

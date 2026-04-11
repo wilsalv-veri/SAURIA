@@ -1,4 +1,4 @@
-class sauria_axi4_lite_seqr extends uvm_sequencer #(sauria_axi4_lite_wr_txn_seq_item);
+class sauria_axi4_lite_seqr extends uvm_sequencer #(sauria_axi_txn_base_seq_item);
 
     `uvm_component_utils(sauria_axi4_lite_seqr)
 

@@ -72,7 +72,8 @@ class sauria_env extends uvm_env;
         subsystem_reg_block.core_weights_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
         subsystem_reg_block.core_ifmaps_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
         subsystem_reg_block.core_psums_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
-        subsystem_reg_block.ctrl_status_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
+        subsystem_reg_block.df_controller_ctrl_status_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
+        subsystem_reg_block.core_ctrl_status_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
         axi4_lite_agent.axi4_lite_seqr.subsystem_reg_block = subsystem_reg_block;
 
         axi4_agent.axi4_mon.send_dma_rd_addr.connect(dma_req_addr_scbd.receive_dma_rd_addr);

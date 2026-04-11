@@ -81,8 +81,13 @@ class sauria_systolic_array_monitor extends uvm_monitor;
                 systolic_array_info.act_start_feeding = act_start_feeding;
                 systolic_array_info.wei_start_feeding = wei_start_feeding;
 
+                // FIXME: Pause/unpause context-switch alignment fix.
+                // Keep previous implementation below for easy rollback if needed.
                 systolic_array_info.cscan_valid        = pipeline_en_q;
-                systolic_array_info.cswitch_valid      = (cswitch_arr_q != arr_row_data_t'(0)) || (cswitch_done_count != 0);
+                systolic_array_info.cswitch_valid      = pipeline_en_q &&
+                                                         ((cswitch_arr_q != arr_row_data_t'(0)) || (cswitch_done_count != 0));
+                // OLD (rollback):
+                // systolic_array_info.cswitch_valid      = (cswitch_arr_q != arr_row_data_t'(0)) || (cswitch_done_count != 0);
 
                 systolic_array_info.act_data_valid = ( (data_valid_done_count != 0) || (feeding_unpaused == 1'b1)) ? 1'b1 : 
                                                      ((feeding_paused == 1'b1) || (feeding_paused_hold)) ? 1'b0 : ((data_valid_sel == 1'b1) ? act_data_valid_q : act_data_valid_d); 
@@ -109,7 +114,11 @@ class sauria_systolic_array_monitor extends uvm_monitor;
                 systolic_array_info.o_c_arr     =  sauria_systolic_array_if.o_c_arr;  
                  
                 systolic_array_info.arr_psum_reserve_reg = sauria_systolic_array_if.arr_psum_reserve_reg;
-                systolic_array_info.pre_cswitch_arr_psum_reserve_reg = arr_psum_reserve_reg_d; //arr_psum_reserve_reg_q;
+                // FIXME: Keep original pre-cswitch reserve sampling for broad context compatibility.
+                // Pause/unpause issue is primarily fixed by cswitch_valid gating above.
+                systolic_array_info.pre_cswitch_arr_psum_reserve_reg = arr_psum_reserve_reg_d;
+                // ALT (A/B check if needed):
+                // systolic_array_info.pre_cswitch_arr_psum_reserve_reg = arr_psum_reserve_reg_q;
 
                 systolic_array_info.arr_psum_accum_in  = arr_psum_accum_in_d; 
                 systolic_array_info.arr_psum_accum_out = arr_psum_accum_out_d;

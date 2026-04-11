@@ -1,7 +1,7 @@
 // Control & Status register (offset 0x0)
-class sauria_ctrl_status_reg_0 extends uvm_reg;
+class sauria_df_controller_ctrl_status_reg_0 extends uvm_reg;
 
-    `uvm_object_utils(sauria_ctrl_status_reg_0)
+    `uvm_object_utils(sauria_df_controller_ctrl_status_reg_0)
 
     uvm_reg_field start;
     uvm_reg_field done;
@@ -15,7 +15,7 @@ class sauria_ctrl_status_reg_0 extends uvm_reg;
     uvm_reg_field implicit_map;
     uvm_reg_field soft_reset;
 
-    function new(string name="sauria_ctrl_status_reg_0");
+    function new(string name="sauria_df_controller_ctrl_status_reg_0");
         super.new(name, SAURIA_REG_SIZE, REG_COVERAGE);
     endfunction
 
