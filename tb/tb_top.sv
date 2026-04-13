@@ -74,7 +74,13 @@ module SAURIA_tb_top;
                                       DATA_AXI_ID_WIDTH
                                     ) ss_cov(.*);
 
-    
+    bind sauria_ss.sauria_core_i.sauria_logic_top_i sauria_core_assert
+                                 core_assert(.*);
+
+    bind sauria_ss.sauria_core_i.sauria_logic_top_i sauria_core_cov
+                                 core_cov(.*);
+
+
     initial begin
         $display("TB_TOP running at time %0t", $time);     
         run_test();

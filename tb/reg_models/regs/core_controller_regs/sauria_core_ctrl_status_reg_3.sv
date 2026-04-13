@@ -18,7 +18,7 @@ class sauria_core_ctrl_status_reg_3 extends uvm_reg;
         done_interrupt_status.configure(.parent(this),
                      .size(CORE_CTRL_STATUS_DONE_INT_STATUS_SIZE),
                      .lsb_pos(CORE_CTRL_STATUS_DONE_INT_STATUS_LSB),
-                     .access(REG_W1T_ACCESS),
+                     .access(REG_W1C_ACCESS),
                                  .volatile(REG_STATUS_VOLATILE_VAL),
                                  .reset(REG_CFG_RESET_VAL),
                                  .has_reset(REG_CFG_HAS_RESET),

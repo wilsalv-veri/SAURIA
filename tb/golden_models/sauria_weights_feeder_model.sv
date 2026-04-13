@@ -113,7 +113,6 @@ class sauria_weights_feeder_model extends uvm_object;
         k_idx       = 0;
     endfunction
 
-
     virtual function sramb_addr_t get_next_exp_sramb_rd_addr();
         return exp_next_sramb_addr;
     endfunction

@@ -6,7 +6,6 @@ package sauria_scbd_pkg;
     import uvm_pkg::*;
     import sauria_pkg::*;
     import sauria_common_pkg::*;
-    import sauria_inv_feeders_pkg::*;
     import sauria_golden_model_pkg::*;
     
     `include "sauria_dma_req_addr_scbd.sv"

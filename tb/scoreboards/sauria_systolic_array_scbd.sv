@@ -133,12 +133,12 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
                 if ((row + col) == cswitch_idx) begin
                   
                     if (pre_cswitch_arr_psum_reserve_reg[row][col] != arr_psum_accum_in[row][col])
-                        `sauria_error(message_id, $sformatf("Accumulator Context Switch Mismatch Row: %0d Col: %0d Exp: 0x%0h Act: 0x%0h",
-                        row, col, pre_cswitch_arr_psum_reserve_reg[row][col], arr_psum_accum_in[row][col]))
+                        `sauria_error(message_id, $sformatf("Accumulator Context Switch Mismatch Row: %0d Col: %0d Exp: 0x%0h Act: 0x%0h CSWITCH_IDX: %0d",
+                        row, col, pre_cswitch_arr_psum_reserve_reg[row][col], arr_psum_accum_in[row][col], cswitch_idx))
                 
                     if (arr_psum_accum_out[row][col] != arr_psum_reserve_reg[row][col])
-                        `sauria_error(message_id, $sformatf("PSUM Reserve Reg Context Switch Mismatch Row: %0d Col: %0d Exp: 0x%0h Act: 0x%0h",
-                        row, col, arr_psum_accum_out[row][col], arr_psum_reserve_reg[row][col]))
+                        `sauria_error(message_id, $sformatf("PSUM Reserve Reg Context Switch Mismatch Row: %0d Col: %0d Exp: 0x%0h Act: 0x%0h CSWITCH_IDX: %0d",
+                        row, col, arr_psum_accum_out[row][col], arr_psum_reserve_reg[row][col], cswitch_idx))
                       
                 end
             end

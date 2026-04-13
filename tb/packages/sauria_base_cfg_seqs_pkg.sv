@@ -14,14 +14,19 @@ package sauria_base_cfg_seqs_pkg;
     endfunction
 
     parameter SINGLE_TILE_DIM_VAL    = 0;
-    parameter MIN_MULTI_TILE_DIM_VAL = 1;
-    parameter MAX_MULTI_TILE_DIM_VAL = 4; 
+    
+    //FIXME: wilsalv
+    //parameter MIN_MULTI_TILE_DIM_VAL = 1;
+    parameter MIN_MULTI_TILE_DIM_VAL = 4;
+    
+    
+    parameter MAX_MULTI_TILE_DIM_VAL = 16; 
 
     parameter MIN_COMP_LEN           = 1;
     parameter MAX_COMP_LEN           = 32;
 
     parameter MIN_MULTIPLE           = 1;
-    parameter MAX_MULTIPLE           = 8;
+    parameter MAX_MULTIPLE           = 16;
     
     `include "sauria_cfg_seq_params.sv"
     `include "sauria_axi4_lite_cfg_base_seq.sv"

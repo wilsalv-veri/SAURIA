@@ -51,7 +51,7 @@ class sauria_df_controller_ctrl_status_reg_0 extends uvm_reg;
         done.configure(.parent(this),
                        .size(CTRL_STATUS_DONE_SIZE),
                        .lsb_pos(CTRL_STATUS_DONE_LSB),
-                       .access(REG_W1T_ACCESS),
+                       .access(REG_W1C_ACCESS),
                        .volatile(REG_STATUS_VOLATILE_VAL),
                        .reset(REG_CFG_RESET_VAL),
                        .has_reset(REG_CFG_HAS_RESET),

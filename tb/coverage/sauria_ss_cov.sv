@@ -1,5 +1,4 @@
 import sauria_common_pkg::*;
-import uvm_pkg::*;
 
 module sauria_ss_cov#(AXI_LITE_DATA_WIDTH,
                           AXI_LITE_ADDR_WIDTH,
@@ -111,7 +110,7 @@ module sauria_ss_cov#(AXI_LITE_DATA_WIDTH,
 
         //DMA
         coverpoint ctrl_udma_aw_addr{
-            bins dma_start_reader_writer_addr  = {0}; //sauria_addr_pkg::DMA_OFFSET
+            bins dma_start_reader_writer_addr  = {0}; 
         }
 
         coverpoint ctrl_udma_w_data{                
@@ -121,7 +120,7 @@ module sauria_ss_cov#(AXI_LITE_DATA_WIDTH,
 
         //CORE
         coverpoint ctrl_sauria_core_aw_addr {
-            bins core_start_addr                = {0}; //sauria_addr_pkg::SAURIA_OFFSET
+            bins core_start_addr                = {0}; 
         }
  
         coverpoint ctrl_sauria_core_w_data {

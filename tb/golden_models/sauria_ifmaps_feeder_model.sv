@@ -29,6 +29,7 @@ class sauria_ifmaps_feeder_model extends uvm_object;
     virtual function void reset_model();
         feeder_data.delete();
         exp_next_srama_addr = srama_addr_t'(0);
+        clear_counters();
     endfunction
 
     virtual function void add_ifmaps_sram_access(ifmaps_feeder_data_t ifmaps_feeder_data);   
@@ -187,6 +188,12 @@ class sauria_ifmaps_feeder_model extends uvm_object;
             popped_inst = feeder_data.pop_front();
 
         end
+    endfunction
+
+    virtual function void clear_counters();
+        c_idx = 0;
+        x_idx = 0;
+        y_idx = 0;
     endfunction
 
      /*-------------------------------------------------- */

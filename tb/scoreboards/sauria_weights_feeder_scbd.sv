@@ -65,11 +65,11 @@ class sauria_weights_feeder_scbd extends uvm_scoreboard;
         `sauria_info(message_id, $sformatf("Got SRAMB Access Addr: 0x%0h Data: 0x%0h",
         feeder_data_inst.sramb_addr ,feeder_data_inst.sramb_data))
 
+        if (weights_feeder_sramb_access_info.til_done) check_tile_done_counters();
+    
         check_sramb_rd_addr(feeder_data_inst.sramb_addr);
         weights_model.add_weights_sram_access(feeder_data_inst);
         
-        if (weights_feeder_sramb_access_info.til_done) check_tile_done_counters();
-    
     endfunction 
 
     function write_weights_feeder_arr_info(sauria_weights_feeder_seq_item weights_feeder_arr_info);

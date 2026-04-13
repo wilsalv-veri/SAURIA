@@ -58,7 +58,7 @@ class sauria_core_ctrl_status_reg_block extends uvm_reg_block;
         default_map.add_reg(core_ctrl_status_reg_0, CORE_CTRL_STATUS_REG_0_ADDR, REG_STATUS_ACCESS);
         default_map.add_reg(core_ctrl_status_reg_1, CORE_CTRL_STATUS_REG_1_ADDR, REG_CFG_ACCESS);
         default_map.add_reg(core_ctrl_status_reg_2, CORE_CTRL_STATUS_REG_2_ADDR, REG_CFG_ACCESS);
-        default_map.add_reg(core_ctrl_status_reg_3, CORE_CTRL_STATUS_REG_3_ADDR, REG_W1T_ACCESS);
+        default_map.add_reg(core_ctrl_status_reg_3, CORE_CTRL_STATUS_REG_3_ADDR, REG_W1C_ACCESS);
         default_map.add_reg(core_ctrl_status_reg_4, CORE_CTRL_STATUS_REG_4_ADDR, REG_STATUS_ACCESS);
         default_map.add_reg(core_ctrl_status_reg_5, CORE_CTRL_STATUS_REG_5_ADDR, REG_STATUS_ACCESS);
         default_map.add_reg(core_ctrl_status_reg_6, CORE_CTRL_STATUS_REG_6_ADDR, REG_STATUS_ACCESS);

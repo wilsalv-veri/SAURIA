@@ -49,6 +49,8 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
         cols_multiple inside {[MIN_MULTIPLE : MAX_MULTIPLE]};
 
         X               <= sauria_pkg::Y * MAX_MULTIPLE;
+       (X % sauria_pkg::Y)   == 0; //           <=  * MAX_MULTIPLE;
+        
         Y               <= sauria_pkg::Y * MAX_MULTIPLE;
 
         X * Y           == sauria_pkg::Y * rows_multiple;

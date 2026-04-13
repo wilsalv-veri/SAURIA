@@ -166,7 +166,9 @@ Although Sauria is natively a hybrid architecture (convolution-native memory/tra
 
 Conceptually, accelerator execution proceeds as repeated tiled dot-product operations:
 
-Activation tile (X,Y,C)  ×  Weight tile (C,K)  →  Output tile (X,Y,K)
+$$
+I[x,y,c] \times W[c,k] \rightarrow O[x,y,k]
+$$
 
 The dataflow controller operates at the tensor-tile level, while the Sauria core executes the per-tile compute sequence once data has been loaded into local storage.
 
@@ -216,31 +218,37 @@ As a result, all architectural models, scoreboards, and reference computations o
 ![Image of Tiling Mental Model](/docs/tb_docs/tiling_mental_model.png)
 ###### Author: Wilfredo Salvador (wilsalv@gmail.com)
 
+At a high level, **Sauria execution** can be viewed as tiled GEMM-style accumulation across the reduction dimension.
 
+Industry-standard GEMM
 
-At a high level, Sauria execution can be viewed as tiled GEMM-style accumulation across the reduction dimension.
+$$
+C[m,n] = \sum_{k} A[m,k] \cdot B[k,n]
+$$
 
-Industry-standard GEMM:
+Tiled GEMM with partial-sum accumulation
 
-C[m,n] = Σ[k] A[m,k] · B[k,n]
+$$
+C_t[m,n] = C_{t-1}[m,n] + \sum_{k \in \text{tile } t} A_t[m,k] \cdot B_t[k,n]
+$$
 
-Tiled GEMM with partial-sum accumulation:
+Sauria-oriented formulation
 
-C_t[m,n] = C_(t-1)[m,n] + Σ[k in tile t] A_t[m,k] · B_t[k,n]
-
-Sauria-oriented formulation:
-
-O_t[x,y,k] = O_(t-1)[x,y,k] + Σ[c in tile t] I_t[x,y,c] · W_t[c,k]
+$$
+O_t[x,y,k] = O_{t-1}[x,y,k] + \sum_{c \in \text{tile } t} I_t[x,y,c] \cdot W_t[c,k]
+$$
 
 Where:
-- I_t[x,y,c] is the activation tile for reduction tile t
-- W_t[c,k] is the weight tile for reduction tile t
-- O_t[x,y,k] is the accumulated output / partial-sum tile after tile t
 
-Mapping to generic GEMM:
-- m ↔ flattened spatial position (x,y)
-- n ↔ output-channel dimension k
-- k ↔ reduction dimension c
+- $I_t[x,y,c]$: activation tile for reduction tile $t$  
+- $W_t[c,k]$: weight tile for reduction tile $t$  
+- $O_t[x,y,k]$: accumulated output / partial-sum tile after tile $t$
+
+Mapping to generic GEMM
+
+- $m \leftrightarrow$ flattened spatial position $(x, y)$  
+- $n \leftrightarrow$ output-channel dimension $k$  
+- $k \leftrightarrow$ reduction dimension $c$
 
 #### Tile Computation
 
