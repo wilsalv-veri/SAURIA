@@ -14,6 +14,7 @@ package sauria_scbd_pkg;
     `include "sauria_weights_feeder_scbd.sv"
     `include "sauria_systolic_array_scbd.sv"
     `include "sauria_psums_mgr_scbd.sv"
+    `include "sauria_perf_scbd.sv"
     
 endpackage
 

@@ -11,10 +11,12 @@ class sauria_weights_feeder_monitor extends uvm_monitor;
     parameter POP_LAT = 1;
 
     sauria_weights_feeder_seq_item weights_feeder_info;
+    sauria_weights_feeder_seq_item weights_feeder_perf_info;
 
     uvm_analysis_port #(sauria_weights_feeder_seq_item) send_weights_feeder_info;
     uvm_analysis_port #(sauria_weights_feeder_seq_item) send_weights_feeder_sramb_access_info;
     uvm_analysis_port #(sauria_weights_feeder_seq_item) send_weights_feeder_arr_info;
+    uvm_analysis_port #(sauria_weights_feeder_seq_item) send_weights_feeder_perf_info;
 
     logic [sauria_pkg::ADRB_W-1:0] sramb_addr_d = {sauria_pkg::ADRB_W{1'bx}};
     logic [sauria_pkg::ADRB_W-1:0] sramb_addr_q;
@@ -30,7 +32,6 @@ class sauria_weights_feeder_monitor extends uvm_monitor;
     int pop_done_count = 0;
     int pop_lat;
 
-
     function new(string name="sauria_weights_feeder_monitor", uvm_component parent=null);
         super.new(name,parent);
     endfunction
@@ -38,11 +39,13 @@ class sauria_weights_feeder_monitor extends uvm_monitor;
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
 
-        weights_feeder_info = sauria_weights_feeder_seq_item::type_id::create("sauria_weights_feeder_seq_item", this);
-        
+        weights_feeder_info       = sauria_weights_feeder_seq_item::type_id::create("sauria_weights_feeder_seq_item");
+        weights_feeder_perf_info  = sauria_weights_feeder_seq_item::type_id::create("weights_feeder_perf_seq_item");
+
         send_weights_feeder_info              = new("SAURIA_WEIGHTS_FEEDER_ANALYSIS_PORT", this);
         send_weights_feeder_sramb_access_info = new("SAURIA_WEIGHTS_FEEDER_SRAMB_ACCESS_INFO_ANALYSIS_PORT", this);
         send_weights_feeder_arr_info          = new("SAURIA_WEIGHTS_FEEDER_ARR_INFO_ANALYSIS_PORT", this);
+        send_weights_feeder_perf_info         = new("SAURIA_WEIGHTS_FEEDER_PERF_INFO_ANALYSIS_PORT", this);
 
         if(!uvm_config_db #(virtual sauria_weights_feeder_ifc)::get(this, "", "sauria_weights_feeder_if", sauria_weights_feeder_if))
             `sauria_error(message_id, "Failed to get access to sauria_weights_feeder_if")
@@ -56,9 +59,26 @@ class sauria_weights_feeder_monitor extends uvm_monitor;
             get_weights_feeder_info();
             get_weights_feeder_sramb_access_info();
             get_weights_feeder_arr_info();
+            get_weights_perf_info();
             set_pop_latency_wait();
             set_pop_lat();
         join
+    endtask
+
+    virtual task get_weights_perf_info();
+        bit feeder_active;
+        forever @ (posedge sauria_weights_feeder_if.clk)begin
+
+            weights_feeder_perf_info.pipeline_en  = sauria_weights_feeder_if.pipeline_en;
+            weights_feeder_perf_info.feeder_en    = sauria_weights_feeder_if.feeder_en;     
+            weights_feeder_perf_info.wei_valid    = sauria_weights_feeder_if.wei_valid;       
+            weights_feeder_perf_info.pop_en       = sauria_weights_feeder_if.pop_en; 
+            weights_feeder_perf_info.sramb_rden   = sauria_weights_feeder_if.sramb_rden;   
+	        weights_feeder_perf_info.fifo_empty   = sauria_weights_feeder_if.fifo_empty; 	
+            weights_feeder_perf_info.fifo_full    = sauria_weights_feeder_if.fifo_full; 
+            weights_feeder_perf_info.feeder_stall = sauria_weights_feeder_if.feeder_stall;  
+            send_weights_feeder_perf_info.write(weights_feeder_perf_info);
+        end
     endtask
 
     virtual task get_weights_feeder_info();

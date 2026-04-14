@@ -7,6 +7,7 @@ $SAURIA/tb/interfaces/sauria_axi_ifcs.sv
 $SAURIA/tb/interfaces/sauria_psums_mgr_shift_reg_ifc.sv
 $SAURIA/tb/interfaces/sauria_psums_mgr_ifc.sv
 $SAURIA/tb/interfaces/sauria_systolic_array_ifc.sv
+$SAURIA/tb/interfaces/sauria_core_ifc.sv
 $SAURIA/tb/interfaces/sauria_weights_feeder_ifc.sv
 $SAURIA/tb/interfaces/sauria_main_controller_ifc.sv
 $SAURIA/tb/interfaces/sauria_ifmaps_feeder_ifc.sv

@@ -6,15 +6,17 @@ class sauria_systolic_array_monitor extends uvm_monitor;
 
     virtual sauria_systolic_array_ifc                   sauria_systolic_array_if;
     uvm_analysis_port #(sauria_systolic_array_seq_item) send_systolic_array_info;
+    uvm_analysis_port #(sauria_systolic_array_seq_item) send_systolic_array_perf_info;
     
     sauria_systolic_array_seq_item                      systolic_array_info;
+    sauria_systolic_array_seq_item                      systolic_array_perf_info;
+    
     int                                                 cswitch_done_count = 0;
 
     arr_row_data_t      cswitch_arr_alternate, cswitch_arr_d, cswitch_arr_q; // Accumulator context switches
     arr_psum_reg_t      arr_psum_reserve_reg_d, arr_psum_reserve_reg_q;
     arr_psum_reg_t      arr_psum_accum_in_d; 
     arr_psum_reg_t      arr_psum_accum_out_d;
-
 
     bit                 cswitch_done_d, cswitch_done_q;
     bit                 pipeline_dis;
@@ -42,8 +44,11 @@ class sauria_systolic_array_monitor extends uvm_monitor;
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
 
-        systolic_array_info          = sauria_systolic_array_seq_item::type_id::create("sauria_systolic_array_seq_item", this);
-        send_systolic_array_info     = new("SAURIA_SYSTOLIC_ARRAY_ANALYSIS_PORT", this);
+        systolic_array_info           = sauria_systolic_array_seq_item::type_id::create("sauria_systolic_array_seq_item", this);
+        systolic_array_perf_info      = sauria_systolic_array_seq_item::type_id::create("sauria_systolic_array_perf_seq_item", this);
+        
+        send_systolic_array_info      = new("SAURIA_SYSTOLIC_ARRAY_ANALYSIS_PORT", this);
+        send_systolic_array_perf_info = new("SAURIA_SYSTOLIC_ARRAY_PERF_ANALYSIS_PORT", this);
         
         if (!uvm_config_db #(virtual sauria_systolic_array_ifc)::get(this, "", "sauria_systolic_array_if", sauria_systolic_array_if))
             `sauria_error(message_id, "Failed to get access to sauria_systolic_array_if")
@@ -57,10 +62,19 @@ class sauria_systolic_array_monitor extends uvm_monitor;
             set_pipeline_en_info();
             set_data_valid_info();
             get_systolic_array_info();
+            get_systolic_array_perf_info();
             wait_cswitch_done();
             get_cswitch_info();
             update_cswitch_done_count();
         join
+    endtask
+
+    virtual task get_systolic_array_perf_info();
+        forever @(posedge sauria_systolic_array_if.clk)begin
+            systolic_array_perf_info.pipeline_en =  sauria_systolic_array_if.pipeline_en;
+            systolic_array_perf_info.cswitch_arr =  sauria_systolic_array_if.cswitch_arr;
+            send_systolic_array_perf_info.write(systolic_array_perf_info);
+        end
     endtask
 
     virtual task get_systolic_array_info();

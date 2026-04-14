@@ -197,7 +197,7 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
         ifmaps_ch_step = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_c_step;                
         ifmaps_ch_lim  = ifmaps_ch_step * computation_params.df_controller_ifmaps_params.tile_params.ifmaps_C;             
 
-        ifmaps_x_step  = SRAMA_N;  //computation_params.df_controller_ifmaps_params.tile_params.ifmaps_x_step; //                   
+        ifmaps_x_step  = SRAMA_N;                  
         ifmaps_x_lim   = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_X;   
                                                                           
         ifmaps_y_step  = computation_params.df_controller_ifmaps_params.tile_params.ifmaps_y_step;  

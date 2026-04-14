@@ -2,19 +2,21 @@ class sauria_ifmaps_feeder_monitor extends uvm_monitor;
 
     `uvm_component_utils(sauria_ifmaps_feeder_monitor)
 
+    string message_id = "SAURIA_IFMAPS_FEEDER_MONITOR";
+
     parameter RD_LAT = 2;
     parameter POP_LAT_FIRST_CNTX = 2;
     parameter POP_LAT = 1;
 
     virtual sauria_ifmaps_feeder_ifc sauria_ifmaps_feeder_if;
     sauria_ifmaps_feeder_seq_item ifmaps_feeder_info; 
+    sauria_ifmaps_feeder_seq_item ifmaps_feeder_perf_info; 
 
     uvm_analysis_port #(sauria_ifmaps_feeder_seq_item) send_ifmaps_feeder_info;
     uvm_analysis_port #(sauria_ifmaps_feeder_seq_item) send_ifmaps_feeder_srama_access_info;
     uvm_analysis_port #(sauria_ifmaps_feeder_seq_item) send_ifmaps_feeder_arr_info;
-
-    string message_id = "SAURIA_IFMAPS_FEEDER_MONITOR";
-
+    uvm_analysis_port #(sauria_ifmaps_feeder_seq_item) send_ifmaps_feeder_perf_info;
+    
     logic [sauria_pkg::ADRA_W-1:0] srama_addr_d = {sauria_pkg::ADRA_W{1'bx}};
     logic [sauria_pkg::ADRA_W-1:0] srama_addr_q;
     logic til_done_d, til_done_q;
@@ -34,8 +36,10 @@ class sauria_ifmaps_feeder_monitor extends uvm_monitor;
         send_ifmaps_feeder_info              = new("SAURIA_IFMAPS_FEEDER_ANALYSIS_PORT", this);
         send_ifmaps_feeder_srama_access_info = new("SAURIA_IFMAPS_FEEDER_SRAMA_ACCESS_INFO_ANALYSIS_PORT", this);
         send_ifmaps_feeder_arr_info          = new("SAURIA_IFMAPS_FEEDER_ARR_INFO_ANALYSIS_PORT", this);
+        send_ifmaps_feeder_perf_info         = new("SAURIA_IFMAPS_FEEDER_PERF_INFO_ANALYSIS_PORT", this);
 
-        ifmaps_feeder_info = sauria_ifmaps_feeder_seq_item::type_id::create("sauria_ifmaps_feeder_seq_item", this);
+        ifmaps_feeder_info      = sauria_ifmaps_feeder_seq_item::type_id::create("sauria_ifmaps_feeder_seq_item", this);
+        ifmaps_feeder_perf_info = sauria_ifmaps_feeder_seq_item::type_id::create("sauria_ifmaps_feeder_seq_item", this);
 
         if (!uvm_config_db #(virtual sauria_ifmaps_feeder_ifc)::get (this, "", "sauria_ifmaps_feeder_if", sauria_ifmaps_feeder_if))
             `sauria_error(message_id, "Failed to get access to sauria_ifmaps_feeder_if")
@@ -47,9 +51,25 @@ class sauria_ifmaps_feeder_monitor extends uvm_monitor;
             get_ifmaps_feeder_info();
             get_ifmaps_feeder_srama_access_info();
             get_ifmaps_feeder_arr_info();
+            get_ifmaps_feeder_perf_info();
             set_pop_latency_wait();
             set_pop_lat();
         join
+    endtask
+
+    virtual task get_ifmaps_feeder_perf_info();
+        forever @ (posedge sauria_ifmaps_feeder_if.clk)begin
+            ifmaps_feeder_perf_info.pipeline_en  = sauria_ifmaps_feeder_if.pipeline_en;
+            ifmaps_feeder_perf_info.feeder_en    = sauria_ifmaps_feeder_if.feeder_en;     
+            ifmaps_feeder_perf_info.act_valid    = sauria_ifmaps_feeder_if.act_valid;       
+            ifmaps_feeder_perf_info.pop_en       = sauria_ifmaps_feeder_if.pop_en; 
+            ifmaps_feeder_perf_info.srama_rden   = sauria_ifmaps_feeder_if.srama_rden;   
+	        ifmaps_feeder_perf_info.fifo_empty   = sauria_ifmaps_feeder_if.fifo_empty; 	
+            ifmaps_feeder_perf_info.fifo_full    = sauria_ifmaps_feeder_if.fifo_full; 
+            ifmaps_feeder_perf_info.feeder_stall = sauria_ifmaps_feeder_if.feeder_stall;  
+            send_ifmaps_feeder_perf_info.write(ifmaps_feeder_perf_info);
+        
+        end
     endtask
 
     virtual task get_ifmaps_feeder_info();

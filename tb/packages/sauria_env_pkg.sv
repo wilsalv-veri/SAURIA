@@ -7,11 +7,13 @@ package sauria_env_pkg;
     import sauria_common_pkg::*;
     import sauria_scbd_pkg::*;
     import sauria_cfg_regs_pkg::*;
-
+    
     `include "sauria_data_generator.sv"
 
     `include "sauria_axi4_lite_driver.sv"
+    `include "sauria_axi4_lite_monitor.sv"
     `include "sauria_axi4_lite_seqr.sv" 
+    
     `include "sauria_axi4_lite_adapter.sv"
     `include "sauria_axi4_lite_agent.sv"
     
@@ -33,6 +35,9 @@ package sauria_env_pkg;
     
     `include "sauria_psums_mgr_monitor.sv"
     `include "sauria_psums_mgr_agent.sv"
+
+    `include "sauria_perf_seq.sv"
+    `include "sauria_perf_collector.sv"
 
     `include "sauria_env.sv"
 

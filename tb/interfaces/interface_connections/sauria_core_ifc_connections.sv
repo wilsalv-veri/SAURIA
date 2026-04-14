@@ -1,0 +1,1 @@
+assign sauria_core_if.o_doneintr = sauria_ss.sauria_core_i.o_doneintr;

@@ -9,8 +9,10 @@ package sauria_base_cfg_seqs_pkg;
     import sauria_env_pkg::*;
     import sauria_cfg_regs_pkg::*;
     
+    parameter CFG_CRS_BASE_OFFSET = 'h10;
+
     function sauria_axi4_lite_addr_t get_cfg_addr_from_idx(int cfg_cr_idx);
-        return sauria_axi4_lite_addr_t'('h10 + cfg_cr_idx*4);
+        return sauria_axi4_lite_addr_t'(CFG_CRS_BASE_OFFSET + cfg_cr_idx*CFG_AXI_BYTE_NUM);
     endfunction
 
     parameter SINGLE_TILE_DIM_VAL    = 0;

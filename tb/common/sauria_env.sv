@@ -27,6 +27,8 @@ class sauria_env extends uvm_env;
     sauria_psums_mgr_agent        psums_mgr_agent;
     sauria_psums_mgr_scbd         psums_mgr_scbd;
 
+    sauria_perf_collector         perf_collector;
+
     function new(string name="sauria_env", uvm_component parent=null);
         super.new(name, parent);
     endfunction
@@ -58,14 +60,13 @@ class sauria_env extends uvm_env;
 
         psums_mgr_agent     = sauria_psums_mgr_agent::type_id::create("sauria_psums_mgr_agent", this);
         psums_mgr_scbd      = sauria_psums_mgr_scbd::type_id::create("sauria_psums_mgr_scbd", this);
+    
+        perf_collector      = sauria_perf_collector::type_id::create("sauria_perf_collector", this);
     endfunction
 
     virtual function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
-
-       //vseqr.axi4_lite_seqr = axi4_lite_agent.axi4_lite_seqr;
-        //vseqr.axi4_seqr      = axi4_agent.axi4_seqr;
-        
+  
         subsystem_reg_block.dma_controller_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
         subsystem_reg_block.df_controller_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
         subsystem_reg_block.core_main_controller_reg_block.default_map.set_sequencer(axi4_lite_agent.axi4_lite_seqr, axi4_lite_adapter);
@@ -84,17 +85,24 @@ class sauria_env extends uvm_env;
         ifmaps_feeder_agent.ifmaps_feeder_mon.send_ifmaps_feeder_info.connect(ifmaps_feeder_scbd.receive_ifmaps_feeder_info);
         ifmaps_feeder_agent.ifmaps_feeder_mon.send_ifmaps_feeder_srama_access_info.connect(ifmaps_feeder_scbd.receive_ifmaps_feeder_srama_access_info);
         ifmaps_feeder_agent.ifmaps_feeder_mon.send_ifmaps_feeder_arr_info.connect(ifmaps_feeder_scbd.receive_ifmaps_feeder_arr_info);
-
+        ifmaps_feeder_agent.ifmaps_feeder_mon.send_ifmaps_feeder_perf_info.connect(perf_collector.perf_scbd.receive_ifmaps_feeder_perf_info);
+        
         weights_feeder_agent.weights_feeder_mon.send_weights_feeder_info.connect(weights_feeder_scbd.receive_weights_feeder_info);
         weights_feeder_agent.weights_feeder_mon.send_weights_feeder_sramb_access_info.connect(weights_feeder_scbd.receive_weights_feeder_sramb_access_info);
         weights_feeder_agent.weights_feeder_mon.send_weights_feeder_arr_info.connect(weights_feeder_scbd.receive_weights_feeder_arr_info);
-
-        systolic_array_agent.systolic_array_mon.send_systolic_array_info.connect(systolic_array_scbd.receive_systolic_array_info);
+        weights_feeder_agent.weights_feeder_mon.send_weights_feeder_perf_info.connect(perf_collector.perf_scbd.receive_weights_feeder_perf_info);
         
+        systolic_array_agent.systolic_array_mon.send_systolic_array_info.connect(systolic_array_scbd.receive_systolic_array_info);
+        systolic_array_agent.systolic_array_mon.send_systolic_array_perf_info.connect(perf_collector.perf_scbd.receive_systolic_array_perf_info);
+
         psums_mgr_agent.psums_mgr_mon.send_psums_mgr_sramc_read_info.connect(psums_mgr_scbd.receive_psums_mgr_sramc_read_info);
         psums_mgr_agent.psums_mgr_mon.send_psums_mgr_sramc_write_info.connect(psums_mgr_scbd.receive_psums_mgr_sramc_write_info);
         psums_mgr_agent.psums_mgr_mon.send_psums_mgr_preload_vals_info.connect(psums_mgr_scbd.receive_psums_mgr_preload_values_info);
         psums_mgr_agent.psums_mgr_mon.send_psums_mgr_shift_reg_info.connect(psums_mgr_scbd.receive_psums_mgr_shift_reg_info);
+        psums_mgr_agent.psums_mgr_mon.send_psums_mgr_perf_info.connect(perf_collector.perf_scbd.receive_psums_mgr_perf_info);
+
+        perf_collector.axi4_lite_seqr = axi4_lite_agent.axi4_lite_seqr;
+        axi4_lite_agent.axi4_lite_mon.send_cfg_perf_info.connect(perf_collector.perf_scbd.receive_cfg_perf_info);
     endfunction
 
 endclass

@@ -53,11 +53,10 @@ class sauria_axi4_lite_driver extends uvm_driver #(sauria_axi_txn_base_seq_item)
     virtual task drive_axi4_lite_cfg_rd_txn(sauria_axi_txn_base_seq_item txn_seq_item);
 
         if ($cast(cfg_rd_txn_item, txn_seq_item)) begin
-            fork 
-                drive_rd_addr_ch(cfg_rd_txn_item.rd_addr_item);
-                drive_rd_data_ch(cfg_rd_txn_item.rd_data_item);
-            join
-
+            
+            drive_rd_addr_ch(cfg_rd_txn_item.rd_addr_item);
+            drive_rd_data_ch(cfg_rd_txn_item.rd_data_item);
+            
             case(cfg_rd_txn_item.rd_data_item.rresp)
                 SLVERR: `sauria_error(message_id, "The slave successfully received the transaction address and data, but it encountered an error when attempting to perform the write operation")
                 DECERR: `sauria_error(message_id, "The address was not mapped to any peripheral (slave)")
@@ -85,20 +84,25 @@ class sauria_axi4_lite_driver extends uvm_driver #(sauria_axi_txn_base_seq_item)
         
     endtask
 
-    
     virtual task drive_rd_addr_ch(sauria_axi4_lite_rd_addr_seq_item rd_addr_item);
+        @ (posedge sauria_ss_if.i_system_clk);
         sauria_axi4_lite_cfg_if.axi4_lite_rd_addr_ch.araddr  <= rd_addr_item.araddr;  
         sauria_axi4_lite_cfg_if.axi4_lite_rd_addr_ch.arvalid <= 1'b1;
-         @ (posedge sauria_axi4_lite_cfg_if.axi4_lite_rd_addr_ch.arready);
+        wait (sauria_axi4_lite_cfg_if.axi4_lite_rd_addr_ch.arready);
+        @ (posedge sauria_ss_if.i_system_clk);
+         sauria_axi4_lite_cfg_if.axi4_lite_rd_addr_ch.arvalid <= 1'b0;
     endtask
 
     virtual task drive_rd_data_ch(sauria_axi4_lite_rd_data_seq_item rd_data_item);
         sauria_axi4_lite_cfg_if.axi4_lite_rd_data_ch.rready <=  1'b1;
-
-        @(posedge sauria_axi4_lite_cfg_if.axi4_lite_rd_data_ch.rvalid);
+        @ (posedge sauria_ss_if.i_system_clk);
+        wait(sauria_axi4_lite_cfg_if.axi4_lite_rd_data_ch.rvalid);
         rd_data_item.rvalid <= sauria_axi4_lite_cfg_if.axi4_lite_rd_data_ch.rvalid; 
-        rd_data_item.rdata <= sauria_axi4_lite_cfg_if.axi4_lite_rd_data_ch.rdata;
-        rd_data_item.rresp <= sauria_axi4_lite_cfg_if.axi4_lite_rd_data_ch.rresp;            
+        rd_data_item.rdata  <= sauria_axi4_lite_cfg_if.axi4_lite_rd_data_ch.rdata;
+        rd_data_item.rresp  <= sauria_axi4_lite_cfg_if.axi4_lite_rd_data_ch.rresp; 
+        wait(!sauria_axi4_lite_cfg_if.axi4_lite_rd_data_ch.rvalid);
+        sauria_axi4_lite_cfg_if.axi4_lite_rd_data_ch.rready <=  1'b0;
+        @ (posedge sauria_ss_if.i_system_clk);
     endtask
 
     virtual task drive_wr_addr_ch(sauria_axi4_lite_wr_addr_seq_item wr_addr_item);
