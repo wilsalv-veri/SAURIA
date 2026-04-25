@@ -4,6 +4,9 @@ class sauria_psums_mgr_model extends uvm_object;
 
     string message_id = "SAURIA_PSUMS_MGR_MODEL";
 
+    sauria_computation_params   computation_params;
+    bit                         is_configured;
+
     localparam RD_LAT        = 2;
     localparam PSUM_ELEM_LEN = $bits(sauria_psums_elem_data_t);
 
@@ -43,6 +46,11 @@ class sauria_psums_mgr_model extends uvm_object;
         super.new(name);
     endfunction
 
+    virtual function void set_computation_params(sauria_computation_params computation_params);
+        this.computation_params = computation_params;
+        is_configured           = 1'b0;
+    endfunction
+
     virtual function void set_reps(sauria_axi4_lite_data_t act_reps,sauria_axi4_lite_data_t wei_reps);
        this.act_reps = act_reps;
        this.wei_reps = wei_reps;
@@ -56,6 +64,75 @@ class sauria_psums_mgr_model extends uvm_object;
         this.psums_rows_active   = psums_rows_active;
         this.psums_inactive_cols = psums_inactive_cols;
         set_params();
+        is_configured            = 1'b1;
+    endfunction
+
+    virtual function psums_mgr_sramc_read_result_t observe_sramc_read(sramc_addr_t sramc_addr,
+                                                                       sramc_data_t sramc_rdata);
+        psums_mgr_sramc_read_result_t result = '{default:'0};
+
+        if (!try_ensure_configured())
+            return result;
+
+        result.addr_check_valid = is_valid_shift();
+        if (result.addr_check_valid) begin
+            result.exp_addr      = get_next_rd_sramc_addr();
+            result.addr_mismatch = (result.exp_addr != sramc_addr);
+        end
+
+        add_psums_sram_rd_access(sramc_rdata);
+        return result;
+    endfunction
+
+    virtual function psums_mgr_sramc_write_result_t observe_sramc_write(sramc_addr_t sramc_addr,
+                                                                         sramc_data_t sramc_wdata);
+        psums_mgr_sramc_write_result_t result = '{default:'0};
+
+        if (!try_ensure_configured())
+            return result;
+
+        result.exp_addr      = get_next_wr_sramc_addr();
+        result.addr_mismatch = (result.exp_addr != sramc_addr);
+
+        add_psums_sram_wr_access();
+
+        result.shift_reg_data_empty = is_shift_reg_data_empty();
+        if (!result.shift_reg_data_empty) begin
+            result.data_valid = 1'b1;
+            result.exp_wdata  = get_shift_reg_data_entry();
+        end
+
+        return result;
+    endfunction
+
+    virtual function psums_mgr_preload_result_t observe_preload_values(scan_chain_data_t i_c_arr,
+                                                                        scan_chain_data_t o_c_arr);
+        psums_mgr_preload_result_t result = '{default:'0};
+
+        if (!try_ensure_configured())
+            return result;
+
+        result.valid_preload_check = is_valid_preload_data();
+        if (result.valid_preload_check)
+            result.exp_preload_data = get_masked_preload_data();
+
+        add_preload_values(i_c_arr);
+        return result;
+    endfunction
+
+    virtual function psums_mgr_shift_reg_result_t observe_shift_reg(bit shift_done);
+        psums_mgr_shift_reg_result_t result = '{default:'0};
+
+        if (!try_ensure_configured())
+            return result;
+
+        if (shift_done && is_valid_psums_shift_reg_data()) begin
+            result.valid_snapshot = 1'b1;
+            for (int col = 0; col < sauria_pkg::X; col++)
+                result.exp_shift_reg[col] = get_masked_shift_reg_data_entry(col);
+        end
+
+        return result;
     endfunction
 
     virtual function void set_params();
@@ -288,6 +365,29 @@ class sauria_psums_mgr_model extends uvm_object;
         shift_k_idx = 0;
         k_idx       = 0;
         x_idx       = 0;
+    endfunction
+
+    local function bit try_ensure_configured();
+        if (is_configured)
+            return 1'b1;
+
+        if (computation_params == null)
+            `sauria_fatal(message_id, "Computation params handle was not provided")
+
+        if (!computation_params.main_controller_cfg_shared)
+            return 1'b0;
+
+        if (!computation_params.ifmaps_cfg_shared)
+            return 1'b0;
+
+        if (!computation_params.psums_mgr_cfg_shared)
+            return 1'b0;
+
+        set_reps(computation_params.act_reps, computation_params.wei_reps);
+        configure(computation_params.core_psums_params,
+                  arr_col_data_t'(computation_params.ifmaps_rows_active),
+                  arr_row_data_t'(computation_params.psums_inactive_cols));
+        return 1'b1;
     endfunction
 
 endclass

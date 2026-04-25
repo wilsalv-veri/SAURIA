@@ -11,6 +11,18 @@ package sauria_cfg_seqs_pkg;
     `include "sauria_rand_df_controller_cfg_seq.sv"
     `include "sauria_stand_alone_OFF_df_controller_cfg_seq.sv"
 
+    //Core Main Controller Seqs
+    `include "sauria_rand_core_main_controller_cfg_seq.sv"
+
+    //Core IFMAPS Seqs
+    `include "sauria_rand_core_ifmaps_cfg_seq.sv"
+
+    //Core Weights Seqs
+    `include "sauria_rand_core_weights_cfg_seq.sv"
+
+    //Core PSUMS Seqs
+    `include "sauria_rand_core_psums_cfg_seq.sv"
+
     //DMA Controller Seqs
 
     //Tile Seqs

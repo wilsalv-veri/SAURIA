@@ -46,6 +46,10 @@ function run_sauria(){
 
     local TEST_NAME="$1"
     shift
+    local EXTRA_SIM_ARGS=()
+    local EXPECT_SV_SEED_VALUE=0
+    local REQUESTED_SV_SEED=""
+    local RESOLVED_SV_SEED=""
 
     # Check that $SAURIA is set before proceeding
     if [ -z "$SAURIA" ]; then
@@ -61,6 +65,32 @@ function run_sauria(){
         return 1
     fi
 
+    for arg in "$@"; do
+        if [ "$EXPECT_SV_SEED_VALUE" -eq 1 ]; then
+            EXTRA_SIM_ARGS+=("$arg")
+            REQUESTED_SV_SEED="$arg"
+            EXPECT_SV_SEED_VALUE=0
+        elif [[ "$arg" == "-sv_seed" ]]; then
+            EXTRA_SIM_ARGS+=("$arg")
+            EXPECT_SV_SEED_VALUE=1
+        elif [[ "$arg" == -sv_seed=* ]]; then
+            EXTRA_SIM_ARGS+=("$arg")
+            REQUESTED_SV_SEED="${arg#-sv_seed=}"
+        elif [[ "$arg" == sv_seed=* ]]; then
+            EXTRA_SIM_ARGS+=("-${arg}")
+            REQUESTED_SV_SEED="${arg#sv_seed=}"
+        elif [[ "$arg" == *=* && "$arg" != +* && "$arg" != -* ]]; then
+            EXTRA_SIM_ARGS+=("+$arg")
+        else
+            EXTRA_SIM_ARGS+=("$arg")
+        fi
+    done
+
+    if [ "$EXPECT_SV_SEED_VALUE" -eq 1 ]; then
+        echo "Error: -sv_seed requires a value. Use -sv_seed <seed> or -sv_seed=<seed>."
+        return 1
+    fi
+
     #Create directory for current test run
     make_incremental_dir $SAURIA/test_runs/"$TEST_NAME"
     
@@ -72,17 +102,15 @@ function run_sauria(){
     mkdir $LAST_CREATED_DIR/cov_reports/funct_reports
     
     echo "Starting $DIR_NAME"
-    local EXTRA_SIM_ARGS=()
-    for arg in "$@"; do
-        if [[ "$arg" == *=* && "$arg" != +* && "$arg" != -* ]]; then
-            EXTRA_SIM_ARGS+=("+$arg")
-        else
-            EXTRA_SIM_ARGS+=("$arg")
-        fi
-    done
 
     if [ ${#EXTRA_SIM_ARGS[@]} -gt 0 ]; then
         echo "Extra simulator args: ${EXTRA_SIM_ARGS[*]}"
+    fi
+
+    if [ -n "$REQUESTED_SV_SEED" ]; then
+        echo "Requested simulator seed: $REQUESTED_SV_SEED"
+    else
+        echo "Requested simulator seed: auto"
     fi
     
     #Run the dsim test run command on compiled image
@@ -97,6 +125,27 @@ function run_sauria(){
     # Move the dsim output files to the designated output directory
     mv dsim* $SAURIA/output/
 
+    if [ -f "$SAURIA/output/dsim.log" ]; then
+        local SEED_LINE
+        SEED_LINE=$(grep -m1 "Random seed:" "$SAURIA/output/dsim.log" 2>/dev/null)
+        if [[ "$SEED_LINE" =~ ([0-9]+) ]]; then
+            RESOLVED_SV_SEED="${BASH_REMATCH[1]}"
+            echo "Resolved simulator seed: $RESOLVED_SV_SEED"
+        else
+            echo "Warning: unable to parse resolved simulator seed from $SAURIA/output/dsim.log"
+        fi
+    fi
+
+    mv "SAURIA_run.log" "$LAST_CREATED_DIR/SAURIA_run.log"
+
+    {
+        echo "test_name=$TEST_NAME"
+        echo "run_dir=$DIR_NAME"
+        echo "requested_sv_seed=${REQUESTED_SV_SEED:-auto}"
+        echo "resolved_sv_seed=${RESOLVED_SV_SEED:-unknown}"
+        echo "extra_sim_args=${EXTRA_SIM_ARGS[*]}"
+    } > "$LAST_CREATED_DIR/run_metadata.txt"
+
     #Generate individual logs
     python3 $SAURIA/verif/scripts/generate_logs.py $LAST_CREATED_DIR 
 
@@ -107,14 +156,28 @@ function run_sauria(){
     #Move cov reports to their appropriate directory
     mv $LAST_CREATED_DIR/cov_reports/assert_*.html      $LAST_CREATED_DIR/cov_reports/assert_reports
     
-    #FIXME: wilsalv :Add back once UVM tests have been enabled
     mv $LAST_CREATED_DIR/cov_reports/cg_detail_*.html   $LAST_CREATED_DIR/cov_reports/cg_reports
     mv $LAST_CREATED_DIR/cov_reports/functional_*.html  $LAST_CREATED_DIR/cov_reports/funct_reports
 
     #Move the waveform file to the test run directory
     mv SAURIA_waves.vcd $LAST_CREATED_DIR/"$DIR_NAME"_waves.vcd
 
-    rm "SAURIA_run.log"
+    #Move the performance file to the test run directory and analyze it
+    local PERF_CSV_PATH="$LAST_CREATED_DIR/SA_perf_data.csv"
+
+    mv SA_perf_log.csv "$PERF_CSV_PATH"
+
+    if [ -d "$SAURIA/verif/scripts/perf_analyzer" ]; then
+        echo "Analyzing performance CSV: $PERF_CSV_PATH"
+        if PYTHONPATH="$SAURIA/verif/scripts${PYTHONPATH:+:$PYTHONPATH}" python3 -m perf_analyzer "$PERF_CSV_PATH"; then
+            echo "Performance report generated at ${PERF_CSV_PATH%.csv}_perf_analysis/perf_report.html"
+        else
+            echo "Warning: performance analysis failed for $PERF_CSV_PATH"
+        fi
+    else
+        echo "Warning: performance analyzer package not found at $SAURIA/verif/scripts/perf_analyzer"
+    fi
+
 }
 
 function make_incremental_dir() {

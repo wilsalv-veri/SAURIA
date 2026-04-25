@@ -86,6 +86,7 @@ module SAURIA_tb_top;
 
     initial begin
         $display("TB_TOP running at time %0t", $time);     
+        $display("SAURIA_TB_RANDOM_SEED=%0d", uvm_pkg::uvm_global_random_seed);
         run_test();
         $dumpvars(0, SAURIA_tb_top);
         repeat (100) @ (posedge i_sauria_clk);

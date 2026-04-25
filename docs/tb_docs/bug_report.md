@@ -1,58 +1,590 @@
 # Bug Report
-This document summarizes RTL logic issues and assertion findings identified during functional verification of the Sauria Subsystem.
+
+This document summarizes the main findings from functional verification of the Sauria subsystem.
+The format is meant to stay easy to scan and easy to maintain without needing extra metadata.
+
+Scope: this document tracks RTL implementation bugs and known configuration hazards. Architectural or semantic mismatches are tracked separately in architectural_findings.md.
+
+## Report Structure
+
+- Architectural findings cover behavior that breaks the intended GEMM semantics.
+- RTL logic findings cover implementation bugs in the current design.
+- Known configuration hazards cover unsupported or deadlock-prone cases that currently rely on constraints or software awareness.
 
 ## Architectural Findings
 
-### Sauria Core
+Architectural findings have been moved to a separate document so this file stays focused on RTL bugs and known hazards.
 
-| Title               | BUG_ID  | Unit  | File    |Description           | Proposed Fix               |
-|--------------------|-------|-------|-------|-----------|------------------|
-Feeders Stream Across Non-Reduction Dimensions  | ARCH_ID1 |IFMAPS Feeders WEIGHTS Feeder |ifmap_idxcnt.sv wei_idxcnt | Both feeders' counters count the non-reduction dimension first. By doing so, you are accessing SRAM addresses and feeding data to the systolic array that is not the equivalent of a dot product, therefore breaking correctness of GEMM semantics. The only configuration that would not break correctness is if the size of the none reduction dimension is equivalent to that of a single SRAM access which is also equal to the size of the array's column in the case of IFMAPS and row in the case of WEIGHST. For that case, SRAM accesses are such that every access moves in the reduction dimension. However, this greatly limits the system's capacity and intent. | In order to preserve full use of the system's dataflow tiling configuration and SRAM capacity, the ifmaps and weights index counter implementation should be modified so that the reduction dimension counter counts first. This allows for a wide range of tiling sizes which are not limited by the systolic array size. |
-| Partial-Sums Manager Preloads and Writes Across Incorrect Dimension | ARCH_ID2 | Partial-Sums Manager | psm_idxcnt.sv | The partial sums manager preloads and collects partial sums to/from the systolic array as one column at a time. Every column therefore corresponds with the same x,y values from ifmaps but different weights k values. Therefore it follows that the k counter should move the fastest but current implementation has the x dimension moving fastest. This breaks correctness of GEMM semantics. | Change the counters implementation such that k dimension moves fastest within a tile, followed by the x dimension.
+See `architectural_findings.md` for the architecture-specific issues.
 
 ## RTL Logic Findings
 
+### Sauria Core Summary
+
+| ID | Area | File(s) | Title |
+|---|---|---|---|
+| CORE_BUGID1 | Main Controller | context_fsm.sv | Context Switch FSM Hangs Waiting For Data Feeders Completion |
+| CORE_BUGID2 | Partial-Sums Manager | psm_shift_fsm.sv | Partial Sums Shift FSM Can Start After All Contexts Complete |
+| CORE_BUGID3 | Partial-Sums Manager | psm_idxcnt.sv | Incorrect Formula For Last Tile Element SRAMC Read/Write Mask |
+| CORE_BUGID4 | Main Controller | feeders_fsm.sv | Pipeline Infinitely Stalled When One Feeder Finishes Earlier |
+| CORE_BUGID5 | Main Controller | context_controller.sv | Computation Fails To Complete, Deadlocking Context FSM |
+| CORE_BUGID6 | Main Controller | context_controller.sv | Extra Cycle (+1) Of Computation Leads To Incorrect Partial Sums |
+| CORE_BUGID7 | Main Controller | context_controller.sv | Extra Cycle (+1) Of Computation From Subsequent Contexts |
+| CORE_BUGID8 | Partial-Sums Manager | psm_top.sv | Partial Sums Manager Does Not Guarantee Zero Data For Inactive Columns |
+| CORE_BUGID9 | Partial-Sums Manager | psm_idxcnt.sv | Partial Sums Tile Reading and Writing Overflow Shift Register |
+| COMMON_BUGID1 | Generic Counter | cnt_generic.sv | Generic Counter Sets Overflow Flag at Zero |
+
 ### Sauria Core
 
-| Title               | BUG_ID  | Unit  | File    |Description           | Proposed Fix               |
-|--------------------|-------|-------|-------|-----------|------------------|
-| Context Switch FSM Hangs Waiting For Data Feeders Completion | CORE_BUGID1 |Main Controller |context_fsm.sv | If the size of the partial sums tile is smaller than the ifmaps tile, then the psums manager can finish before the data feeder is done. In order for the data feeder to continue, its fifos cannot be full, so therefore a pop operation must occur. The context controller and context fsm prevent this action because they wait on the data feeders and the partial sums manager to load their corresponsing tiles before proceeding with a context switch. The resulting scenario is a circular dependency, where the data feeder needs its fifos to be popped so it can continue feeding, and the context fsm needs the data feeder to complete before it can continue. | Remove the dependency of the data feeder completion from the condition to initiate a context switch within the context switch fsm and only rely on the indication from the partial sums manager. |
-| Partial Sums Shift FSM Can Start After All Contexts Complete| CORE_BUGID2 | Partial Sums Manager |psm_shift_fsm.sv | The next state logic for the idle state of the partial sums shift fsm allows the fsm to change states when all contexts have been completed. This creates potential hangs from the fsm waiting for inputs from other parts of the core to complete when none should be expected due to the completion of all contexts. | Place the condition of not completion_flag at the first conditional statement of the idle state such that the fsm rejects all inputs once the flag has been set. |
-| Incorrect Formula For Last Tile Element SRAMC read/write Mask | CORE_BUGID3 | Partial Sums Manager |psm_idxcnt.sv | The partial sums manager index counter creates the element mask for SRAMC read and write accesses. To do so, it calculates the index of the first and last elements being accessed in the current read/write operation. The current formula for calculating the last index is idx_end = kk_idx + i_cxlim - (SRAMC_N + 1). If x step = i_cxlim = SRAMC_N then this formula fails. | Remove consideration of SRAMC_N from the formula in order to match all cases. |
-| Pipeline Infinitely Stalled When One Feeder Finishes Earlier | CORE_BUGID4 | Main Controller |feeders_fsm.sv | The feeders fsm contains logic such that if the amount of activation maps or weights is so small that it finishes feeding before the FSM gets to the feeding state, then it can handle that gracefully. However, under the scenario that we are in the feeding state and one feeder finishes earlier than the other than the pipeline is infiniately disabled and the opposite feeder can no longer continue feeding nor can the pipeline finish computing gracefully. This in turn hangs the pipeline infinately. It is understood that if one feeder is done then there is no more valid data for this to feed the pipeline, but even if the data is invalid, the rest of the system should continue to operate gracefully without any interruptions. | Set pre_feeding_flag=1 in the feeding state. This violates initial intent of the flag but it is the least intrusive fix. This bit controls the count_hold signals which in turn control the pipeline en signal.  |
-| Computation Fails To Complete Deadlocking Context FSM | CORE_BUGID5 | Main_Controller |context_controller.sv | When the feeders are done feeding, the feeder feeders_pop_en remains high until the fifos have been emptied. This allows the remaining computations to complete. Current output indication from the context controller that the computation is complete requires that the feeders are actively popping. Because there is a one cycle delay between the internal computation done being set and the output signal being generated, the output signal generation will not see the feeders actively popping, since they stopped popping a cycle earlier. For this case, the computation done signal never asserts and because the context fsm waits for the computation to be done in order to change states from ARRAY_BUSY. | Remove the requirement that the feeders must be popping in order for the computation done output signal to propogate. The feeders actively popping was already used as a qualifier to set the internal computation done signal.  |
-| Extra Cycle (+1) Of Computation Leads To Incorrect Partial Sums | CORE_BUGID6 | Main_Controller |context_controller.sv | For the scenario where the computation length is greater than 1 cycle, the context controller signal indicating computation done gets set 2 cycles before reaching the incntlim value. The output signal would get generated a cycle after, and at this point the count would be incntlim - 1. The indication gets consumed in the context switch fsm as part of next state logic so in order for feeders to stop popping values, the context switch fsm needs to move to the next state which consumes another cycle. By the time that the feeders' pop indication is dropped, the computation count is equal to incntlim therefore popping an extra column from the ifmaps feeder and a extra row from the weights fetcher, resulting in the incorrect partial sum for the tile.| Start the computation done signal in the context controller a cycle earlier than what it currently is so that the feeders' pop indication gets dropped when comp count = incntlim - 1.|
-| Extra Cycle (+1) Of Computation From Subsequent Contexts | CORE_BUGID7 | Main_Controller |context_controller.sv | Similar to CORE_BUGID6, the context done signal within the context controller gets an extra cycle later leading to extra cycle of computation. However, in this case, it is because for subsequent contexts, the latency between the feeder's pop_en asserting and data arriving at the input of the array is shorter by 1 cycle, since the feeders' fifos already have data ready to be popped. This causes an extra cycle of computation leading to corruption of the expected mac calculation results .| For contexts beyond the first context, assert the computation done signal a cycle earlier than for the first context.|
-| Partial Sums Manager Does Not Guarantee Zero Data For Inactive Cols| CORE_BUGID8 | Partial Sums Manager |psm_top.sv | The partial sums manager shifts in data coming from either the SRAMC or the output of the systolic array. When inactive columns are set for partial sums, the partial sum shift fsm shifts for extra cycles such that data from inactive columns can be replaced. Because you depend on what data is present on either the SRAMC bus or the array output bus to be zero, there is no guarantee of filling the inactive columns with zero data. | Create an extra condition for the selection of the source of the shift reg input data, such that when the shift fsm is in the POSTREAD_SHIFT state which is especifically designed to handle inactive columns, zero data is chosen. |
-| Partial Sums Tile Reading and Writing Overflow Shift Register| CORE_BUGID9 | Partial Sums Manager |psm_idxcnt.sv | The partial sums SRAM reading and writing operation is largely managed by the index counters. These counters are configured through configuration registers and they decide how many SRAM accesses must be done to read or write a partial sums tile. The partial sums shift register however is intended to match the size of the systolic array 1:1 as to be able to provide a full array worth of partial sums. If the counters are configured such that the tile is larger than fits into the array, the shift register will overflow and partial sums data will be lost. | Introduce a new counter whose limit is as many SRAM accesses as there are columns in the systolic array. This makes it so that we only read/write a full systolic array of psums on every context (tile) and psum data is not lost. Make this counter the fastest running counter and trigger done based off of it. Since this counter will consume a subset of the k dimension iterations, make sure to modify the step that the original k counter sees to be the limit of the new counter.  |
-| Smaller Than SRAM Width Feeder Addr Lim Lead To Deadlock | BAD_CONFIG1 | IFMAPS Feeder WEIGHTS Feeder |feed_data_manager.sv | The global word offset indicates which byte acts as the zeroth byte in a feeder SRAM read access. This is later used along with the local word offset and the dilation pattern to calculate the feeder output value for a specific lane based on the SRAM data. When in the case of ifmaps feeder the (x,y) combined lim is smaller than SRAMA data width or the weights feeder dimension the k lim is smaller than SRAMB data width, push indication for different lanes becomes unsynchronized which causes some lane fifo's to become full while others still have space. The full indication gets set when any fifo is full. Once the feeder's pop indication asserts, items are popped from all fifos but eventually it leads to a scenario where some fifos are full and others are empty, sending both the full and empty indication simultanously and deadlocking the pipeline. | No fix suggested. Architecture supports catching of this scenario and reports deadlock through status register. WA through stimulus constraint.  |
-| Generic Counter Sets Overflow Flag at Zero| COMMON_BUGID1 | Generic Counter |cnt_generic.sv | The generic counter module used for ifmaps, weights, and partial sums is implemented such that if the limit is within a single iteration, the overflow flag is asserted even at zero. This creates incorrect overflow (limit reached) indications breaking correctness of core dataflow | Modify counter implementation to update overflow signal only when the counter is enabled  |
+#### CORE_BUGID1 - Context Switch FSM Hangs Waiting For Data Feeders Completion
 
+- Area: Main Controller
+- File(s): context_fsm.sv
+
+**Issue**
+
+If the partial-sums tile is smaller than the IFMAPS tile, the partial-sums manager can finish before the feeders are done loading data. The feeders cannot keep going if their FIFOs are full, so they need more pop operations. At the same time, the context controller and context FSM wait for both the feeders and the partial-sums manager to finish before allowing the context switch.
+
+That creates a circular dependency: the feeders need pops to keep moving, but the FSM will not move on until the feeders are already done.
+
+**Proposed Fix**
+
+Remove feeder completion from the context-switch condition and rely only on the partial-sums manager completion indication.
+
+---
+
+#### CORE_BUGID2 - Partial Sums Shift FSM Can Start After All Contexts Complete
+
+- Area: Partial-Sums Manager
+- File(s): psm_shift_fsm.sv
+
+**Issue**
+
+The idle-state next-state logic lets the partial-sums shift FSM start even after all contexts are complete. That can leave the FSM waiting on inputs from the rest of the core when no more activity should happen.
+
+**Proposed Fix**
+
+Check completion_flag first in the idle state so the FSM ignores any new activity once processing is done.
+
+---
+
+#### CORE_BUGID3 - Incorrect Formula For Last Tile Element SRAMC Read/Write Mask
+
+- Area: Partial-Sums Manager
+- File(s): psm_idxcnt.sv
+
+**Issue**
+
+The partial-sums index counter computes the first and last elements touched by each SRAMC read or write. The current last-index formula,
+idx_end = kk_idx + i_cxlim - (SRAMC_N + 1),
+fails when x step = i_cxlim = SRAMC_N.
+
+**Proposed Fix**
+
+Remove the SRAMC_N term from the last-index calculation so the formula works across all cases.
+
+---
+
+#### CORE_BUGID4 - Pipeline Infinitely Stalled When One Feeder Finishes Earlier
+
+- Area: Main Controller
+- File(s): feeders_fsm.sv
+
+**Issue**
+
+The feeders FSM handles the case where a feeder finishes before the feeding state starts. It does not handle the case where one feeder finishes earlier while already in the feeding state. In that case, the pipeline stays disabled, the other feeder cannot continue, and the computation cannot drain cleanly.
+
+Even if one feeder no longer has valid data, the rest of the system should still be able to finish cleanly.
+
+**Proposed Fix**
+
+Set pre_feeding_flag = 1 in the feeding state. This changes the original meaning of the flag, but it is the least intrusive way to release the count_hold path that gates pipeline enable.
+
+---
+
+#### CORE_BUGID5 - Computation Fails To Complete, Deadlocking Context FSM
+
+- Area: Main Controller
+- File(s): context_controller.sv
+
+**Issue**
+
+After feeders stop sending new data, feeders_pop_en stays high while the FIFOs drain so the remaining computation can finish. The context controller currently requires the feeders to still be popping when it generates the outward-facing computation-done signal. Because there is a one-cycle delay between the internal done condition and the output signal, the feeder pop condition has already dropped by then.
+
+That prevents computation_done from asserting and leaves the context FSM stuck in ARRAY_BUSY.
+
+**Proposed Fix**
+
+Remove the requirement that feeders must still be popping when the computation-done output is generated. That condition is already used earlier to qualify the internal done state.
+
+---
+
+#### CORE_BUGID6 - Extra Cycle (+1) Of Computation Leads To Incorrect Partial Sums
+
+- Area: Main Controller
+- File(s): context_controller.sv
+
+**Issue**
+
+For computations longer than one cycle, the computation-done signal is generated too late relative to incntlim. By the time that indication makes it through the context-switch FSM and feeder pops are disabled, the computation counter has already reached incntlim.
+
+That causes one extra IFMAPS column and one extra weights row to be popped, which corrupts the partial sums.
+
+**Proposed Fix**
+
+Start the computation-done indication one cycle earlier so feeder popping stops when comp_count = incntlim - 1.
+
+---
+
+#### CORE_BUGID7 - Extra Cycle (+1) Of Computation From Subsequent Contexts
+
+- Area: Main Controller
+- File(s): context_controller.sv
+
+**Issue**
+
+For later contexts, the latency between feeder pop_en and data arriving at the array is one cycle shorter because the feeder FIFOs are already primed. The current computation-done timing does not account for that shorter path, so later contexts also run one extra cycle and corrupt the MAC results.
+
+**Proposed Fix**
+
+Assert the computation-done indication one cycle earlier for contexts after the first.
+
+---
+
+#### CORE_BUGID8 - Partial Sums Manager Does Not Guarantee Zero Data For Inactive Columns
+
+- Area: Partial-Sums Manager
+- File(s): psm_top.sv
+
+**Issue**
+
+The partial-sums manager shifts in data from either SRAMC or the systolic array output. When inactive columns are present, the shift FSM runs extra cycles to replace those columns. The current logic assumes the selected input source already carries zero data, but that is not guaranteed.
+
+That can leave inactive columns filled with non-zero values.
+
+**Proposed Fix**
+
+Add a source-selection case for POSTREAD_SHIFT so explicit zero data is shifted in during the inactive-column cleanup phase.
+
+---
+
+#### CORE_BUGID9 - Partial Sums Tile Reading and Writing Overflow Shift Register
+
+- Area: Partial-Sums Manager
+- File(s): psm_idxcnt.sv
+
+**Issue**
+
+The partial-sums SRAM read and write sequence is driven by configurable index counters. Those counters can request more SRAM accesses than fit into the partial-sums shift register, even though the shift register is sized to match the systolic array one-to-one. When that happens, partial sums overflow the register and data is lost.
+
+**Proposed Fix**
+
+Introduce a new fastest-running counter whose limit matches the number of array columns. Use it to bound each context to a full-array chunk of partial sums, and adjust the original k-step handling so the remaining iteration space still advances correctly.
+
+---
+
+#### COMMON_BUGID1 - Generic Counter Sets Overflow Flag at Zero
+
+- Area: Generic Counter
+- File(s): cnt_generic.sv
+
+**Issue**
+
+The generic counter used by IFMAPS, weights, and partial sums asserts overflow immediately at zero when the limit fits within a single iteration. That creates false limit-reached indications and breaks core dataflow correctness.
+
+**Proposed Fix**
+
+Update the counter so overflow only changes when the counter is enabled.
+
+---
+
+### Dataflow Controller Summary
+
+| ID | Area | File(s) | Title |
+|---|---|---|---|
+| DF_BUGID1 | Dataflow Controller | sauria_dma_controller.sv | Incorrect awaddr Is Sent in SEND_CMD |
+| DF_BUGID2 | Dataflow Controller | sauria_dma_controller.sv | SEND_CMD State Deadlocked |
+| DF_BUGID3 | Dataflow Controller | sauria_dma_controller.sv | Incorrect Data Sent To DMA CSRs |
+| DF_BUGID4 | Dataflow Controller | sauria_dma_controller.sv | DMA Controller FSM Fails To Start DMA Engine After First Iteration |
+| DF_BUGID5 | Dataflow Controller | sauria_dma_controller.sv | Divergent Paths After Write Response |
+| DF_BUGID6 | Dataflow Controller | sauria_dma_controller.sv | Write Interrupt Failed To Be Cleared |
+| DF_BUGID7 | Dataflow Controller | sauria_dma_controller.sv | Extra Start DMA Reader/Writer Engine Sent After Completion |
+| DF_BUGID8 | Dataflow Controller | sauria_dma_controller.sv | Tile Pointer Fails To Advance After Tile Read |
+| DF_BUGID9 | Dataflow Controller | sauria_dma_controller.sv | Last Two Tensor-Loop Iterations Deadlock FSM |
+| DF_BUGID10 | Dataflow Controller | sauria_interface.sv | Partial Sum K Lim Formula Uses Tile K Step Instead of W Step |
+| DF_BUGID11 | Dataflow Controller | sauria_interface.sv | Partial Sum Y Lim Formula Uses Tile Partial Sum Y Step |
+| DF_BUGID12 | Dataflow Controller | sauria_interface.sv | Incorrect Number of Elements Sent Per Weights DMA Read Request |
+| DF_BUGID13 | Dataflow Controller | sauria_interface.sv | Incorrect Number of Elements Sent Per Partial Sum DMA Read Request |
+| DF_BUGID14 | Dataflow Controller | sauria_interface.sv | Incorrect Partial Sum DMA Read Request Size When Y Lim = 0 |
+| DF_BUGID15 | Dataflow Controller | sauria_interface.sv | Incorrect Partial Sum DMA Read Request Size When Z Lim = 0 |
+| DF_BUGID16 | Dataflow Controller | sauria_interface.sv | Weights W Lim Incorrectly Set When WXfer_op Is On |
+| DF_BUGID17 | Dataflow Controller | sauria_dma_controller.sv | Flattening Y and K Psums Dimensions Deadlocks FSM |
+| DF_BUGID18 | Dataflow Controller | sauria_dma_controller.sv | Incorrect Tensor Read On Second Iteration When loop_order = 2 |
 
 ### Dataflow Controller
-| Title               | BUG_ID  | File    |Description           | Proposed Fix               |
-|--------------------|-------|-------|-----------|------------------|
-| Incorrect awaddr is sent on SEND_CMD state for dma controller | DF_BUGID1 | sauria_dma_controller.sv | RTL shows intention of having wvalid assert a cycle after awvalid assertion to give a chance of the awaddr to be latched. Instead awvalid and wvalid assert concurrently thus the incorrect address is written to | Use awvalid and wvalid in the state logic to determine addr_sent and data sent, instead of using awready and wready. |
-| SEND_CMD State Deadlocked | DF_BUGID2 | sauria_dma_controller.sv | The SEND_CMD state is supposed to send multiple CSR writes to the DMA engine to initiate a read to memory. After the first CSR write has been issued, the state is deadlocked and cannot issue any more writes due to incorrect condition. | Simplify the initial entry condition to send a CSR write to be based on addr and data sent indications. |
-| Incorrect Data Sent To DMA CSRs | DF_BUGID3 | sauria_dma_controller.sv | Some DMA CSRs have single bit fields while others have full CSR length fields. When a full length CSR has been written to, the bit are never cleared again for the CSRs which have single bit fields. As a result, those bits stay sticky. | Update data write to start with all 0s whenever there is a CSR which has single bit fields so that sticky previous bits are cleared. |
-| DMA Controller FSM Fails to Start Read/Write DMA Engine After First Iteration | DF_BUGID4 | sauria_dma_controller.sv | SYNC_WRESP state behavior only sends the start read/write DMA csr on the first iteration, on other iterations it waits for reader interrupt which deadlocks the fsm. The reader interrupt indication never arrives because the reader engine was never started. | Update next state logic to remove condition for first iteration and make every iteration go to SEND_START_ADDR |
-| Divergent Paths After Write Response | DF_BUGID5 | sauria_dma_controller.sv | WAIT_START_WRESP is meant to wait for the DMA engine to finish writing to the SRAMs. It is written as to not wait extra time, so it chooses different paths whether you see the axi4-lite write response or the write interrupt from the dma engine. This however inadvertently leads to divergent paths, as the bvalid next state path and the dma writer interrupt path don't converge | Update next state logic to wait for write dma interrupt in all cases once the write response (bvalid) has been asserted. This leads to a longer path but forces convergence. |
-| Write Interrupt Failed to Be Cleared |DF_BUGID6 | sauria_dma_controller.sv | WAIT_DMA_INTR_READER is meant to wait for the dma reader interrupt and then clear the interrupt indication. It only clears the read interrupt and depends on the WAIT_DMA_INTR_WRITER state to clear the writer interrupt. However, because WAIT_DMA_INTR_READER can lead to different next state paths, sometimes the dma writer interrupt remains uncleared. | Clear both the read and write interrupt regardless of which one we are waiting for. |
-| Extra Start DMA Reader/Writer Engine Sent After Read/Write Complete | DF_BUGID7 | sauria_dma_controller.sv | Once the DMA engine finishes reading the tile from memory and writing it to SRAM, we determine what to do next (eg. advance tile pointer). At this point, a start DMA reader/write command is sent yet again.  | Update next state logic of WAIT_CLR_INTR_WRESP to go straight to CHECK_NEXT_ACTION so that it can be determined what to do next. | 
-| Tile Pointer Fails to Advance After Tile Has Been Read By DMA | DF_BUGID8 | sauria_dma_controller.sv | After the DMA engine finishes reading the tile from memory and writing it to SRAM, we start the tensor core fsm and wait for the computation to complete. Once computation completes we set the DF controller to transfer the partial sums to memory. In order to do this, we must synchronize with the tensor core. The next state logic for DMA controller FSM does not move to the core sync state once the entire tile has been read. Instead, it moves to wait for the read interrupt signal from the DMA engine to arrive which it never does but it already completed the last read for the current tile. Thus you end up deadlocking the FSM. | Update next state logic of CHECK_NEXT_ACTION to go straight to SAURIA_SYNC once the tiles for IFMAPS, WEIGHTS (optionally), and PSUMS have been read. | 
-| Last Two Iterations of Tensor Loops Deadlock Dataflow FSM | DF_BUGID9 | sauria_dma_controller.sv | After the computation has been completed and the partial sums are transferred to memory, we have two extra iterations in which we sync the dataflow controller fsm with the dma controller fsm. This sync is deadlocked because the dma controller moves to a state where it waits for a DMA reader interrupt, which it never arrives because there aren't any pending reads left. All of the DMA reads/writes have been completed at this time. | Update next state logic of CHECK_NEXT_ACTION at the stage where the partial sums have finished being written to memory, to go directly to SAURIA_SYNC. | 
-| Flattening Y and K Psums Dimensions With Ck_eq and Ch_eq Deadlocks DF FSM | DF_BUGID10 | sauria_dma_controller.sv | Incorrect next state is set for the case where psums Y and K dimensions have been flattened and weights have finished being read. At that point, the intent is to start the computation, and wait for it to complete, and then send the partial sums to memory. The fsm prepares to do that, but it jumps to a state where it waits for the dma to send a read interrupt, which it won't do because it has finished sending reads for the moment. The next dma operations will be writes to memory. Because of this, the dma controller fsm is deadlocked.| Change the next state condition to SAURIA_SYNC state where it waits for the sauria core to complete the tile computation. | 
-| Incorrect Tensor Read On Second Iter When Loop_Order = 2 | DF_BUGID11 | sauria_dma_controller.sv | After the first full iteration completes, meaning all current tile ifmaps, weights, and psums have been read, the dma controller starts to read the next ifmaps tile. This order is correct except when loop_order is set to 2. In that case, the K dimension is the fastest moving, and reading ifmaps would result in reading the same ifmaps tile again uneccessarily.| Create condition that changes behavior for this case when loop order is 2. Behvaior should be to prepare the dma controller fsm  to start reading the next weights tile. | 
 
+#### DF_BUGID1 - Incorrect awaddr Is Sent in SEND_CMD
 
-            
+- Area: Dataflow Controller
+- File(s): sauria_dma_controller.sv
+
+**Issue**
+
+The RTL looks like it was meant to assert wvalid one cycle after awvalid so the address can be latched first. Instead, awvalid and wvalid assert in the same cycle, which causes the wrong awaddr to be written.
+
+**Proposed Fix**
+
+Use awvalid and wvalid to drive addr_sent and data_sent state tracking instead of awready and wready.
+
+---
+
+#### DF_BUGID2 - SEND_CMD State Deadlocked
+
+- Area: Dataflow Controller
+- File(s): sauria_dma_controller.sv
+
+**Issue**
+
+SEND_CMD is supposed to issue multiple CSR writes to start a DMA read from memory. After the first CSR write, the state deadlocks because the condition for issuing the next write is wrong.
+
+**Proposed Fix**
+
+Simplify the write-entry condition so it depends only on address-sent and data-sent indications.
+
+---
+
+#### DF_BUGID3 - Incorrect Data Sent To DMA CSRs
+
+- Area: Dataflow Controller
+- File(s): sauria_dma_controller.sv
+
+**Issue**
+
+Some DMA CSRs contain only single-bit fields while others use the full CSR width. After a full-width write, the leftover bits are not cleared before writing the single-bit CSRs, so stale bits stay set.
+
+**Proposed Fix**
+
+Start each single-bit CSR write from an all-zero value so previous bits are cleared.
+
+---
+
+#### DF_BUGID4 - DMA Controller FSM Fails To Start DMA Engine After First Iteration
+
+- Area: Dataflow Controller
+- File(s): sauria_dma_controller.sv
+
+**Issue**
+
+In SYNC_WRESP, the start-read or start-write DMA CSR is only sent on the first iteration. Later iterations wait for a reader interrupt that never arrives because the engine was never started.
+
+**Proposed Fix**
+
+Remove the first-iteration special case so every iteration transitions to SEND_START_ADDR.
+
+---
+
+#### DF_BUGID5 - Divergent Paths After Write Response
+
+- Area: Dataflow Controller
+- File(s): sauria_dma_controller.sv
+
+**Issue**
+
+WAIT_START_WRESP is meant to wait for SRAM writes to finish without adding extra delay. In practice, it takes different next-state paths depending on whether it sees the AXI4-Lite write response or the DMA write interrupt first. Those paths do not converge correctly.
+
+**Proposed Fix**
+
+Once bvalid has been seen, always wait for the DMA write interrupt before advancing.
+
+---
+
+#### DF_BUGID6 - Write Interrupt Failed To Be Cleared
+
+- Area: Dataflow Controller
+- File(s): sauria_dma_controller.sv
+
+**Issue**
+
+WAIT_DMA_INTR_READER clears only the reader interrupt and assumes WAIT_DMA_INTR_WRITER will clear the writer interrupt. Because the FSM can leave the reader-wait state through multiple paths, the writer interrupt can be left uncleared.
+
+**Proposed Fix**
+
+Clear both reader and writer interrupts regardless of which one triggered the wait state.
+
+---
+
+#### DF_BUGID7 - Extra Start DMA Reader/Writer Engine Sent After Completion
+
+- Area: Dataflow Controller
+- File(s): sauria_dma_controller.sv
+
+**Issue**
+
+After a tile has been read from memory and written to SRAM, the controller should decide what to do next, such as advancing the tile pointer. Instead, it sends another start command to the DMA reader or writer.
+
+**Proposed Fix**
+
+Transition from WAIT_CLR_INTR_WRESP directly to CHECK_NEXT_ACTION.
+
+---
+
+#### DF_BUGID8 - Tile Pointer Fails To Advance After Tile Read
+
+- Area: Dataflow Controller
+- File(s): sauria_dma_controller.sv
+
+**Issue**
+
+Once the current tile has been fully read into SRAM, the dataflow controller should sync with the tensor core, wait for computation to finish, and then transfer partial sums. Instead, the DMA controller waits for another read interrupt that will never arrive because the tile read has already finished.
+
+**Proposed Fix**
+
+Update CHECK_NEXT_ACTION so it goes directly to SAURIA_SYNC after IFMAPS, weights if applicable, and psums have all been read.
+
+---
+
+#### DF_BUGID9 - Last Two Tensor-Loop Iterations Deadlock FSM
+
+- Area: Dataflow Controller
+- File(s): sauria_dma_controller.sv
+
+**Issue**
+
+After computation finishes and partial sums are written back to memory, the dataflow and DMA controller FSMs go through two extra sync iterations. During that sequence, the DMA controller enters a state that waits for a reader interrupt even though no reads are still pending.
+
+**Proposed Fix**
+
+At the point where partial sums have finished writing to memory, make CHECK_NEXT_ACTION transition directly to SAURIA_SYNC.
+
+---
+
+#### DF_BUGID10 - Partial Sum K Lim Formula Uses Tile K Step Instead of W Step
+
+- Area: Dataflow Controller
+- File(s): sauria_interface.sv
+
+**Issue**
+
+When WXfer_op is not set, the partial-sum k limit is based on the tile partial-sum k step, which represents multiple tiles instead of the actual K dimension length. The correct quantity is the weights-tile w limit.
+
+**Proposed Fix**
+
+Always derive the partial-sum k limit from weights w_step.
+
+---
+
+#### DF_BUGID11 - Partial Sum Y Lim Formula Uses Tile Partial Sum Y Step
+
+- Area: Dataflow Controller
+- File(s): sauria_interface.sv
+
+**Issue**
+
+X is the fastest-running tile dimension, so using tile partial-sum y step to compute the Y limit of a single partial-sum tile makes the span larger than intended. Tile partial-sum y step is already a multiple of tile partial-sum x step.
+
+**Proposed Fix**
+
+Replace tile partial-sum y step with tile partial-sum x step in the Y-limit formula.
+
+---
+
+#### DF_BUGID12 - Incorrect Number of Elements Sent Per Weights DMA Read Request
+
+- Area: Dataflow Controller
+- File(s): sauria_interface.sv
+
+**Issue**
+
+Each DMA read request for a weights tile should cover the K dimension. The current implementation uses the tile weights k step, which spans C weights tiles instead of one.
+
+**Proposed Fix**
+
+Use weights w_step as the number of elements per weights DMA read request.
+
+---
+
+#### DF_BUGID13 - Incorrect Number of Elements Sent Per Partial Sum DMA Read Request
+
+- Area: Dataflow Controller
+- File(s): sauria_interface.sv
+
+**Issue**
+
+Each partial-sum DMA read request should cover one X dimension of a tile. The current implementation uses tile partial-sum x step, which corresponds to an entire partial-sum tile.
+
+**Proposed Fix**
+
+Use the IFMAPS-tile X dimension as the partial-sum tile X dimension.
+
+---
+
+#### DF_BUGID14 - Incorrect Partial Sum DMA Read Request Size When Y Lim = 0
+
+- Area: Dataflow Controller
+- File(s): sauria_interface.sv
+
+**Issue**
+
+When Cw_eq is set, the partial-sum intra-tile Y limit becomes zero. If Ch_eq is not set, ett falls back to tile partial-sum y step, which is still larger than a single-tile X span.
+
+**Proposed Fix**
+
+Use the IFMAPS-tile X dimension for the partial-sum request size even when the Y limit is zero.
+
+---
+
+#### DF_BUGID15 - Incorrect Partial Sum DMA Read Request Size When Z Lim = 0
+
+- Area: Dataflow Controller
+- File(s): sauria_interface.sv
+
+**Issue**
+
+When both Cw_eq and Ch_eq are set, the partial-sum intra-tile Z limit also becomes zero. In that case, ett becomes tile partial-sum k step, which still reflects multiple larger dimensions instead of a single partial-sum tile.
+
+**Proposed Fix**
+
+Set partial-sum ett to tile partial-sum x step when both Cw_eq and Ch_eq are set.
+
+---
+
+#### DF_BUGID16 - Weights W Lim Incorrectly Set When WXfer_op Is On
+
+- Area: Dataflow Controller
+- File(s): sauria_interface.sv
+
+**Issue**
+
+When WXfer_op is set, the intra-tile weights W limit is forced to 1, which gives only two iterations for a full weights tile. If C is greater than 2, the remaining k-wide rows are never read from memory.
+
+**Proposed Fix**
+
+Drop the WXfer_op special case and always derive weights w lim from tile weights c step and weights w step.
+
+---
+
+#### DF_BUGID17 - Flattening Y and K Psums Dimensions Deadlocks FSM
+
+- Area: Dataflow Controller
+- File(s): sauria_dma_controller.sv
+
+**Issue**
+
+When the partial-sum Y and K dimensions are flattened and weights have finished reading, the next step should be to start computation, wait for it to finish, and then write partial sums back to memory. Instead, the DMA controller jumps to a state that waits for another DMA read interrupt even though the next DMA traffic will be writes, not reads.
+
+**Proposed Fix**
+
+Change the next-state condition so it transitions to SAURIA_SYNC and waits for the core to finish the tile computation.
+
+---
+
+#### DF_BUGID18 - Incorrect Tensor Read On Second Iteration When loop_order = 2
+
+- Area: Dataflow Controller
+- File(s): sauria_dma_controller.sv
+
+**Issue**
+
+After the first full tile iteration completes, the controller starts reading the next IFMAPS tile. That order is only correct when loop_order is not 2. When loop_order = 2, K is the fastest-moving dimension, so reading IFMAPS again causes an unnecessary reread of the same IFMAPS tile.
+
+**Proposed Fix**
+
+Add a loop_order = 2 condition so the DMA controller prepares to read the next weights tile instead.
+
+---
+
+### DMA Engine Summary
+
+| ID | Area | File(s) | Title |
+|---|---|---|---|
+| DMA_BUGID1 | DMA Engine | axi_demux.sv | Response Ready Not Propagated For DMA Demux When FIFO Is Empty |
+| DMA_BUGID2 | DMA Engine | fifo_v3.sv | Incorrect Demux Selection When FIFO Is Empty |
+| DMA_BUGID4 | DMA Engine | data_fifo.sv | Incorrect First Chunk Data Sent To SRAMs |
+| DMA_BUGID5 | DMA Engine | aw_engine.sv, w_engine.sv | AW and W Channel Deadlock |
+
 ### DMA Engine
-| Title               | BUG_ID  | File    |Description           | Proposed Fix               |
-|--------------------|-------|-------|-----------|------------------|
-| Response Ready Not Propogated For DMA Demux When Empty Fifo | DMA_BUGID1 | axi_demux.sv | The dma engine uses a demux to syncronize or choose who to transmit to/from next. This is the mechanism that selects to either read/write to/from memory or read/write to/from SRAMs. The logic for the response ready and assertion between masters and slaves, depend on the w fifo not being empty. If it is, then dma responses ready never asserts and the transaction never completes. | Remove the fifo not empty condition from the master response logic. |
-| Response Ready Not Propogated For DMA Demux When Empty Fifo | DMA_BUGID2 | fifo_v3.sv | The dma engine uses a demux to syncronize or choose who to transmit to/from next. This is the mechanism that selects to either read/write to/from memory or read/write to/from SRAMs. When the fifo is empty, the last value in the fifo gets sent out as the select, causing the demux to choose the incorrect port (MEM v SRAM) as the next interaction, leading to blocking of the dataflow and execution of the subsystem | Remove the fifo not empty condition from the master response logic. |
-| Incorrect First Chunk Data Sent To SRAMs | DMA_BUGID4 | data_fifo.sv | The write to the internal DMA memory from the DMA read to external memory and the read from the internal DMA memory to write to SRAM occurs in the same cycle which means that we are reading old data from the internal DMA memory. | Extend the DMA internal memory read pipeline to add 2 cycles of delay such that we can read the newly written data. Add parameter to data_fifo module to choose this change only for writer fifo. |
-| AW and W Channel Deadlock | DMA_BUGID5 | aw_engine.sv w_engine.sv | DMA_BUGID4 impacts the aw and w engine pipelines because the writer fifo empty indications are used to create the aw_valid and w_valid pulses. The number of pulses becomes incorrect which in turn can lead to deadlock of these engines. | Extend the AW and W engine pipelines to add 2 cycles of delay to the fifo empty indication being used to create the AW valid and W valid pulses. Set the AW_W_SYNC parameter to 1 to guarantee that these two engines synchronize with each other |
+
+#### DMA_BUGID1 - Response Ready Not Propagated For DMA Demux When FIFO Is Empty
+
+- Area: DMA Engine
+- File(s): axi_demux.sv
+
+**Issue**
+
+The DMA demux selects whether traffic goes to memory or SRAM interfaces. The response-ready logic between masters and slaves currently depends on the write FIFO being non-empty. If the FIFO is empty, DMA response-ready never asserts and the transaction cannot complete.
+
+**Proposed Fix**
+
+Remove the FIFO-not-empty condition from the master response logic.
+
+---
+
+#### DMA_BUGID2 - Incorrect Demux Selection When FIFO Is Empty
+
+- Area: DMA Engine
+- File(s): fifo_v3.sv
+
+**Issue**
+
+When the FIFO is empty, the last stored FIFO value is still used as the demux select. That can route the next interaction to the wrong port, such as memory instead of SRAM, and block subsystem progress.
+
+**Proposed Fix**
+
+Make sure the select logic does not reuse stale FIFO contents once the FIFO is empty.
+
+---
+
+#### DMA_BUGID4 - Incorrect First Chunk Data Sent To SRAMs
+
+- Area: DMA Engine
+- File(s): data_fifo.sv
+
+**Issue**
+
+The DMA reads external memory into internal DMA storage and, in the same cycle, reads that internal storage back out to write into SRAM. That means the SRAM side can see old data instead of the newly written chunk.
+
+**Proposed Fix**
+
+Extend the internal DMA memory read path by two cycles so the SRAM write path reads the newly written data. Make the change selectable through a data_fifo parameter so it only applies to the writer FIFO path.
+
+---
+
+#### DMA_BUGID5 - AW and W Channel Deadlock
+
+- Area: DMA Engine
+- File(s): aw_engine.sv, w_engine.sv
+
+**Issue**
+
+DMA_BUGID4 also affects the AW and W engine timing because writer-FIFO empty indications are used to generate aw_valid and w_valid pulses. Once the pulse count becomes wrong, the address and write-data channels can deadlock.
+
+**Proposed Fix**
+
+Delay the writer-FIFO empty indication by two cycles in the AW and W engines and set AW_W_SYNC = 1 so both engines stay synchronized.
+
+## Known Configuration Hazards
+
+### Summary
+
+| ID | Area | File(s) | Title |
+|---|---|---|---|
+| BAD_CONFIG1 | IFMAPS Feeder, Weights Feeder | feed_data_manager.sv | Smaller Than SRAM Width Feeder Address Limit Leads To Deadlock |
+
+#### BAD_CONFIG1 - Smaller Than SRAM Width Feeder Address Limit Leads To Deadlock
+
+- Area: IFMAPS Feeder, Weights Feeder
+- File(s): feed_data_manager.sv
+
+**Issue**
+
+The global word offset defines the zeroth byte in a feeder SRAM read access and is combined with the local word offset and dilation pattern to compute the value emitted by each feeder lane. If the IFMAPS combined x/y limit is smaller than SRAMA width, or the weights k limit is smaller than SRAMB width, lane push indications become misaligned.
+
+That can leave some lane FIFOs full while others are not. Since full is asserted if any FIFO is full and pop removes entries from all FIFOs, the design can eventually reach a state where some FIFOs are full while others are empty. At that point, full and empty can assert at the same time and the pipeline deadlocks.
+
+**Current Handling**
+
+No RTL fix is currently proposed. The architecture detects the condition and reports deadlock through a status register. The current workaround is to block the configuration through stimulus constraints.
+
+---
 
 
-       

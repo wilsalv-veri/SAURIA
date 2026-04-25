@@ -10,16 +10,18 @@ class sauria_dma_mem_req_shape_model extends sauria_base_model;
     endfunction
 
     virtual function sauria_axi_len_t get_exp_len(sauria_axi4_addr_t mem_req_rd_addr);
+        ensure_configured();
         set_elem_type(mem_req_rd_addr);
         return get_num_beats();
     endfunction
 
     virtual function sauria_axi_size_t get_exp_size(sauria_axi4_addr_t mem_req_rd_addr);
         int ett, btt;
+        ensure_configured();
         set_elem_type(mem_req_rd_addr);
         ett = get_ett();
         btt = get_btt(ett);
-        return ($clog2(btt) > 7) ? 7 : $clog2(btt);
+        return sauria_axi_size_t'(($clog2(btt) > 7) ? 7 : $clog2(btt));
     endfunction
     
     virtual function void set_elem_type(sauria_axi4_addr_t mem_req_rd_addr);
@@ -33,8 +35,8 @@ class sauria_dma_mem_req_shape_model extends sauria_base_model;
     virtual function sauria_axi_len_t get_num_beats();
         int ett = get_ett();
         int btt = get_btt(ett);
-        int transfers  = $floor(btt / DATA_AXI_BYTE_NUM);
-        return (transfers > 0) ? transfers - 1 : transfers;
+        int transfers  = btt / DATA_AXI_BYTE_NUM;
+        return sauria_axi_len_t'((transfers > 0) ? transfers - 1 : transfers);
     endfunction
 
     virtual function int get_btt(int ett);

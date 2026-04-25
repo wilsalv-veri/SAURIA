@@ -1,13 +1,10 @@
-class sauria_weights_feeder_model extends uvm_object;
+class sauria_weights_feeder_model extends sauria_feeder_base_model;
 
     `uvm_object_utils(sauria_weights_feeder_model)
-
-    string message_id = "SAURIA_WEIGHTS_FEEDER_MODEL";
 
     sramb_addr_t               exp_next_sramb_addr;   
     weights_feeder_data_t      feeder_data[$];
     weights_feeder_data_t      feeder_data_inst;
-    weights_feeder_data_t      popped_inst;
 
     arr_row_data_t             weights_cols_active;
     arr_row_data_t             weights_gwoff_cols_active;
@@ -18,30 +15,23 @@ class sauria_weights_feeder_model extends uvm_object;
     sauria_axi4_lite_data_t    act_reps, wei_reps;
     sauria_axi4_lite_data_t    act_rep_idx, wei_rep_idx;
 
-    sauria_axi4_lite_data_t    incntlim, comp_feeding_len;
-    sauria_axi4_lite_data_t    idx_curr_comp, idx_next_comp;
-    
     bit                        wei_feeding_not_done;
-    bit                        overlapping_comps;
-
-    bit                        valid_entry_sramb_addr_accessed;
-    bit                        valid_entry_sramb_data_accessed;
-    bit                        valid_entry_b_arr_data_accessed;
             
    
     function new(string name="sauria_weights_feeder_model");
         super.new(name);
+        set_message_id("SAURIA_WEIGHTS_FEEDER_MODEL");
     endfunction
 
     virtual function void configure(weights_params_t weights_params, arr_row_data_t weights_cols_active);
         this.weights_params            = weights_params;
         this.weights_gwoff_cols_active = get_bitmask(weights_params.tile_params.weights_k_step);
         this.weights_cols_active       = weights_cols_active;
+        is_configured                  = 1'b1;
     endfunction
 
     virtual function void set_incntlim(sauria_axi4_lite_data_t incntlim);
-        this.incntlim = incntlim;
-        comp_feeding_len  = incntlim + sauria_pkg::X;
+        set_incntlim_and_comp_feeding_len(incntlim, sauria_pkg::X);
     endfunction
 
     virtual function void set_reps(sauria_axi4_lite_data_t act_reps, sauria_axi4_lite_data_t wei_reps);
@@ -52,11 +42,52 @@ class sauria_weights_feeder_model extends uvm_object;
 
     virtual function void reset_model();
         feeder_data.delete();
-        idx_curr_comp       = 0;
-        idx_next_comp       = 0;
-        overlapping_comps   = 0;
+        reset_overlap_tracking();
         exp_next_sramb_addr = sramb_addr_t'(0);
         clear_counters();
+    endfunction
+
+    virtual function weights_feeder_sramb_access_result_t observe_sramb_access(weights_feeder_data_t weights_feeder_data,
+                                                                                bit                   til_done);
+        weights_feeder_sramb_access_result_t result = '{default:'0};
+
+        ensure_configured();
+
+        if (til_done) begin
+            result.w_idx = w_idx;
+            result.k_idx = k_idx;
+            result.tile_done_counter_mismatch = !are_tile_done_counters_cleared();
+        end
+
+        result.exp_sramb_addr = exp_next_sramb_addr;
+        result.addr_mismatch  = (result.exp_sramb_addr != weights_feeder_data.sramb_addr);
+
+        add_weights_sram_access(weights_feeder_data);
+
+        return result;
+    endfunction
+
+    virtual function weights_feeder_arr_feed_result_t observe_arr_feed(b_arr_data_t b_arr,
+                                                                        bit          start_feeding,
+                                                                        bit          pop_en,
+                                                                        bit          fifo_empty);
+        weights_feeder_arr_feed_result_t result = '{default:'0};
+
+        ensure_configured();
+
+        if (start_feeding)
+            set_overlapping_comp();
+
+        add_weights_systolic_feed_data(b_arr);
+
+        if (has_valid_entry() && !fifo_empty)
+            result = get_valid_entry();
+
+        if(!(pop_en || is_overlapping_comps()))
+            clear_arr_byte_valids();
+
+        update_comp_indeces();
+        return result;
     endfunction
 
     virtual function void add_weights_sram_access(weights_feeder_data_t weights_feeder_data);   
@@ -113,16 +144,9 @@ class sauria_weights_feeder_model extends uvm_object;
         k_idx       = 0;
     endfunction
 
-    virtual function sramb_addr_t get_next_exp_sramb_rd_addr();
-        return exp_next_sramb_addr;
-    endfunction
-
-    virtual function sauria_axi4_lite_data_t get_w_idx();
-        return w_idx;
-    endfunction
-
-    virtual function sauria_axi4_lite_data_t get_k_idx();
-        return k_idx;
+    virtual function bit are_tile_done_counters_cleared();
+        return (w_idx == sramb_addr_t'(0)) &&
+               (k_idx == sramb_addr_t'(0));
     endfunction
 
     /*------------------------------------------------------------- */
@@ -215,42 +239,22 @@ class sauria_weights_feeder_model extends uvm_object;
     endfunction
 
     virtual function bit has_valid_entry();
-        return $countones(feeder_data[0].arr_byte_valid) == sauria_pkg::X;
+        return (feeder_data.size() > 0) &&
+               ($countones(feeder_data[0].arr_byte_valid) == sauria_pkg::X);
     endfunction
 
-    virtual function sramb_addr_t get_valid_entry_sramb_addr();
-        valid_entry_sramb_addr_accessed = 1'b1;
-        feeder_data_inst = feeder_data[0];
-        pop_valid_entry();
-        return feeder_data_inst.sramb_addr;
-    endfunction
+    virtual function weights_feeder_arr_feed_result_t get_valid_entry();
+        weights_feeder_arr_feed_result_t result = '{default:'0};
 
-    virtual function sramb_data_t get_valid_sramb_data();
-        valid_entry_sramb_data_accessed = 1'b1;
-        feeder_data_inst = feeder_data[0];
-        pop_valid_entry();
-        return get_masked_inactive_cols_data(feeder_data_inst.sramb_data);
-    endfunction
- 
-    virtual function b_arr_data_t get_valid_b_arr_data();
-        valid_entry_b_arr_data_accessed = 1'b1;
-        feeder_data_inst = feeder_data[0];
-        `sauria_info(message_id, $sformatf("Getting B_ARR_Data: 0x%0h Reversed: 0x%0h", feeder_data_inst.b_arr, get_reversed_array_bus(feeder_data_inst.b_arr)))
-        pop_valid_entry();
-        return get_reversed_array_bus(feeder_data_inst.b_arr);
-    endfunction
+        feeder_data_inst       = feeder_data.pop_front();
+        result.valid_entry     = 1'b1;
+        result.sramb_addr      = feeder_data_inst.sramb_addr;
+        result.exp_sramb_data  = get_masked_inactive_cols_data(feeder_data_inst.sramb_data);
+        result.exp_b_arr_data  = get_reversed_array_bus(feeder_data_inst.b_arr);
 
-    virtual function void pop_valid_entry();
-        if (valid_entry_sramb_addr_accessed &&
-            valid_entry_sramb_data_accessed &&
-            valid_entry_b_arr_data_accessed) begin
+        `sauria_info(message_id, $sformatf("Getting B_ARR_Data: 0x%0h Reversed: 0x%0h", feeder_data_inst.b_arr, result.exp_b_arr_data))
 
-            valid_entry_sramb_addr_accessed = 1'b0;
-            valid_entry_sramb_data_accessed = 1'b0;
-            valid_entry_b_arr_data_accessed = 1'b0;
-            popped_inst = feeder_data.pop_front();
-
-        end
+        return result;
     endfunction
 
     virtual function arr_row_data_t get_bitmask(sauria_axi4_lite_data_t k_step);
@@ -267,6 +271,23 @@ class sauria_weights_feeder_model extends uvm_object;
         end
 
         return bitmask;
+    endfunction
+
+    protected virtual function void validate_configuration_ready();
+        if (!computation_params.main_controller_cfg_shared)
+            `sauria_fatal(message_id, "Weights model used before main controller configuration was shared")
+
+        if (!computation_params.weights_cfg_shared)
+            `sauria_fatal(message_id, "Weights model used before weights configuration was shared")
+
+    endfunction
+
+    protected virtual function void configure_from_computation_params();
+        set_incntlim(computation_params.incntlim);
+        set_reps(computation_params.act_reps,
+                 computation_params.wei_reps);
+        configure(computation_params.core_weights_params,
+                  computation_params.weights_cols_active);
     endfunction
 
 endclass

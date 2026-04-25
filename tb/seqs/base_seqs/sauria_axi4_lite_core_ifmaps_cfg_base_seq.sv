@@ -25,13 +25,13 @@ class sauria_axi4_lite_core_ifmaps_cfg_base_seq extends sauria_axi4_lite_cfg_bas
     rand logic[63:0]             dilation_pattern;
                               
     rand sauria_axi4_lite_data_t ifmaps_rows_active;
-    rand sauria_axi4_lite_data_t ifmaps_loc_woffs_0;
-                             
+    
+    rand sauria_axi4_lite_data_t ifmaps_loc_woffs_0;                         
     rand sauria_axi4_lite_data_t ifmaps_loc_woffs_1;
     rand sauria_axi4_lite_data_t ifmaps_loc_woffs_2;
     rand sauria_axi4_lite_data_t ifmaps_loc_woffs_3;
-    rand sauria_axi4_lite_data_t ifmaps_loc_woffs_4;
-                            
+    
+    rand sauria_axi4_lite_data_t ifmaps_loc_woffs_4;                        
     rand sauria_axi4_lite_data_t ifmaps_loc_woffs_5;
     rand sauria_axi4_lite_data_t ifmaps_loc_woffs_6;
     rand sauria_axi4_lite_data_t ifmaps_loc_woffs_7;

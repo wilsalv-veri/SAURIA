@@ -25,7 +25,7 @@ class SAURIA_log:
 
     @staticmethod
     def get_formated_name(name):
-        return f"VX_{name}.log"
+        return f"SA_{name}.log"
 
 def generate_logs(test_run_path):
 

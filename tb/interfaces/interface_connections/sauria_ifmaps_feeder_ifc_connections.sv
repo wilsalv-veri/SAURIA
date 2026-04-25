@@ -21,3 +21,6 @@
 
     assign sauria_ifmaps_feeder_if.act_deadlock  = sauria_ss.sauria_core_i.sauria_logic_top_i.ifmap_feeder_i.o_act_deadlock;     
 	assign sauria_ifmaps_feeder_if.a_arr         = sauria_ss.sauria_core_i.sauria_logic_top_i.ifmap_feeder_i.o_a_arr;            
+
+    assign sauria_ifmaps_feeder_if.data_valid    = sauria_ss.sauria_core_i.sauria_logic_top_i.ifmap_feeder_i.i_pop_en &
+                                                   sauria_ss.sauria_core_i.sauria_logic_top_i.ifmap_feeder_i.i_pipeline_en;

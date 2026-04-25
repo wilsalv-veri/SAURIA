@@ -303,6 +303,11 @@ For full setup instructions, see the [Setup and Usage Guide](docs/tb_docs/setup_
   ```bash
    run_sauria testname
   ```
+   Optional simulator seed examples:
+  ```bash
+   run_sauria testname -sv_seed 12345
+   run_sauria testname -sv_seed=12345
+  ```
    Optional data mode override examples:
   ```bash
    run_sauria testname IFMAPS_DATA_MODE=ALL_TWOS

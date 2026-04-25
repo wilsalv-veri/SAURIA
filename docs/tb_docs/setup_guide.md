@@ -86,6 +86,12 @@ Run any test from the test list below using the following command:
 run_sauria testname
 ```
 
+To reproduce a random scenario with a simulator seed, pass DSIM's `-sv_seed` option:
+```bash
+run_sauria testname -sv_seed 12345
+run_sauria testname -sv_seed=12345
+```
+
 To override default tensor data generation mode from the command line:
 ```bash
 run_sauria testname IFMAPS_DATA_MODE=ALL_TWOS

@@ -1,6 +1,6 @@
-class sauria_tensor_ptr_model extends sauria_base_model;
+class sauria_dataflow_model extends sauria_base_model;
 
-    `uvm_object_utils(sauria_tensor_ptr_model)
+    `uvm_object_utils(sauria_dataflow_model)
 
     sauria_axi4_lite_data_t ifmaps_y_counter;
     sauria_axi4_lite_data_t ifmaps_c_counter;
@@ -32,24 +32,52 @@ class sauria_tensor_ptr_model extends sauria_base_model;
     bit                     update_prev_psums_tile_offset = 1'b1;
     bit                     psums_tile_wr_n_minus_1;
 
-    function new(string name="sauria_tensor_ptr_model");
+    function new(string name="sauria_dataflow_model");
         super.new(name);
-        message_id = "SAURIA_TENSOR_PTR_MODEL";
+        message_id = "SAURIA_DATAFLOW_MODEL";
+    endfunction
+
+    virtual function dma_req_addr_check_result_t observe_rd_addr(sauria_axi4_rd_addr_seq_item dma_rd_addr);
+        dma_req_addr_check_result_t result = init_dma_req_addr_result();
+
+        ensure_configured();
+
+        result.exp_addr       = get_next_exp_rd_address();
+        result.addr_mismatch  = (result.exp_addr != dma_rd_addr.araddr);
+        result.burst_mismatch = (dma_rd_addr.arburst != INCR);
+
+        return result;
+    endfunction
+
+    virtual function dma_req_addr_check_result_t observe_wr_addr(sauria_axi4_wr_addr_seq_item dma_wr_addr);
+        dma_req_addr_check_result_t result = init_dma_req_addr_result();
+
+        ensure_configured();
+
+        result.exp_addr       = get_next_exp_wr_address();
+        result.addr_mismatch  = (result.exp_addr != dma_wr_addr.awaddr);
+        result.burst_mismatch = (dma_wr_addr.awburst != INCR);
+        result.psums_tile_idx = get_psums_tile_idx();
+
+        return result;
     endfunction
 
     virtual function sauria_axi4_addr_t get_next_exp_rd_address();
+        ensure_configured();
             
         if (rd_tensors_done) return sauria_axi4_addr_t'('hdeadbeef);
         else if (is_curr_tile_iter_done())begin 
             clear_done_signals();
 
             if (update_prev_psums_tile_offset) set_prev_SRAMC_tile_offset(); 
-            
-            case(loop_order)
-                0: x_fastest_update_tile_counters();
-                1: c_fastest_update_tile_counters();
-                2: k_fastest_update_tile_counters();
-            endcase
+
+            if (loop_order == 0)
+                x_fastest_update_tile_counters();
+            else if (loop_order == 1)
+                c_fastest_update_tile_counters();
+            else if (loop_order == 2)
+                k_fastest_update_tile_counters();
+
             `sauria_info(message_id, $sformatf("Tile Counters K: %0d C: %0d Y: %0d X: %0d", tile_K_counter, tile_C_counter, tile_Y_counter, tile_X_counter))
             
             update_tile_addr_offsets();
@@ -63,6 +91,7 @@ class sauria_tensor_ptr_model extends sauria_base_model;
     endfunction
 
     virtual function sauria_axi4_addr_t get_next_exp_wr_address();
+        ensure_configured();
         update_prev_psums_tile_offset = 1'b1;   
         
         if (psums_tile_wr_n_minus_1 && psums_done)begin
@@ -85,7 +114,7 @@ class sauria_tensor_ptr_model extends sauria_base_model;
     virtual function  sauria_tensor_type_t select_tensor();
         
         if (!ifmaps_done && !weights_done && !psums_done)begin
-            if (get_ifmaps() || is_first_tile()) return IFMAPS;
+            if (get_ifmaps()) return IFMAPS;
             else begin
                 ifmaps_done = 1'b1;
                 return WEIGHTS;
@@ -98,27 +127,37 @@ class sauria_tensor_ptr_model extends sauria_base_model;
     endfunction
 
     virtual function bit get_ifmaps();
-        case(loop_order)
-            0: return 1'b1;
-            1: return 1'b1;
-            2: return (tile_K_counter == 0);
-        endcase
+        if (is_first_tile())
+            return 1'b1;
+        else if (loop_order == 0)
+            return 1'b1;
+        else if (loop_order == 1)
+            return 1'b1;
+        else if (loop_order == 2)
+            return (tile_K_counter == 0);
     endfunction
 
     virtual function bit get_weights();
-        case(loop_order)
-            0: return (tile_X_counter == 0) && (tile_Y_counter == 0);
-            1: return 1'b1;
-            2: return 1'b1;
-        endcase
+
+        if (is_first_tile())
+            return 1'b1;
+        else if (loop_order == 0)
+            return (tile_X_counter == 0) && (tile_Y_counter == 0);
+        else if (loop_order == 1)
+            return ((tile_C > 1) || (tile_K > 1));
+        else if ((loop_order == 2) )
+            return ((tile_C > 1) || (tile_K > 1));
     endfunction
 
     virtual function bit get_psums();
-        case(loop_order)
-            0: return 1'b1;
-            1: return (tile_C_counter == 0);
-            2: return 1'b1;
-        endcase
+        if (is_first_tile())
+            return 1'b1;
+        else if (loop_order == 0)
+            return 1'b1;
+        else if (loop_order == 1)
+            return (tile_C_counter == 0);
+        else if (loop_order == 2)
+            return 1'b1;
     endfunction
 
     virtual function bit is_curr_tile_iter_done();

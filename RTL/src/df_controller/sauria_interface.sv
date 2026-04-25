@@ -19,8 +19,6 @@
 // Jordi Fornt <jfornt@bsc.es>
 //
 
-import sauria_cfg_pkg::*;
-
 module sauria_interface #(
     parameter N_REGS = 1
 )(
@@ -222,45 +220,39 @@ module sauria_interface #(
         start_wresp_sync <= 1'b0;
         start_dma_controller <= 1'b0;
 
-        if (DV_GEMM_BYPASS)begin
-            dma_params.dma.psums.k_lim <= (dma_params.dma.weights.w_step - 12'd1); 
+        //NOTE: wilsalv :DF_BUGID10
+        //dma_params.dma.psums.k_lim <= (WXfer_op == 1'b1) ? (dma_params.dma.weights.w_step - 12'd1) : (dma_params.tile.weights.k_step - 12'd1);  // ETIL_W_WSTEP = Cout -> Becomes an auxiliary register to not mess up PSUMS
+        dma_params.dma.psums.k_lim <= (dma_params.dma.weights.w_step - 12'd1); 
             
-            dma_params.dma.psums.y_lim <= {12'd0, dma_params.dma.psums.k_step} - {12'd0, dma_params.dma.psums.y_step};
+        //NOTE: wilsalv :DF_BUGID11
+        //dma_params.dma.psums.y_lim <= dma_params.tile.psums.y_step - {12'd0, dma_params.dma.psums.y_step};
+        dma_params.dma.psums.y_lim <= {12'd0, dma_params.dma.psums.k_step} - {12'd0, dma_params.dma.psums.y_step};
             
-            dma_params.dma.weights.w_lim <= (dma_params.tile.weights.c_step - {12'd0, dma_params.dma.weights.w_step});     // WHOLE TILE WILL ALWAYS BE SENT IN A SINGLE DMA TRANSACTION!
+        //NOTE: wilsalv :DF_BUGID12
+        //dma_params.dma.weights.w_lim <= (WXfer_op == 1'b1) ? 1 : (dma_params.tile.weights.c_step - {12'd0, dma_params.dma.weights.w_step});     // WHOLE TILE WILL ALWAYS BE SENT IN A SINGLE DMA TRANSACTION!
+        dma_params.dma.weights.w_lim <= (dma_params.tile.weights.c_step - {12'd0, dma_params.dma.weights.w_step});     // WHOLE TILE WILL ALWAYS BE SENT IN A SINGLE DMA TRANSACTION!
 
-            if (Cw_eq && Ch_eq) begin
-                dma_params.dma.psums.ett <= {12'd0, dma_params.tile.psums.x_step}; //WHOLE PSUMS Tile Per DMA Rd Req
-            end else begin
-                dma_params.dma.psums.ett <= dma_params.dma.ifmaps.ett;
-            end
+        //NOTE: wilsalv :DF_BUGID13 DF_BUGID14 DF_BUGID15
+        /*if (Cw_eq && Ch_eq) begin
+            dma_params.dma.psums.ett <= dma_params.tile.psums.k_step;    
+        end else if (Cw_eq) begin
+            dma_params.dma.psums.ett <= dma_params.tile.psums.y_step;
+        end else begin
+            dma_params.dma.psums.ett <= dma_params.dma.ifmaps.ett;
+        end*/
 
-            if (Ck_eq) begin
-                dma_params.dma.weights.ett <= dma_params.tile.weights.c_step; //WHOLE WEIGHTS Tile Per DMA Rd Req
-            end else begin
-                dma_params.dma.weights.ett <= {12'd0, dma_params.dma.weights.w_step};
-            end
+        if (Cw_eq && Ch_eq) begin
+            dma_params.dma.psums.ett <= {12'd0, dma_params.tile.psums.x_step}; //WHOLE PSUMS Tile Per DMA Rd Req
+        end else begin
+            dma_params.dma.psums.ett <= dma_params.dma.ifmaps.ett;
         end
-        else begin
-            dma_params.dma.psums.k_lim <= (WXfer_op == 1'b1) ? (dma_params.dma.weights.w_step - 12'd1) : (dma_params.tile.weights.k_step - 12'd1);  // ETIL_W_WSTEP = Cout -> Becomes an auxiliary register to not mess up PSUMS
-            
-            dma_params.dma.psums.y_lim <= dma_params.tile.psums.y_step - {12'd0, dma_params.dma.psums.y_step};
-            
-            dma_params.dma.weights.w_lim <= (WXfer_op == 1'b1) ? 1 : (dma_params.tile.weights.c_step - {12'd0, dma_params.dma.weights.w_step});     // WHOLE TILE WILL ALWAYS BE SENT IN A SINGLE DMA TRANSACTION!
-            
-            if (Cw_eq && Ch_eq) begin
-                dma_params.dma.psums.ett <= dma_params.tile.psums.k_step;    
-            end else if (Cw_eq) begin
-                dma_params.dma.psums.ett <= dma_params.tile.psums.y_step;
-            end else begin
-                dma_params.dma.psums.ett <= dma_params.dma.ifmaps.ett;
-            end
 
-            if (Ck_eq) begin
-                dma_params.dma.weights.ett <= dma_params.tile.weights.c_step; //WHOLE WEIGHTS Tile Per DMA Rd Req
-            end else begin
-                dma_params.dma.weights.ett <= {12'd0, dma_params.dma.weights.w_step};
-            end
+        if (Ck_eq) begin
+            //NOTE: wilsalv :DF_BUGID16
+            //dma_params.dma.weights.ett <= dma_params.tile.weights.c_step; //WHOLE WEIGHTS Tile Per DMA Rd Req
+            dma_params.dma.weights.ett <= dma_params.tile.weights.c_step; //WHOLE WEIGHTS Tile Per DMA Rd Req
+        end else begin
+            dma_params.dma.weights.ett <= {12'd0, dma_params.dma.weights.w_step};
         end
         
         case (state)

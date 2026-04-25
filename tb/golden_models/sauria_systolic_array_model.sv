@@ -4,6 +4,9 @@ class sauria_systolic_array_model extends uvm_object;
 
     string message_id = "SAURIA_SYSTOLIC_ARRAY_MODEL";
 
+    sauria_computation_params                 computation_params;
+    bit                                       is_configured;
+
     a_arr_data_t                            a_arr_entries[$];	 // Activation operands
 	b_arr_data_t                            b_arr_entries[$];	 // Weight operands
 	
@@ -55,6 +58,11 @@ class sauria_systolic_array_model extends uvm_object;
         super.new(name);
     endfunction
 
+    virtual function void set_computation_params(sauria_computation_params computation_params);
+        this.computation_params = computation_params;
+        is_configured           = 1'b0;
+    endfunction
+
     virtual function void reset();
         idx_curr_comp = 0;
         context_count = 0;
@@ -70,6 +78,44 @@ class sauria_systolic_array_model extends uvm_object;
 
     virtual function void set_psums_preload_en(bit psums_preload_en);
         this.psums_preload_en = psums_preload_en;
+    endfunction
+
+    virtual function systolic_array_scan_chain_result_t observe_scan_chain_event(bit               cscan_en,
+                                                                                 scan_chain_data_t i_c_arr,
+                                                                                 arr_psum_reg_t    arr_psum_reserve_reg);
+        systolic_array_scan_chain_result_t result = '{default:'0};
+
+        if (!try_ensure_configured())
+            return result;
+
+        if ((cscan_en || is_cscan_last_shift()) && is_scan_chain_out_data_valid()) begin
+            `sauria_info(message_id, "Valid CSCAN")
+            result.valid_scan_chain_out = 1'b1;
+            result.scan_chain_out_col_idx = get_curr_scan_chain_out_col_idx() - 1;
+            result.exp_scan_chain_out_col = get_scan_chain_out_col();
+        end
+        else if (is_cscan_done()) begin
+            result.valid_psum_reserve_reg_snapshot = 1'b1;
+            result.exp_arr_psum_reserve_reg = get_psum_shift_reg_as_arr_psum_reg();
+        end
+
+        observe_scan_chain(cscan_en, i_c_arr, arr_psum_reserve_reg);
+        return result;
+    endfunction
+
+    virtual function systolic_array_context_switch_result_t observe_context_switch(bit            first_ctx_switch,
+                                                                                   arr_psum_reg_t pre_cswitch_arr_psum_reserve_reg);
+        systolic_array_context_switch_result_t result = '{default:'0};
+
+        if (!try_ensure_configured())
+            return result;
+
+        if (first_ctx_switch)
+            set_pre_cswitch_arr_psum_reserve_reg(pre_cswitch_arr_psum_reserve_reg);
+
+        result.valid_context_switch = 1'b1;
+        result.exp_pre_cswitch_arr_psum_reserve_reg = get_pre_cswitch_arr_psums_reserve_reg();
+        return result;
     endfunction
 
     virtual function void observe_scan_chain(bit cscan_en, ref scan_chain_data_t i_c_arr, 
@@ -149,11 +195,11 @@ class sauria_systolic_array_model extends uvm_object;
 
     virtual function scan_chain_data_t get_scan_chain_out_col();
         scan_chain_data_t scan_chain_out_col;
-        
-        case(rd_ptr)
-            0: scan_chain_out_col = psum_scan_chain_out_a.pop_front();
-            1: scan_chain_out_col = psum_scan_chain_out_b.pop_front();
-        endcase
+
+        if (!rd_ptr)
+            scan_chain_out_col = psum_scan_chain_out_a.pop_front();
+        else
+            scan_chain_out_col = psum_scan_chain_out_b.pop_front();
 
         update_popped_psums_col_entry_count();
         
@@ -165,10 +211,10 @@ class sauria_systolic_array_model extends uvm_object;
     endfunction
 
     virtual function int get_curr_scan_chain_out_col_idx();
-        case(rd_ptr)
-            0: return sauria_pkg::X  - psum_scan_chain_out_a.size();
-            1: return sauria_pkg::X  - psum_scan_chain_out_b.size();
-        endcase
+        if (!rd_ptr)
+            return sauria_pkg::X  - psum_scan_chain_out_a.size();
+        else
+            return sauria_pkg::X  - psum_scan_chain_out_b.size();
     endfunction
 
     virtual function bit all_curr_ctx_psum_cols_popped();
@@ -189,6 +235,19 @@ class sauria_systolic_array_model extends uvm_object;
         return scan_chain_data_q_t'(shift_reg_clone);
     endfunction
 
+    virtual function arr_psum_reg_t get_psum_shift_reg_as_arr_psum_reg();
+        arr_psum_reg_t psum_reserve_reg_snapshot;
+        scan_chain_data_q_t psum_shift_reg_snapshot;
+
+        psum_shift_reg_snapshot = get_psum_shift_reg_clone();
+        for (int col = 0; col < sauria_pkg::X; col++) begin
+            for (int row = 0; row < sauria_pkg::Y; row++)
+                psum_reserve_reg_snapshot[row][col] = psum_shift_reg_snapshot[col][row];
+        end
+
+        return psum_reserve_reg_snapshot;
+    endfunction
+
     virtual function void set_pre_cswitch_arr_psum_reserve_reg(arr_psum_reg_t pre_cswitch_arr_psum_reserve_reg);
         this.pre_cswitch_arr_psum_reserve_reg = pre_cswitch_arr_psum_reserve_reg;
     endfunction
@@ -200,6 +259,9 @@ class sauria_systolic_array_model extends uvm_object;
     /***********COMPUTATION FUNCTIONS************************* */
 
     virtual function void observe_mac_context_data(bit start_data_feed, bit data_feed_valid, a_arr_data_t a_arr, b_arr_data_t b_arr);
+        if (!try_ensure_configured())
+            return;
+
         if (start_data_feed)
             start_context();
     
@@ -338,10 +400,10 @@ class sauria_systolic_array_model extends uvm_object;
                 mac_psum_reg[row][col] = 0;
             end
             
-            case(wr_ptr)
-                0: psum_scan_chain_out_a.push_back(psum_col);
-                1: psum_scan_chain_out_b.push_back(psum_col);
-            endcase
+            if (!wr_ptr)
+                psum_scan_chain_out_a.push_back(psum_col);
+            else
+                psum_scan_chain_out_b.push_back(psum_col);
         end
 
         flip_wr_ptr();        
@@ -353,7 +415,10 @@ class sauria_systolic_array_model extends uvm_object;
         
         for(int i=0; i < last_valid_queue_elem; i++)begin 
             
-            if ((i == sauria_pkg::Y - 1 -  (idx_curr_comp - incntlim)) && (idx_curr_comp >= incntlim) && (!overlapping_contexts))
+            if ((i == sauria_pkg::Y - 1 -  (idx_curr_comp - incntlim)) &&
+                (idx_curr_comp >= incntlim) &&
+                (idx_curr_comp != (comp_feeding_len - 1)) &&
+                (!overlapping_contexts))
                 break;
 
             for(int row=0; row < sauria_pkg::Y; row++)begin
@@ -362,7 +427,15 @@ class sauria_systolic_array_model extends uvm_object;
                     ifmaps_feeder_out_data[i].arr_byte_valid[row] = 1'b1; //Set To Valid
                     ifmaps_feeder_out_data[i].a_arr[row]          = a_arr[row];
                     
-                    if (i == 0) last_valid_queue_elem  = row + 1;
+                    if ((i == 0) && (row < last_valid_queue_elem)) begin
+                        last_valid_queue_elem = row + 1;
+                    end
+                    else if (overlapping_contexts && (row == 0)) begin
+                        `sauria_info(message_id, $sformatf("Overlapping Contexts Found Idx: %0d Row: %0d Last_Valid_Elem_Before: %0d Last_Valid_Elem_After: %0d",
+                        i, row, last_valid_queue_elem, i))
+                        last_valid_queue_elem = i;
+                    end
+
                     `sauria_info(message_id, $sformatf("Valid elem_idx: %0d a_arr_row[%0d]: 0x%0h Entry_Val: 0x%0h",
                     i, row, a_arr[row], a_arr))
                     break;    
@@ -556,6 +629,26 @@ class sauria_systolic_array_model extends uvm_object;
             // Normal Number: Pack Sign, New Exponent, and top 10 bits of Mantissa
             return {sign, 5'(new_exp), man32[22:13]};
         end
+    endfunction
+
+    local function bit try_ensure_configured();
+        if (is_configured)
+            return 1'b1;
+
+        if (computation_params == null)
+            `sauria_fatal(message_id, "Computation params handle was not provided")
+
+        if (!computation_params.main_controller_cfg_shared)
+            return 1'b0;
+
+        set_incntlim(computation_params.incntlim);
+
+        if (!computation_params.psums_mgr_cfg_shared)
+            return 1'b0;
+
+        set_psums_preload_en(computation_params.psums_preload_en != 0);
+        is_configured = 1'b1;
+        return 1'b1;
     endfunction
      
 endclass

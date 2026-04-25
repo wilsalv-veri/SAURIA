@@ -25,7 +25,7 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     rand sauria_axi4_lite_data_t psums_preload_en;
        
     constraint psums_preload_en_c{
-        psums_preload_en == sauria_axi4_lite_data_t'('h1);
+        psums_preload_en == sauria_axi4_lite_data_t'('h0);
     }
     
     constraint psums_inactive_cols_c{
@@ -132,6 +132,10 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
         psums_ck_lim        = psums_ck_step 
                             * computation_params.df_controller_psums_params.tile_params.psums_K; 
         
+        `sauria_info(message_id, $sformatf("PSUMS CK_LIM: 0x%0h K:%0d CX_STEP: 0x%0h Combined: 0x%0h Field_Len: %0d", 
+                            psums_ck_lim, computation_params.df_controller_psums_params.tile_params.psums_K, 
+                            psums_ck_step, psums_ck_step * computation_params.df_controller_psums_params.tile_params.psums_K, PSUMS_TILE_DIM_SIZE))
+
         //Single Tile
         psums_tile_cy_step  = psums_ck_lim; 
         psums_tile_cy_lim   = psums_ck_lim;  

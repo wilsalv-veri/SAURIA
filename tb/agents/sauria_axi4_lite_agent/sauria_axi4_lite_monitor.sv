@@ -7,7 +7,7 @@ class sauria_axi4_lite_monitor extends uvm_monitor;
     sauria_axi4_lite_wr_txn_seq_item cfg_wr_txn_item;
     sauria_axi4_lite_rd_txn_seq_item cfg_rd_txn_item;
     
-    uvm_analysis_port #(sauria_axi4_lite_rd_txn_seq_item) send_cfg_perf_info;
+    uvm_analysis_port #(sauria_axi_txn_base_seq_item) send_cfg_perf_info;
 
     virtual sauria_axi4_lite_ifc  sauria_axi4_lite_cfg_if;
     virtual sauria_subsystem_ifc  sauria_ss_if;
@@ -51,6 +51,15 @@ class sauria_axi4_lite_monitor extends uvm_monitor;
                 cfg_rd_txn_item.rd_data_item.rdata  = sauria_axi4_lite_cfg_if.axi4_lite_rd_data_ch.rdata;
                 send_cfg_perf_info.write(cfg_rd_txn_item);
             end
+
+            if (sauria_axi4_lite_cfg_if.axi4_lite_wr_addr_ch.awvalid)
+               cfg_wr_txn_item.wr_addr_item.awaddr =  sauria_axi4_lite_cfg_if.axi4_lite_wr_addr_ch.awaddr; 
+        
+            if (sauria_axi4_lite_cfg_if.axi4_lite_wr_data_ch.wvalid) begin
+                cfg_wr_txn_item.wr_data_item.wdata  = sauria_axi4_lite_cfg_if.axi4_lite_wr_data_ch.wdata;
+                send_cfg_perf_info.write(cfg_wr_txn_item);
+            end
+
         end
 
     endtask

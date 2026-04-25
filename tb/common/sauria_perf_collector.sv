@@ -8,7 +8,7 @@ class sauria_perf_collector extends uvm_component;
     
     sauria_axi4_lite_seqr   axi4_lite_seqr;
    
-    sauria_perf_scbd      perf_scbd;
+    sauria_perf_logger    perf_logger;
     sauria_perf_seq       perf_seq;
 
     function new(string name="suria_perf_collector", uvm_component parent=null);
@@ -19,8 +19,8 @@ class sauria_perf_collector extends uvm_component;
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
 
-        perf_seq  = sauria_perf_seq::type_id::create("sauria_perf_seq");
-        perf_scbd = sauria_perf_scbd::type_id::create("sauria_perf_scbd", this);
+        perf_seq    = sauria_perf_seq::type_id::create("sauria_perf_seq");
+        perf_logger = sauria_perf_logger::type_id::create("sauria_perf_logger", this);
 
         if (!uvm_config_db #(virtual sauria_core_ifc)::get(this, "", "sauria_core_if", sauria_core_if))
             `sauria_error(message_id, "Failed to get access to sauria_core_if")

@@ -9,6 +9,9 @@ class sauria_w_dma_base_test extends sauria_base_test;
 
     virtual function void build_phase(uvm_phase phase);
         set_type_override_by_type(sauria_axi4_lite_df_controller_cfg_base_seq::get_type(),  sauria_rand_df_controller_cfg_seq::get_type());
+        set_type_override_by_type(sauria_axi4_lite_core_ifmaps_cfg_base_seq::get_type(),    sauria_rand_core_ifmaps_cfg_seq::get_type());
+        set_type_override_by_type(sauria_axi4_lite_core_weights_cfg_base_seq::get_type(),   sauria_rand_core_weights_cfg_seq::get_type());
+        set_type_override_by_type(sauria_axi4_lite_core_psums_cfg_base_seq::get_type(),     sauria_rand_core_psums_cfg_seq::get_type());
         super.build_phase(phase);
     endfunction
 

@@ -11,6 +11,58 @@
     typedef bit [CFG_AXI_DATA_WIDTH-1:0]  sauria_axi4_lite_data_t;
     typedef bit [DATA_AXI_DATA_WIDTH-1:0] sauria_axi4_data_t;
 
+    typedef enum bit [1:0] {GEMM_OPERAND_A, GEMM_OPERAND_B, GEMM_OPERAND_C} gemm_tensor_operand_t;
+    typedef enum bit {GEMM_ACCESS_READ, GEMM_ACCESS_WRITE} gemm_access_dir_t;
+
+    typedef struct {
+        sauria_axi4_lite_data_t total_m;
+        sauria_axi4_lite_data_t total_k;
+        sauria_axi4_lite_data_t total_n;
+        sauria_axi4_lite_data_t tile_m_count;
+        sauria_axi4_lite_data_t tile_k_count;
+        sauria_axi4_lite_data_t tile_n_count;
+        sauria_axi4_lite_data_t a_m_per_tile;
+        sauria_axi4_lite_data_t a_k_per_tile;
+        sauria_axi4_lite_data_t b_k_per_tile;
+        sauria_axi4_lite_data_t b_n_per_tile;
+        sauria_axi4_lite_data_t c_m_per_tile;
+        sauria_axi4_lite_data_t c_n_per_tile;
+    } gemm_problem_shape_t;
+
+    typedef struct {
+        bit                     valid;
+        gemm_tensor_operand_t   operand;
+        gemm_access_dir_t       access_dir;
+        sauria_axi4_lite_data_t m_tile_idx;
+        sauria_axi4_lite_data_t k_tile_idx;
+        sauria_axi4_lite_data_t n_tile_idx;
+        sauria_axi4_lite_data_t m_block_idx;
+        sauria_axi4_lite_data_t k_block_idx;
+        sauria_axi4_lite_data_t n_block_idx;
+        sauria_axi4_lite_data_t contiguous_span;
+        bit                     requires_existing_c;
+        bit                     final_c_write;
+    } gemm_tensor_access_event_t;
+
+    typedef struct {
+        bit                valid;
+        sauria_tensor_type_t tensor;
+        gemm_access_dir_t  access_dir;
+        sauria_axi4_lite_data_t m_tile_idx;
+        sauria_axi4_lite_data_t k_tile_idx;
+        sauria_axi4_lite_data_t n_tile_idx;
+        sauria_axi4_lite_data_t m_block_idx;
+        sauria_axi4_lite_data_t k_block_idx;
+        sauria_axi4_lite_data_t n_block_idx;
+        int                sauria_tile_idx;
+        int                reported_psums_tile_idx;
+        sauria_axi4_addr_t intra_tile_offset;
+        sauria_axi4_addr_t tile_offset;
+        sauria_axi4_addr_t elem_byte_offset;
+        sauria_axi4_addr_t row_addr;
+        bit                final_c_write;
+    } gemm_sauria_addr_map_t;
+
     typedef bit [sauria_pkg::IA_W-1:0]    sauria_ifmaps_elem_data_t;
     typedef bit [sauria_pkg::IB_W-1:0]    sauria_weights_elem_data_t;
     typedef bit [sauria_pkg::OC_W-1:0]    sauria_psums_elem_data_t;
@@ -344,6 +396,45 @@
 
     } psums_params_t;
 
+    typedef scan_chain_data_t psums_shift_reg_snapshot_t [sauria_pkg::X];
+
+    typedef struct {
+        bit          addr_check_valid;
+        bit          addr_mismatch;
+        sramc_addr_t exp_addr;
+    } psums_mgr_sramc_read_result_t;
+
+    typedef struct {
+        bit          addr_mismatch;
+        sramc_addr_t exp_addr;
+        bit          shift_reg_data_empty;
+        bit          data_valid;
+        sramc_data_t exp_wdata;
+    } psums_mgr_sramc_write_result_t;
+
+    typedef struct {
+        bit               valid_preload_check;
+        scan_chain_data_t exp_preload_data;
+    } psums_mgr_preload_result_t;
+
+    typedef struct {
+        bit                         valid_snapshot;
+        psums_shift_reg_snapshot_t  exp_shift_reg;
+    } psums_mgr_shift_reg_result_t;
+
+    typedef struct {
+        bit               valid_scan_chain_out;
+        int               scan_chain_out_col_idx;
+        scan_chain_data_t exp_scan_chain_out_col;
+        bit               valid_psum_reserve_reg_snapshot;
+        arr_psum_reg_t    exp_arr_psum_reserve_reg;
+    } systolic_array_scan_chain_result_t;
+
+    typedef struct {
+        bit            valid_context_switch;
+        arr_psum_reg_t exp_pre_cswitch_arr_psum_reserve_reg;
+    } systolic_array_context_switch_result_t;
+
     typedef struct {
         srama_addr_t               srama_addr;   
         srama_data_t               srama_data;
@@ -353,12 +444,52 @@
     } ifmaps_feeder_data_t;
 
     typedef struct {
+        bit                     addr_mismatch;
+        srama_addr_t            exp_srama_addr;
+        bit                     tile_done_counter_mismatch;
+        sauria_axi4_lite_data_t c_idx;
+        sauria_axi4_lite_data_t x_idx;
+        sauria_axi4_lite_data_t y_idx;
+    } ifmaps_feeder_srama_access_result_t;
+
+    typedef struct {
+        bit          valid_entry;
+        srama_addr_t srama_addr;
+        srama_data_t exp_srama_data;
+        a_arr_data_t exp_a_arr_data;
+    } ifmaps_feeder_arr_feed_result_t;
+
+    typedef struct {
         sramb_addr_t               sramb_addr;   
         sramb_data_t               sramb_data;
         b_arr_data_t               b_arr; 
         bit [sauria_pkg::X-1:0]    arr_byte_valid;
     
     } weights_feeder_data_t;
+
+    typedef struct {
+        bit                     addr_mismatch;
+        sramb_addr_t            exp_sramb_addr;
+        bit                     tile_done_counter_mismatch;
+        sauria_axi4_lite_data_t w_idx;
+        sauria_axi4_lite_data_t k_idx;
+    } weights_feeder_sramb_access_result_t;
+
+    typedef struct {
+        bit          valid_entry;
+        sramb_addr_t sramb_addr;
+        sramb_data_t exp_sramb_data;
+        b_arr_data_t exp_b_arr_data;
+    } weights_feeder_arr_feed_result_t;
+
+    typedef struct {
+        bit                addr_mismatch;
+        sauria_axi4_addr_t exp_addr;
+        bit                burst_mismatch;
+        int                psums_tile_idx;
+        bit                debug_map_valid;
+        gemm_sauria_addr_map_t debug_map;
+    } dma_req_addr_check_result_t;
 
     typedef struct{
         sauria_ifmaps_elem_data_t ifmaps_data[$];

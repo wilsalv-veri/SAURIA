@@ -43,19 +43,28 @@ class sauria_axi4_lite_dma_controller_cfg_base_seq extends sauria_axi4_lite_cfg_
     //Independent Constraints
     constraint tile_dimensions_c {
         solve rows_multiple before X, Y;
+        solve X, Y before K;
         solve cols_multiple before K;
 
         rows_multiple inside {[MIN_MULTIPLE : MAX_MULTIPLE]};
         cols_multiple inside {[MIN_MULTIPLE : MAX_MULTIPLE]};
 
+        X               <= (2**ACT_TILE_DIM_SIZE);
         X               <= sauria_pkg::Y * MAX_MULTIPLE;
-       (X % sauria_pkg::Y)   == 0; //           <=  * MAX_MULTIPLE;
-        
+       (X % sauria_pkg::Y)   == 0;
+       
+        X               <= (2**WEI_TILE_DIM_SIZE);
         Y               <= sauria_pkg::Y * MAX_MULTIPLE;
+        (Y % sauria_pkg::Y)   == 0;
 
         X * Y           == sauria_pkg::Y * rows_multiple;
         C  inside {[MIN_COMP_LEN:MAX_COMP_LEN]};
+        
         K               == sauria_pkg::X * cols_multiple;
+        K               <= ((2**(PSUMS_TILE_DIM_SIZE-1)) / (X * Y));
+        (K % sauria_pkg::Y)      == 0;
+        (DATA_AXI_BYTE_NUM % K)  == 0;
+
     }
 
     constraint tensor_dimensions_c {

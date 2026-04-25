@@ -8,8 +8,11 @@ package sauria_golden_model_pkg;
     import sauria_common_pkg::*;
    
     `include "sauria_base_model.sv"
+    `include "sauria_feeder_base_model.sv"
     `include "sauria_dma_mem_req_shape_model.sv"
-    `include "sauria_tensor_ptr_model.sv"
+    `include "gemm_tensor_model.sv"
+    `include "sauria_dataflow_model.sv"
+    `include "sauria_gemm_tensor_ptr_adapter_model.sv"
 
     `include "sauria_ifmaps_feeder_model.sv"
     `include "sauria_weights_feeder_model.sv"

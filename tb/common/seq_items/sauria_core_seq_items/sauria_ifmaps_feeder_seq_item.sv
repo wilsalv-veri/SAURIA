@@ -9,6 +9,7 @@ class sauria_ifmaps_feeder_seq_item extends uvm_sequence_item;
     bit                        act_valid;        // Flag: valid inputs at feeder
    
     // FIFO control inputs
+    bit                        start_feeding;
     bit                        clearfifo;        // Clear signal for FIFO
     bit                        pipeline_en;      // Systolic Array pipeline enable
     bit                        pop_en;           // FIFO pop enable

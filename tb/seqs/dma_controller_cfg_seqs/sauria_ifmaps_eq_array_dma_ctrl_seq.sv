@@ -7,11 +7,5 @@ class sauria_ifmaps_eq_array_dma_ctrl_cfg_seq extends sauria_axi4_lite_dma_contr
         message_id = "SAURIA_IFMAPS_EQ_ARRAY_DMA_CTRL_CFG_SEQ";
     endfunction
 
-   //Independent Constraints
-   //constraint tile_dimensions_c {
-   //     X * Y           == `Y;
-   //     C  inside {[MIN_COMP_LEN:MAX_COMP_LEN]};
-   //     K               == `X;
-   // }
      
 endclass

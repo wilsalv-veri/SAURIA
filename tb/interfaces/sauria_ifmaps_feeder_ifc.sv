@@ -11,6 +11,7 @@ interface sauria_ifmaps_feeder_ifc import sauria_pkg::*;();
     logic                        act_valid;        // Flag: valid inputs at feeder
     
     // FIFO control inputs
+    logic                         data_valid;
     logic                         clearfifo;        // Clear signal for FIFO
     logic                         pipeline_en;      // Systolic Array pipeline enable
     logic                         pop_en;           // FIFO pop enable

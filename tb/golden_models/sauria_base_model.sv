@@ -4,6 +4,9 @@ class sauria_base_model extends uvm_object;
 
     string message_id = "SAURIA_BASE_MODEL";
 
+    sauria_computation_params computation_params;
+    bit                      is_configured;
+
     sauria_axi4_lite_data_t ifmap_X;
     sauria_axi4_lite_data_t ifmap_Y;
     sauria_axi4_lite_data_t ifmap_C;
@@ -44,12 +47,67 @@ class sauria_base_model extends uvm_object;
         super.new(name);
     endfunction
 
+    protected function gemm_sauria_addr_map_t init_debug_map();
+        gemm_sauria_addr_map_t result;
+
+        result.valid                   = 1'b0;
+        result.tensor                  = IFMAPS;
+        result.access_dir              = GEMM_ACCESS_READ;
+        result.m_tile_idx              = '0;
+        result.k_tile_idx              = '0;
+        result.n_tile_idx              = '0;
+        result.m_block_idx             = '0;
+        result.k_block_idx             = '0;
+        result.n_block_idx             = '0;
+        result.sauria_tile_idx         = 0;
+        result.reported_psums_tile_idx = -1;
+        result.intra_tile_offset       = '0;
+        result.tile_offset             = '0;
+        result.elem_byte_offset        = '0;
+        result.row_addr                = '0;
+        result.final_c_write           = 1'b0;
+
+        return result;
+    endfunction
+
+    protected function dma_req_addr_check_result_t init_dma_req_addr_result();
+        dma_req_addr_check_result_t result;
+
+        result.addr_mismatch   = 1'b0;
+        result.exp_addr        = '0;
+        result.burst_mismatch  = 1'b0;
+        result.psums_tile_idx  = 0;
+        result.debug_map_valid = 1'b0;
+        result.debug_map       = init_debug_map();
+
+        return result;
+    endfunction
+
+    virtual function void set_computation_params(sauria_computation_params computation_params);
+        this.computation_params = computation_params;
+        is_configured           = 1'b0;
+    endfunction
+
     virtual function void configure_model(sauria_computation_params computation_params);
         set_tensor_modifiers(computation_params);
         set_tensor_dimensions(computation_params);
         set_tensor_start_addr(computation_params);
         set_tile_sizes(computation_params);
         set_loop_order(computation_params);
+        is_configured = 1'b1;
+    endfunction
+
+    virtual function void ensure_configured();
+        if (is_configured)
+            return;
+
+        if (computation_params == null)
+            `sauria_fatal(message_id, "Computation params handle was not provided")
+
+        if (!(computation_params.tensors_start_addr_shared && computation_params.shared))
+            `sauria_fatal(message_id, "DMA model used before computation params were shared")
+
+        configure_model(computation_params);
     endfunction
 
     virtual function void set_tensor_dimensions(sauria_computation_params computation_params);
@@ -72,7 +130,7 @@ class sauria_base_model extends uvm_object;
         tile_C      = computation_params.tile_C;
         tile_K      = computation_params.tile_K;
 
-        tile_dim_loop_order = get_tile_dime_loop_order();
+        tile_dim_loop_order = get_tile_dim_loop_order();
     
         single_tile = is_single_tile();
     endfunction
@@ -116,11 +174,10 @@ class sauria_base_model extends uvm_object;
         return (tile_K == 0) && (tile_C == 0) && (tile_Y == 0) && (tile_X == 0);
     endfunction
 
-    virtual function sauria_axi4_lite_data_t get_tile_dime_loop_order();
+    virtual function sauria_axi4_lite_data_t get_tile_dim_loop_order();
         if (is_single_dim_multi_tile())begin
 
-            if (x_only_multi_dim) return 0;
-            else if (y_only_multi_dim) return 0;
+            if (x_only_multi_dim || y_only_multi_dim) return computation_params.loop_order;
             else if (c_only_multi_dim) return 1;
             else if (k_only_multi_dim) return 2;
         end
