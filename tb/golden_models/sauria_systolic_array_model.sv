@@ -366,6 +366,10 @@ class sauria_systolic_array_model extends uvm_object;
         shortreal fp_weights_data;
         shortreal fp_accum;
 
+        shortint fp16_dpi_ifmaps_data;
+        shortint fp16_dpi_weights_data;
+        shortint fp16_dpi_accum;
+
         for(int row=0; row < sauria_pkg::Y; row++)begin
             for(int col=0; col < sauria_pkg::X; col++)begin
                 for(int c=0; c < incntlim; c++)begin
@@ -374,9 +378,14 @@ class sauria_systolic_array_model extends uvm_object;
                         fp_weights_data = fp16_to_shortreal(weights_feeder_data[col].weights_data[c]);
                         fp_accum += fp_ifmaps_data * fp_weights_data;
 
+                        fp16_dpi_accum = fp16_mac(shortint'(ifmaps_feeder_data[row].ifmaps_data[c]),
+                                                  shortint'(weights_feeder_data[col].weights_data[c]),
+                                                  fp16_dpi_accum);
+
                         if (c == (incntlim - 1)) begin
-                            mac_psum_reg[row][col] = shortreal_to_fp16(fp_accum);
+                            mac_psum_reg[row][col] = fp16_dpi_accum;//shortreal_to_fp16(fp_accum);
                             fp_accum = 0.0;
+                            fp16_dpi_accum = 0;
                         end
                         
                     end

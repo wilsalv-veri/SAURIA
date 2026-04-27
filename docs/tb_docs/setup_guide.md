@@ -31,7 +31,7 @@ Steps to obtain a license
 
 ---
 
-## 2. Initialize Repository Submodules
+## 3. Initialize Repository Submodules
 The Sauria RTL depends on source files tracked through Git submodules. These repositories must be initialized after cloning.
 
 From the Sauria repository root, initialize and update all submodules:
@@ -40,24 +40,61 @@ From the Sauria repository root, initialize and update all submodules:
    ```
 ---
 
-## 3. Set Env Variables
+## 4. Set Env Variables
 1. Open the following file using your preferred text editor:
    /verif/scripts/dsim_env.sh
-2. Set the following environment variables
-    - `DSIM_LICENSE` - Path to the DSIM license file
-    - `DSIM`         - Path to DSIM installation 
-    - `SAURIA`       - Path to the Sauria repository root
+2. Set the following environment variables:
+   - `DSIM_LICENSE` - Path to the DSIM license file
+   - `DSIM` - Path to DSIM installation
+   - `SAURIA` - Path to the Sauria repository root
+   - `SOFTFLOAT` - Path to the Berkeley SoftFloat repository root
+   - `SOFTFLOAT_BUILD` - Path to the SoftFloat build directory containing `softfloat.a`
 
 ---
 
-## 4. Source DSIM Environment
+## 5. Source DSIM Environment
 From the Sauria repository root directory, source the DSIM environment:
 ```bash 
 source /verif/scripts/dsim_env.sh
 ```
 ---
 
-## 5. Compile RTL, Testbench, and DPI Library
+## 6. Build SoftFloat and DPI Shared Library
+The Sauria DPI library (`verif/dpi/sauria_dpi.so`) links against Berkeley SoftFloat (`softfloat.a`).
+
+If you do not already have SoftFloat locally, clone it first:
+```bash
+cd $HOME
+git clone https://github.com/ucb-bar/berkeley-softfloat-3.git
+```
+
+Set SoftFloat-related environment variables (adjust paths if needed):
+```bash
+export SOFTFLOAT=$HOME/berkeley-softfloat-3
+export SOFTFLOAT_BUILD=$SOFTFLOAT/build/Linux-x86_64-GCC
+```
+
+Build SoftFloat static library:
+```bash
+make -C "$SOFTFLOAT_BUILD"
+```
+
+Build the Sauria DPI shared library:
+```bash
+make -C "$SAURIA/verif/dpi" clean
+make -C "$SAURIA/verif/dpi"
+```
+
+Expected artifacts:
+- `$SOFTFLOAT_BUILD/softfloat.a`
+- `$SAURIA/verif/dpi/sauria_dpi.so`
+
+> **Note:**
+> `compile_sauria` also checks for `verif/dpi/sauria_dpi.so` and attempts to build it automatically if missing. Building it explicitly first is recommended so build/setup issues are caught early.
+
+---
+
+## 7. Compile RTL, Testbench, and DPI Library
 Before compiling, generate filelists for the target hardware version:
 
 ```bash
@@ -80,7 +117,7 @@ compile_sauria
 ```
 ---
 
-## 6. Run Test
+## 8. Run Test
 Run any test from the test list below using the following command:
 ```bash
 run_sauria testname

@@ -26,6 +26,7 @@ $SAURIA/tb/interfaces/sauria_ifmaps_feeder_ifc.sv
 +incdir+$SAURIA/tb/reg_models/reg_params/
 +incdir+$SAURIA/tb/packages/
 $SAURIA/tb/packages/sauria_cfg_regs_pkg.sv
+$SAURIA/tb/packages/sauria_dpi_pkg.sv
 $SAURIA/tb/packages/sauria_golden_models_pkg.sv
 $SAURIA/tb/packages/sauria_scbd_pkg.sv
 $SAURIA/tb/packages/sauria_env_pkg.sv

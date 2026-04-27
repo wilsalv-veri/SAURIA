@@ -142,11 +142,20 @@ class sauria_data_generator extends uvm_object;
         case(fp_data_mode)
             RAND_FP_DATA_MODE:  return get_rand_fp_elem_data();
             RAND_FP:            return get_rand_fp_elem_data();
+            FP_POS_ZERO:        return FP16_POS_ZERO;
+            FP_NEG_ZERO:        return FP16_NEG_ZERO;
             FP_ONE:             return get_one_fp_elem_data();
             FP_ONE_W_FRAC_COMP: return get_one_w_frac_comp_fp_elem_data();
             FP_NEG_ONE:         return get_neg_one_fp_elem_data();
             FP_HALF:            return get_half_fp_elem_data();
-            FP_TWO:             return get_two_fp_elem_data(); 
+            FP_TWO:             return get_two_fp_elem_data();
+            FP_MIN_NORM:        return FP16_MIN_NORM;
+            FP_MAX_SUB:         return FP16_MAX_SUB;
+            FP_MIN_SUB:         return FP16_MIN_SUB;
+            FP_MAX_FIN:         return FP16_MAX_FIN;
+            FP_POS_INF:         return FP16_POS_INF;
+            FP_NEG_INF:         return FP16_NEG_INF;
+            FP_QNAN:            return FP16_QNAN;
         endcase
     endfunction
 
@@ -207,13 +216,21 @@ class sauria_data_generator extends uvm_object;
     endfunction
 
     virtual function sauria_fp_elem_data_t get_rand_fp_elem_data();
-        int rand_val = $urandom_range(0,4);
+        int rand_val = $urandom_range(0,12);
         case(rand_val)
-            0: return get_one_fp_elem_data();
-            1: return get_one_w_frac_comp_fp_elem_data();
-            2: return get_neg_one_fp_elem_data();
-            3: return get_half_fp_elem_data();
-            4: return get_two_fp_elem_data(); 
+            0:  return FP16_POS_ZERO;
+            1:  return FP16_NEG_ZERO;
+            2:  return FP16_ONE;
+            3:  return FP16_NEG_ONE;
+            4:  return FP16_TWO;
+            5:  return FP16_HALF;
+            6:  return FP16_MIN_NORM;
+            7:  return FP16_MAX_SUB;
+            8:  return FP16_MIN_SUB;
+            9:  return FP16_MAX_FIN;
+            10: return FP16_POS_INF;
+            11: return FP16_NEG_INF;
+            12: return FP16_QNAN;
         endcase
     endfunction 
 

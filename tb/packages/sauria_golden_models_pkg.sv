@@ -6,6 +6,7 @@ package sauria_golden_model_pkg;
     import uvm_pkg::*;
     import sauria_pkg::*;
     import sauria_common_pkg::*;
+    import sauria_dpi_pkg::*;
    
     `include "sauria_base_model.sv"
     `include "sauria_feeder_base_model.sv"

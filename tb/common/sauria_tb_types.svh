@@ -274,9 +274,27 @@
                 INCR_PATTERN, SING_NIB_INCR_PATTERN, 
                 ALL_ONES, ALL_TWOS} int_data_gen_mode_t;
         
-    typedef enum {RAND_FP_DATA_MODE, RAND_FP, FP_ONE, FP_ONE_W_FRAC_COMP, FP_NEG_ONE,         
-                FP_HALF, FP_TWO} fp_data_gen_mode_t;
+    typedef enum {
+                RAND_FP_DATA_MODE,
+                RAND_FP,
+                FP_POS_ZERO,
+                FP_NEG_ZERO,
+                FP_ONE,
+                FP_ONE_W_FRAC_COMP,
+                FP_NEG_ONE,
+                FP_HALF,
+                FP_TWO,
+                FP_MIN_NORM,
+                FP_MAX_SUB,
+                FP_MIN_SUB,
+                FP_MAX_FIN,
+                FP_POS_INF,
+                FP_NEG_INF,
+                FP_QNAN
+    } fp_data_gen_mode_t;
 
+    typedef bit [15:0] fp16_data_t;
+    
     typedef bit [sauria_pkg::ADRA_W-1:0]                                      srama_addr_t;
     typedef bit [sauria_pkg::SRAMA_W-1:0]                                     srama_data_t;
     typedef bit [0:sauria_pkg::Y-1][sauria_pkg::IA_W-1:0]                     a_arr_data_t;

@@ -100,6 +100,7 @@ def addLinesUnderCurrentDirectory(cwd_path,include_files):
             sort_by_match(file_entries, "env")  
             sort_by_match(file_entries, "scbd")  
             sort_by_match(file_entries, "golden_models")  
+            sort_by_match(file_entries, "dpi")  
             sort_by_match(file_entries, "cfg_regs")  
             sort_by_match(file_entries, "common")  
         elif cwd == 'interfaces':

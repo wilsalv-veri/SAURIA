@@ -11,6 +11,7 @@ package sauria_common_pkg;
     parameter ARITHMETIC             = `ARITHMETIC;
     parameter INT_ARITHMETIC         = !ARITHMETIC;
     parameter FP_ARITHMETIC          = ARITHMETIC;
+
     parameter COLS_ACTIVE_SIZE       = sauria_pkg::X;
     parameter ROWS_ACTIVE_SIZE       = sauria_pkg::Y; 
    
@@ -78,6 +79,20 @@ package sauria_common_pkg;
     `include "sauria_tb_defines.svh"
     `include "sauria_tb_types.svh"
     `include "sauria_plusarg_utils.sv"
+
+    parameter fp16_data_t FP16_POS_ZERO  = 16'h0000;
+    parameter fp16_data_t FP16_NEG_ZERO  = 16'h8000;
+    parameter fp16_data_t FP16_ONE       = 16'h3C00;
+    parameter fp16_data_t FP16_NEG_ONE   = 16'hBC00;
+    parameter fp16_data_t FP16_TWO       = 16'h4000;
+    parameter fp16_data_t FP16_HALF      = 16'h3800;
+    parameter fp16_data_t FP16_MIN_NORM  = 16'h0400;
+    parameter fp16_data_t FP16_MAX_SUB   = 16'h03FF;
+    parameter fp16_data_t FP16_MIN_SUB   = 16'h0001;
+    parameter fp16_data_t FP16_MAX_FIN   = 16'h7BFF;
+    parameter fp16_data_t FP16_POS_INF   = 16'h7C00;
+    parameter fp16_data_t FP16_NEG_INF   = 16'hFC00;
+    parameter fp16_data_t FP16_QNAN      = 16'h7E00;
 
     parameter IFMAPS_DATA_MODE  = INT_ARITHMETIC ? SING_NIB_INCR_PATTERN : FP_ONE_W_FRAC_COMP;
     parameter WEIGHTS_DATA_MODE = INT_ARITHMETIC ? SING_NIB_INCR_PATTERN : FP_NEG_ONE;
