@@ -7,6 +7,8 @@ from statistics import median
 from perf_analyzer.constants import (
     CORE_CLOCK_PERIOD_PS,
     CORE_CYCLE_COUNTER_ADDR,
+    DF_LOOP_ORDER_LSB,
+    DF_LOOP_ORDER_WIDTH,
     CORE_STALL_COUNTER_ADDR,
     DF_START_ADDR,
     SYSTEM_CLOCK_PERIOD_PS,
@@ -16,6 +18,13 @@ from perf_analyzer.models import PerfRow, SubsystemTimeBreakdown, TileSummary
 
 def is_df_start_event(row: PerfRow) -> bool:
     return row.source == "cfg" and row.txn_type == "wr" and row.addr == DF_START_ADDR
+
+
+def decode_df_loop_order(row: PerfRow) -> int | None:
+    if row.data is None:
+        return None
+    mask = (1 << DF_LOOP_ORDER_WIDTH) - 1
+    return int((row.data >> DF_LOOP_ORDER_LSB) & mask)
 
 
 def pair_tile_counters(rows: list[PerfRow]) -> list[TileSummary]:
@@ -59,6 +68,14 @@ def pair_tile_counters(rows: list[PerfRow]) -> list[TileSummary]:
 
 def get_start_times(rows: list[PerfRow]) -> list[int]:
     return [row.time for row in rows if is_df_start_event(row)]
+
+
+def get_df_start_events(rows: list[PerfRow]) -> list[tuple[int, int | None]]:
+    return [
+        (row.time, decode_df_loop_order(row))
+        for row in rows
+        if is_df_start_event(row)
+    ]
 
 
 def get_core_start_times(rows: list[PerfRow]) -> list[int]:
@@ -244,19 +261,22 @@ def rows_in_window(rows: list[PerfRow], start_time: int, end_time: int) -> list[
     return [row for row in rows if start_time <= row.time <= end_time]
 
 
-def get_tensor_windows(rows: list[PerfRow], tiles: list[TileSummary]) -> list[tuple[int, int, int, list[TileSummary]]]:
+def get_tensor_windows(
+    rows: list[PerfRow],
+    tiles: list[TileSummary],
+) -> list[tuple[int, int, int, list[TileSummary], int | None]]:
     if not rows:
         return []
 
-    start_times = get_start_times(rows)
-    if not start_times:
-        start_times = [rows[0].time]
+    start_events = get_df_start_events(rows)
+    if not start_events:
+        start_events = [(rows[0].time, None)]
 
-    windows: list[tuple[int, int, int, list[TileSummary]]] = []
+    windows: list[tuple[int, int, int, list[TileSummary], int | None]] = []
     last_time = rows[-1].time
 
-    for index, start_time in enumerate(start_times):
-        next_start = start_times[index + 1] if index + 1 < len(start_times) else None
+    for index, (start_time, loop_order) in enumerate(start_events):
+        next_start = start_events[index + 1][0] if index + 1 < len(start_events) else None
         window_tiles = [
             tile
             for tile in tiles
@@ -272,7 +292,7 @@ def get_tensor_windows(rows: list[PerfRow], tiles: list[TileSummary]) -> list[tu
             end_time = last_time
 
         search_end_time = (next_start - 1) if next_start is not None else last_time
-        windows.append((index + 1, start_time, search_end_time, window_tiles))
+        windows.append((index + 1, start_time, search_end_time, window_tiles, loop_order))
         if next_start is None:
             break
 

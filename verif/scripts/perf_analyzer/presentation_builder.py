@@ -381,6 +381,8 @@ def build_presentation_payload(
             title="Tensor Summary",
             columns=[
                 "Tensor",
+                "Loop Order",
+                "Loop Order Label",
                 "Start Time",
                 "End Time",
                 "Subsystem End Time",
@@ -410,6 +412,8 @@ def build_presentation_payload(
             rows=[
                 [
                     tensor.tensor_id,
+                    tensor.loop_order if tensor.loop_order is not None else "unknown",
+                    tensor.loop_order_label,
                     tensor.start_time,
                     tensor.end_time,
                     tensor.subsystem_end_time,

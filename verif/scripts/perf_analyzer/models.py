@@ -58,6 +58,8 @@ class TileSummary:
 @dataclass
 class TensorSummary:
     tensor_id: int
+    loop_order: int | None
+    loop_order_label: str
     start_time: int
     end_time: int
     subsystem_end_time: int

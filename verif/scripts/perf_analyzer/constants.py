@@ -3,6 +3,14 @@ from __future__ import annotations
 
 DF_START_ADDR = 0x40000064
 DF_START_BIT = 22
+DF_LOOP_ORDER_LSB = 16
+DF_LOOP_ORDER_WIDTH = 2
+DF_CW_EQ_BIT = 23
+DF_CH_EQ_BIT = 24
+DF_CK_EQ_BIT = 25
+# PSUMS preload enable is captured from core psums cfg reg 41.
+# In the currently used INT arithmetic configuration it is bit 8.
+PSUMS_PRELOAD_EN_BIT = 8
 CORE_CYCLE_COUNTER_ADDR = 0x50000014
 CORE_STALL_COUNTER_ADDR = 0x50000018
 # Perf timestamps are logged in the simulator time units used by $time, which are

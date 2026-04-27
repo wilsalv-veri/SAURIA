@@ -9,9 +9,18 @@ from perf_analyzer.models import PerfRow
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Analyze SAURIA performance CSV logs and generate summary reports."
+        description=(
+            "Analyze SAURIA performance logs and generate reports. "
+            "Input can be a single SA_perf_data.csv file or a regression directory."
+        )
     )
-    parser.add_argument("csv_path", help="Path to the SAURIA perf CSV file.")
+    parser.add_argument(
+        "csv_path",
+        help=(
+            "Path to SAURIA perf CSV file, or a regression run directory "
+            "containing multiple SA_perf_data.csv files."
+        ),
+    )
     parser.add_argument(
         "-o",
         "--output-dir",

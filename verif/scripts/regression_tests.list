@@ -1,0 +1,21 @@
+# Regression test list schema
+# Each non-empty, non-comment line has one of these forms:
+#   <test_name>
+#   <test_name> | <sim arg 1> <sim arg 2> ...
+#
+# Notes:
+# - Lines starting with # are ignored.
+# - Arguments are split by whitespace (basic schema).
+# - To pass plusargs, use run_sauria style tokens (e.g. sv_seed=42 or +foo=bar).
+
+#sauria_smoke_test
+#sauria_cfg_sanity_test | sv_seed=101 UVM_VERBOSITY=UVM_LOW
+#sauria_x_dim_multi_tile_cfg_test  | sv_seed=100 +UVM_TIMEOUT=1000000
+
+sauria_x_dim_multi_tile_cfg_test   | sv_seed=100 
+sauria_y_dim_multi_tile_cfg_test   | sv_seed=101 
+sauria_c_dim_multi_tile_cfg_test   | sv_seed=102 
+sauria_k_dim_multi_tile_cfg_test   | sv_seed=103 
+sauria_all_dim_multi_tile_cfg_test | sv_seed=104 
+sauria_single_tile_cfg_test        | sv_seed=105 
+sauria_rand_tile_dims_cfg_test     | sv_seed=106 

@@ -350,6 +350,7 @@ def analyze_tensor(
     start_time: int,
     window_end_hint: int,
     tile_templates: list[TileSummary],
+    loop_order: int | None,
 ) -> tuple[TensorSummary, list[TileSummary]]:
     if tile_templates:
         end_time = tile_templates[-1].stall_read_time
@@ -598,6 +599,8 @@ def analyze_tensor(
 
     tensor_summary = TensorSummary(
         tensor_id=tensor_id,
+        loop_order=loop_order,
+        loop_order_label=(f"mode_{loop_order}" if loop_order is not None else "unknown"),
         start_time=start_time,
         end_time=end_time,
         subsystem_end_time=subsystem_breakdown.end_time,
