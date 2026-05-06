@@ -97,6 +97,8 @@ class sauria_psums_mgr_model extends uvm_object;
         add_psums_sram_wr_access();
 
         result.shift_reg_data_empty = is_shift_reg_data_empty();
+        `sauria_info(message_id, $sformatf("Shift Reg Data Empty: %0d Shift Reg Data: %0d", result.shift_reg_data_empty, shift_reg_data.size()))
+        
         if (!result.shift_reg_data_empty) begin
             result.data_valid = 1'b1;
             result.exp_wdata  = get_shift_reg_data_entry();
@@ -177,6 +179,7 @@ class sauria_psums_mgr_model extends uvm_object;
 
     virtual function void add_preload_values(scan_chain_data_t i_c_arr);
 
+        `sauria_info(message_id, $sformatf("Add Preload Values %0d", shift_reg_data.size()))
         if ((shift_count <= sauria_pkg::X) && valid_preload_data) begin
         
             if (shift_reg_data.size() > 0) begin

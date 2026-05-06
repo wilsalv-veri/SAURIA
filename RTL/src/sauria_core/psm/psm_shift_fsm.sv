@@ -74,6 +74,7 @@ module psm_shift_fsm #(
 
     // Status Outputs
     output  logic [4:0]                 o_out_status,       // Output Scan FSM status
+    output  logic [IDX_W-1:0]           o_ctx_cnt,          // Current context counter value
     output  logic                       o_shift_done,       // Flag signaling that computation can start
     output  logic                       o_done,             // Finish flag
     output  logic                       o_finalwrite        // Flag signaling that all outputs EXCEPT LAST have been written successfully
@@ -182,7 +183,11 @@ end
 // Buffer Clear flag => Simple logic
 // ----------------------------------------
 
-assign o_buff_clear = (main_state_q==IDLE) && ((!i_preload_en)||(ctx_cnt>i_ncontexts));
+//NOTE: wilsalv :CORE_BUGID10
+//NOTE: Clear the shift buffer only at true FSM completion, not immediately
+//       after read contexts are done, otherwise pending write contexts lose data.
+//assign o_buff_clear = (main_state_q==IDLE) && ((!i_preload_en)||(ctx_cnt>i_ncontexts));
+assign o_buff_clear = (main_state_q==IDLE) && ((!i_preload_en)||completion_flag);
 
 // ------------------------------------------------------------
 // Final write flag => When current context is last
@@ -195,6 +200,7 @@ assign o_finalwrite = (ctx_cnt == (i_ncontexts+2));
 // ------------------------------------------------------------
 
 assign completion_flag = (ctx_cnt == (i_ncontexts+3));
+assign o_ctx_cnt = ctx_cnt;
 
 // ----------------------------------------
 // Feeders Control FSM - Transition Logic
@@ -219,7 +225,14 @@ always_comb begin: state_transitions
                 //if ((ctx_cnt<3) && (!completion_flag)) begin
                     
                     // If preload is currently needed
-                    if (i_preload_en && (i_ncontexts >= ctx_cnt)) begin
+                    //NOTE: wilsalv :CORE_BUGID9
+                    //NOTE: wilsalv :CORE_BUGID11
+                    //NOTE: Remove this explicit i_ncontexts==2 corner-case guard once
+                    //       preload/context boundary logic is refactored in the FSM.
+                    //if (i_preload_en && (i_ncontexts >= ctx_cnt)) begin
+                    if (i_preload_en &&
+                        (((i_ncontexts == 2) && (ctx_cnt < i_ncontexts)) ||
+                         ((i_ncontexts != 2) && (i_ncontexts >= ctx_cnt)))) begin
                         
                         // If we are on the very first context : No need for Shift
                         if (ctx_cnt == 0) begin

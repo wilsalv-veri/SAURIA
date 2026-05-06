@@ -6,6 +6,7 @@ class sauria_computation_params extends uvm_object;
     bit ifmaps_cfg_shared;
     bit weights_cfg_shared;
     bit psums_mgr_cfg_shared;
+    bit eq_flags_shared;
     
     sauria_axi4_lite_data_t       start_SRAMA_addr;
     sauria_axi4_lite_data_t       start_SRAMB_addr;

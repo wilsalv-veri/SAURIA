@@ -7,6 +7,7 @@ interface sauria_psums_mgr_ifc import sauria_pkg::*;();
 
     logic                cnt_en;
     logic                shift_reg_shift;
+    logic                pipeline_en;
     
     // Data Inputs from Memory
     logic [SRAMC_W-1:0]          sramc_rdata;      // Read data bus from SRAMC

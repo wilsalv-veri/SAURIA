@@ -47,8 +47,12 @@ module main_controller #(
     input  logic                        i_outbuf_done,      // Done signal from output buffer
     input  logic                        i_finalwrite,       // Signals that next write is the last
     input  logic                        i_shift_done,       // First ready flag from output buffer
+    input  logic [OUT_IDX_W-1:0]        i_psm_ctx_cnt,      // Current context count from PSM manager
 
     // Control Inputs (Feeders FSM)
+    //NOTE: wilsalv :CORE_BUGID11
+    input  logic [OUT_IDX_W-1:0]		i_ncontexts,        // Total number of contexts to compute
+   
     input  logic [ACT_IDX_W-1:0]        i_incntlim,         // Input counter limit
     input  logic [OUT_IDX_W-1:0]        i_act_reps,         // Total activation data repetitions
     input  logic [OUT_IDX_W-1:0]        i_wei_reps,         // Total weight data repetitions
@@ -117,10 +121,16 @@ logic   cdone, cswitch_en, cswitch_force, cswitch_done, cswitch_cnt_clear;
 
 // Context FSM
 context_fsm #(
+    .IDX_W(OUT_IDX_W) //NOTE: wilsalv :CORE_BUGID11
+    
     ) context_fsm_i
        (.i_clk          (i_clk),
         .i_rstn         (i_rstn),
         .i_soft_reset   (i_soft_reset),
+        
+        //NOTE: wilsalv :CORE_BUGID11
+        .i_ncontexts        (i_ncontexts),
+        .i_psm_ctx_cnt      (i_psm_ctx_cnt),
         
         .i_start	        (i_start),
         .i_outbuf_done      (i_outbuf_done),
@@ -149,6 +159,8 @@ context_switch_controller #(
         .X(X),
         .Y(Y),
         .IDX_W(ACT_IDX_W),
+        .OUT_IDX_W(OUT_IDX_W), //NOTE: wilsalv :CORE_BUGID11
+       
         .PE_LAT(PE_LAT),
         .EXTRA_CSREG(EXTRA_CSREG)
     ) context_switch_controller_i
@@ -156,6 +168,8 @@ context_switch_controller #(
         .i_rstn         (i_rstn),
         
         .i_incntlim	        (i_incntlim),
+        .i_ncontexts        (i_ncontexts),
+        .i_psm_ctx_cnt      (i_psm_ctx_cnt),
         .i_clear            (cswitch_cnt_clear | i_soft_reset),
         .i_pipeline_en      (o_pipeline_en),
         .i_wei_pop_en       (o_wei_pop_en),

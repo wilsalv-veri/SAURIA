@@ -20,7 +20,9 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
          
     sauria_axi4_lite_data_t psums_tile_ck_lim;
     sauria_axi4_lite_data_t psums_tile_ck_step;
-         
+    
+    sauria_axi4_lite_data_t effective_psums_K;
+
     rand sauria_axi4_lite_data_t psums_inactive_cols;
     rand sauria_axi4_lite_data_t psums_preload_en;
        
@@ -123,18 +125,24 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
     endtask
 
     virtual task get_psums_params(); 
+        
         wait_comp_params_shared();
+        wait_eq_flags_shared();
+
+        effective_psums_K   = (computation_params.Cw_eq & computation_params.Ch_eq) ? 1 :
+                               computation_params.df_controller_psums_params.tile_params.psums_K;
 
         psums_cx_step       = SRAMC_N;                    
-        psums_cx_lim        = computation_params.df_controller_psums_params.tile_params.psums_CX; 
+        psums_cx_lim        = computation_params.Cw_eq ?
+                               computation_params.df_controller_psums_params.tile_params.psums_X :
+                               computation_params.df_controller_psums_params.tile_params.psums_CX; 
                  
         psums_ck_step       = psums_cx_lim;   
-        psums_ck_lim        = psums_ck_step 
-                            * computation_params.df_controller_psums_params.tile_params.psums_K; 
+        psums_ck_lim        = psums_ck_step * effective_psums_K; 
         
-        `sauria_info(message_id, $sformatf("PSUMS CK_LIM: 0x%0h K:%0d CX_STEP: 0x%0h Combined: 0x%0h Field_Len: %0d", 
-                            psums_ck_lim, computation_params.df_controller_psums_params.tile_params.psums_K, 
-                            psums_ck_step, psums_ck_step * computation_params.df_controller_psums_params.tile_params.psums_K, PSUMS_TILE_DIM_SIZE))
+        `sauria_info(message_id, $sformatf("PSUMS CK_LIM: 0x%0h K:%0d CK_STEP: 0x%0h Combined: 0x%0h Field_Len: %0d", 
+                            psums_ck_lim, effective_psums_K, 
+                            psums_ck_step, psums_ck_step * effective_psums_K, PSUMS_TILE_DIM_SIZE))
 
         //Single Tile
         psums_tile_cy_step  = psums_ck_lim; 
@@ -143,13 +151,11 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
         psums_tile_ck_step  = psums_ck_lim; 
         psums_tile_ck_lim   = psums_ck_lim; 
         
-        act_reps            = (computation_params.df_controller_psums_params.tile_params.psums_K  
-                                / SRAMB_N);
+        act_reps            = (effective_psums_K / SRAMB_N);
 
         act_reps            = (act_reps > 0) ? act_reps : 1;
         
-        wei_reps            = (computation_params.df_controller_psums_params.tile_params.psums_CX 
-                                / SRAMA_N);
+        wei_reps            = (psums_cx_lim / SRAMA_N);
 
         wei_reps            = (wei_reps > 0) ? wei_reps : 1;
         
@@ -162,7 +168,7 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
                             = psums_cx_step;
 
         computation_params.core_psums_params.tile_params.psums_CX 
-                            = computation_params.df_controller_psums_params.tile_params.psums_CX;
+                            = psums_cx_lim;
 
         computation_params.core_psums_params.tile_params.psums_ck_step
                             =  psums_cx_lim;
@@ -186,6 +192,14 @@ class sauria_axi4_lite_core_psums_cfg_base_seq extends sauria_axi4_lite_cfg_base
         computation_params.psums_preload_en     = psums_preload_en;
         computation_params.psums_inactive_cols  = psums_inactive_cols;
         computation_params.psums_mgr_cfg_shared = 1'b1;
+    endtask
+
+    virtual task wait_eq_flags_shared();
+        fork
+            wait(computation_params.eq_flags_shared);
+            begin #TIMEOUT_NS; `sauria_error(message_id, "Timeout waiting for eq_flags_shared flag"); end
+        join_any
+        disable fork;
     endtask
   
 endclass

@@ -247,13 +247,12 @@ module sauria_interface #(
             dma_params.dma.psums.ett <= dma_params.dma.ifmaps.ett;
         end
 
-        if (Ck_eq) begin
-            //NOTE: wilsalv :DF_BUGID16
+        //NOTE: wilsalv :DF_BUGID16
+        //if (Ck_eq) begin
             //dma_params.dma.weights.ett <= dma_params.tile.weights.c_step; //WHOLE WEIGHTS Tile Per DMA Rd Req
-            dma_params.dma.weights.ett <= dma_params.tile.weights.c_step; //WHOLE WEIGHTS Tile Per DMA Rd Req
-        end else begin
+        //end else begin
             dma_params.dma.weights.ett <= {12'd0, dma_params.dma.weights.w_step};
-        end
+        //end
         
         case (state)
 

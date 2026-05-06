@@ -59,9 +59,12 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
     virtual task get_weights_params();
     
         wait_comp_params_shared();
+        wait_eq_flags_shared();
 
         weights_w_step      = computation_params.df_controller_weights_params.tile_params.weights_w_step;                           
-        weights_w_lim       = computation_params.df_controller_weights_params.tile_params.weights_C;           
+        weights_w_lim       = computation_params.Ck_eq ?
+                                computation_params.df_controller_weights_params.tile_params.weights_w_step :
+                                computation_params.df_controller_weights_params.tile_params.weights_C;
 
         weights_k_step      = (computation_params.df_controller_weights_params.tile_params.weights_K >= SRAMB_N) ? 
                                 SRAMB_N : computation_params.df_controller_weights_params.tile_params.weights_K;
@@ -71,6 +74,14 @@ class sauria_axi4_lite_core_weights_cfg_base_seq extends sauria_axi4_lite_cfg_ba
         //Single Tile
         weights_tile_k_step = weights_w_lim; 
         weights_tile_k_lim  = weights_w_lim;                
+    endtask
+
+    virtual task wait_eq_flags_shared();
+        fork
+            wait(computation_params.eq_flags_shared);
+            begin #TIMEOUT_NS; `sauria_error(message_id, "Timeout waiting for eq_flags_shared flag"); end
+        join_any
+        disable fork;
     endtask
 
     

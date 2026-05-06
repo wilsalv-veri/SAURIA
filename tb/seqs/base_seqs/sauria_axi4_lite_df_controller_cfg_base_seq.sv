@@ -65,7 +65,7 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
     virtual task exchange_computation_params();
         set_compute_params_loop_order();
         set_starting_tensors_addr();
-        set_tensor_modifiers();
+        share_eq_flags();
     endtask
 
     virtual function void set_unit_specific_cfg_CRs();
@@ -112,11 +112,12 @@ class sauria_axi4_lite_df_controller_cfg_base_seq extends sauria_axi4_lite_cfg_b
         computation_params.loop_order = loop_order;
     endfunction
 
-    virtual function void set_tensor_modifiers();
+    virtual function void share_eq_flags();
         computation_params.Cw_eq    = Cw_eq;
         computation_params.Ch_eq    = Ch_eq;
         computation_params.Ck_eq    = Ck_eq;
         computation_params.WXfer_op = WXfer_op;
+        computation_params.eq_flags_shared = 1'b1;
     endfunction
 
     virtual function void set_df_controller_cfg_reg_18();

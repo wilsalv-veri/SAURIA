@@ -241,7 +241,231 @@ Provides launch and completion signaling.
 
 ---
 
-## 4. Practical Legal-Value Rules (Big Picture)
+## 4. Configuration Derivation: How a Valid System Configuration Is Arrived At
+
+### 4.1 The Root Parameters and Why They Matter
+
+All configuration values across every CR group ultimately derive from a small set of randomized root parameters that are resolved first by the DMA base sequence. Understanding these roots makes the entire programming model coherent.
+
+The root parameters are:
+
+| Parameter | Source constraint | Meaning |
+|---|---|---|
+| `rows_multiple` | `[MIN_MULTIPLE..MAX_MULTIPLE]` = `[1..16]` | Scale factor controlling the total `X*Y` spatial window size relative to the array row count |
+| `cols_multiple` | `[MIN_MULTIPLE..MAX_MULTIPLE]` = `[1..16]` | Scale factor controlling `K` (output channels) relative to the array column count |
+| `X` | Multiple of `sauria_pkg::Y`; `X*Y == sauria_pkg::Y * rows_multiple` | Spatial width of the input tile (must be a whole multiple of the hardware row count to keep row alignment) |
+| `Y` | Multiple of `sauria_pkg::Y`; `X*Y == sauria_pkg::Y * rows_multiple` | Spatial height of the input tile |
+| `C` | `[MIN_COMP_LEN..MAX_COMP_LEN]` = `[4..32]` | Reduction dimension length (input channels per tile) |
+| `K` | `== sauria_pkg::X * cols_multiple` | Output channel dimension; always a whole multiple of the hardware column count |
+
+`MIN_COMP_LEN = 4` reflects a hardware minimum: the inner compute loop requires a nonzero reduction depth, and values below 4 have historically produced edge-case scheduling behavior. The lower bound of 4 is a conservative architectural assumption, not a tightly characterized hardware limit.
+
+`rows_multiple` and `cols_multiple` are solved before their dependent dimensions (`X`, `Y`, `K`) to guarantee the solver explores dimension scales before specific values, producing a more diverse configuration space.
+
+#### Additional constraints on the root parameters
+
+- `X * Y == sauria_pkg::Y * rows_multiple` — the total input spatial window must exactly equal the hardware row count times the chosen row scale. This ensures the systolic array is always covered with a legally aligned input pattern.
+- `K == sauria_pkg::X * cols_multiple` — `K` must be an exact multiple of the hardware column count so weight columns map uniformly.
+- `K <= (2**(PSUMS_TILE_DIM_SIZE-1)) / (X * Y)` — keeps `K` within the bit-width of partial-sum addressing.
+- `(K % sauria_pkg::Y) == 0` — K must be divisible by the hardware row count; this keeps PSUMs row indexing regular.
+- `(DATA_AXI_BYTE_NUM % K) == 0` — K must divide evenly into the AXI data bus byte count, keeping DMA burst alignment consistent.
+
+These divisibility requirements are the primary reason dimensions cannot be chosen freely; violating them produces misaligned DMA bursts, irregular loop termination, or unsatisfiable step-limit arithmetic.
+
+---
+
+### 4.2 Single-Tile Baseline Assumption
+
+The base sequence enforces a **single-tile** execution model by constraining:
+
+```
+dma_tile_x_lim = dma_tile_y_lim = dma_tile_c_lim = dma_tile_k_lim = 0
+```
+
+Setting all tile limit registers to 0 means the tiling loop iterates exactly once in every dimension — there is no outer tile stride. All inter-tile step fields are still computed and programmed, but they are never exercised in this baseline. This assumption allows the single-tile sequence library to be correct without requiring verified multi-tile traversal logic in the testbench.
+
+Multi-tile tests extend the base sequences by overriding one or more tile limit fields to non-zero values, and then the corresponding tile step fields become meaningful.
+
+---
+
+### 4.3 DMA Geometry Derivation Chain
+
+Once the root parameters are resolved, the DMA step/limit fields are computed as a dependency-ordered chain — the SV constraint solver's `solve ... before` directives enforce this order explicitly.
+
+**IFMAPs DMA geometry (constraint `dma_ifmaps_c`)**
+
+```
+dma_ifmaps_ett      = X                              // x-span of one IFMAP row transfer
+dma_ifmaps_y_lim    = Y - 1                          // row count limit (Y rows, 0-based)
+dma_ifmaps_c_lim    = C - 1                          // channel count limit
+
+dma_ifmaps_y_step   = dma_ifmaps_ett                 // stride between IFMAP rows
+dma_ifmaps_c_step   = dma_ifmaps_y_step * Y          // stride between channel planes
+
+dma_tile_ifmaps_x_step = ett * Y * C                 // whole-tile IFMAP stride in x
+dma_tile_ifmaps_y_step = dma_tile_ifmaps_x_step * (tile_x_lim + 1)
+dma_tile_ifmaps_c_step = dma_tile_ifmaps_y_step * (tile_y_lim + 1)
+```
+
+`dma_ifmaps_ett` (effective transfer thickness) equals `X` because in GEMM-bypass mode each activation row is `X` elements wide with no convolution padding. This value propagates directly into PSUMs geometry, so any error here has compound effects.
+
+**Weights DMA geometry (constraint `dma_weights_c`)**
+
+```
+dma_weights_w_step        = K          // one kernel row spans K output channels
+dma_weights_w_lim         = (C-1) * K // address of the last weight element (C reductions * K cols)
+
+dma_tile_weights_c_step   = dma_weights_w_lim + K   // one full weight tile in C dimension
+dma_tile_weights_k_step   = dma_tile_weights_c_step * (tile_c_lim + 1)
+```
+
+The assumption `dma_weights_w_step = K` reflects the GEMM interpretation: the weight matrix is stored in row-major order where each row has `K` elements.
+
+**PSUMs DMA geometry (constraint `dma_psums_c`)**
+
+```
+dma_psums_y_step        = dma_ifmaps_ett   // PSUMs spatial stride mirrors IFMAP x-span
+dma_psums_k_step        = dma_psums_y_step * Y
+
+dma_tile_psums_x_step   = dma_psums_k_step * K
+dma_tile_psums_y_step   = dma_tile_psums_x_step * (tile_x_lim + 1)
+dma_tile_psums_k_step   = dma_tile_psums_y_step * (tile_y_lim + 1)
+```
+
+PSUMs spatial stepping reuses the IFMAP spatial geometry because in the GEMM model the output `O[x,y,k]` is indexed over the same `(x,y)` spatial domain as the input `I[x,y,c]`.
+
+---
+
+### 4.4 Core Configuration Derivation — Propagation from DMA Parameters
+
+After the DMA sequence shares the resolved tile dimensions via `computation_params`, the remaining unit sequences derive their CR values without further randomization. This is a deliberate assumption: once DMA geometry is fixed, no other sequence should introduce independent dimensional choices that could break consistency.
+
+**Core IFMAPS feeder (base seq `sauria_axi4_lite_core_ifmaps_cfg_base_seq`)**
+
+The IFMAPS feeder receives the shared `ifmaps_X`, `ifmaps_Y`, `ifmaps_C`, and step fields from `computation_params` and computes:
+
+```
+ifmaps_x_step  = SRAMA_N          // fixed to SRAM word width — one bus word per feeder advance
+ifmaps_x_lim   = X                // spatial limit in x
+
+ifmaps_y_step  = dma_ifmaps_y_step
+ifmaps_y_lim   = ifmaps_y_step * Y   // y limit expressed as a byte offset
+
+ifmaps_ch_step = ifmaps_c_step
+ifmaps_ch_lim  = ifmaps_ch_step * C  // channel limit as byte offset
+
+// Single-tile defaults:
+ifmaps_tile_x_step = ifmaps_ch_lim
+ifmaps_tile_x_lim  = ifmaps_ch_lim
+ifmaps_tile_y_step = ifmaps_ch_lim
+ifmaps_tile_y_lim  = ifmaps_ch_lim
+```
+
+The critical assumption here is `ifmaps_x_step = SRAMA_N`. This fixes the feeder's word advance to the SRAM bus width and is the source of the feeder-step floor constraint stated in Section 4 — the feeder FSM cannot advance by less than one SRAM word.
+
+**Fixed fields by assumption:**
+- `ifmaps_rows_active = 0xFF` — all rows in the array are considered live. Deactivating rows is not explored in the baseline, as non-rectangular array utilization requires separate scoreboarding logic.
+- `ifmaps_loc_woffs_0..7 = {0,1,2,3,4,5,6,7}` — sequential identity offsets assume no convolution window remapping. This is consistent with GEMM-bypass mode where there is no im2col to perform.
+- `dilation_pattern = 0x8000_0000_0000_0000` when `DV_GEMM_BYPASS=1` — this specific bit pattern activates the feeder's bypass path for dilated convolution and requires this exact value in GEMM mode; any other non-zero value would enable partial convolution semantics.
+
+**Core Weights feeder**
+
+```
+weights_w_step      = K (from dma_weights_w_step, i.e. the weight row width)
+weights_w_lim       = C-total element offset (from dma_weights tile C step)
+
+weights_k_step      = SRAMB_N   if K >= SRAMB_N, else K
+                                 // clamped to SRAM bus word width; cannot be smaller
+weights_k_lim       = K
+
+// Single-tile defaults:
+weights_tile_k_step = weights_w_lim
+weights_tile_k_lim  = weights_w_lim
+```
+
+`weights_k_step` is clamped at `SRAMB_N` (the weight SRAM bus width) because the hardware feeder advances in SRAM-word increments. Setting `k_step < SRAMB_N` would represent a sub-word stride that the hardware cannot satisfy and would deadlock the feeder. This is the floor constraint for the weights path.
+
+**Fixed fields by assumption:**
+- `weights_aligned_flag = 1` — weight data is assumed to be pre-aligned to SRAMB word boundaries in all baseline tests. Unaligned weights require a different DMA burst decomposition and different feeder phasing, which is out of scope for baseline verification.
+- `weights_cols_active = 0xFFFF` — all weight columns are assumed active; this is consistent with the full `K` columns being valid for every test.
+
+**Core Main Controller**
+
+```
+total_macs  = C                              // inner MAC loop count equals reduction dimension
+act_reps    = K / SRAMB_N                    // number of weight SRAM words to load per MAC
+weight_reps = (X * Y) / SRAMA_N             // number of activation SRAM words to load per MAC
+```
+
+These three values are derived purely from the root parameters; they are not randomized. The assumption is that the main controller always executes exactly one pass through the `C` reduction dimension for the current tile dimensions. Partial reduction scheduling is not exercised in the baseline.
+
+`zero_negligence_threshold = 0` — this optimization field can skip MAC operations when inputs are below threshold; constraining it to zero ensures all MACs execute, maximizing observability and scoreboard determinism.
+
+**Core PSUMs Manager**
+
+```
+psums_cx_step = SRAMC_N                      // PSUMs advance by one SRAMC word per step
+psums_cx_lim  = psums_CX = X * Y            // total spatial positions in the output tile
+
+psums_ck_step = psums_cx_lim                 // outer PSUMs loop step spans the full CX range
+psums_ck_lim  = psums_ck_step * K           // total partial-sum elements for the tile
+
+// Single-tile defaults (all collapse to psums_ck_lim):
+psums_tile_cy_step = psums_tile_cy_lim = psums_tile_ck_step = psums_tile_ck_lim = psums_ck_lim
+
+act_reps    = max(K / SRAMB_N, 1)
+wei_reps    = max(X*Y / SRAMA_N, 1)
+psums_reps  = act_reps * wei_reps
+```
+
+`psums_cx_step = SRAMC_N` mirrors the IFMAPS floor: the PSUMs manager also operates in SRAMC bus-word increments. Setting this smaller would violate the hardware's minimum addressable unit.
+
+**Fixed fields by assumption:**
+- `psums_preload_en = 0` in the base sequence. Preload controls whether prior partial sums are loaded before a tile's accumulation begins. The base class constrains this to 0; subclasses that test multi-tile accumulation continuity override it to 1.
+- `psums_inactive_cols = 0` — all output columns are active, consistent with `K` being a full multiple of the column count.
+
+---
+
+### 4.5 Dataflow Controller Assumptions
+
+The dataflow controller sequence (`sauria_axi4_lite_df_controller_cfg_base_seq`) programs operational mode flags by constraint, not by derivation:
+
+- `stand_alone = 1` — the subsystem executes as a self-contained unit without external handshakes from an upstream processor. This allows verification to fully control execution timing using only AXI4-Lite register writes and status checks.
+- `stand_alone_keep_A/B/C = 1` — these flags prevent the dataflow controller from autonomously re-fetching SRAM contents after each tile. In verification, tensor data is pre-loaded by the testbench and must not be overwritten between tile sequences.
+- `loop_order = 0` — selects the default dimension traversal order. Alternative loop orders are available in the hardware but not exercised in the baseline, as they alter the sequence in which tile-relative parameters are consumed.
+- `Cw_eq / Ch_eq / Ck_eq = 0` — dimension equality shortcuts are disabled. These flags allow the controller to skip re-programming when consecutive tiles share a dimension value. Disabling them ensures the full configuration write sequence executes every time, which is the safest baseline choice.
+- `WXfer_op = 0` — disables the alternate weights transfer mode. This field changes how the weights DMA burst is decomposed and is left at the default to keep the DMA geometry straightforward.
+- SRAM base addresses are fixed to the package-constant memory map: `SRAMA = 0x7000_0000`, `SRAMB = 0x8000_0000`, `SRAMC = 0x9000_0000`. These correspond to the DMA engine's address routing for the three local SRAMs and must match the physical address map configured in the AXI4 infrastructure.
+
+---
+
+### 4.6 Configuration Flow Summary
+
+The derivation chain can be summarized as a one-way dependency graph:
+
+```
+[rows_multiple, cols_multiple]
+        │
+        ▼
+[X, Y, C, K]   ←── DMA base seq randomizes and constrains these
+        │
+        ▼
+DMA step/limit fields (ett, y_step, c_step, tile steps) ── shared via computation_params
+        │
+        ├──► Core IFMAPS seq: x_step=SRAMA_N, derives lim fields from shared params
+        │
+        ├──► Core Weights seq: k_step=SRAMB_N (floor), derives w_step/lim from shared params
+        │
+        ├──► Core Main Controller seq: total_macs=C, act_reps=K/SRAMB_N, weight_reps=X*Y/SRAMA_N
+        │
+        └──► Core PSUMs seq: cx_step=SRAMC_N, derives cx/ck lim and tile fields
+```
+
+No downstream sequence introduces new random variables that are independent of the root parameters. The DMA base sequence's `computation_params.shared` flag acts as a synchronization barrier — all other sequences wait on this flag before deriving their fields.
+
+---
+
+## 5. Practical Legal-Value Rules (Big Picture)
 
 For robust configuration, treat the following as mandatory invariants:
 
@@ -258,7 +482,7 @@ For robust configuration, treat the following as mandatory invariants:
 
 ---
 
-## 5. Recommended Programming Order
+## 6. Recommended Programming Order
 
 1. Program DMA controller CRs (`0..17`) to establish movement geometry.
 2. Program dataflow controller CRs (`18..21`) for start addresses and mode flags.
@@ -270,7 +494,7 @@ This order mirrors the verification sequence library, matches the chosen configu
 
 ---
 
-## 6. Common Misconfiguration Patterns and Effects
+## 7. Common Misconfiguration Patterns and Effects
 
 - **Mismatch between DMA geometry and core feeder geometry**  
   Causes feeder/compute desynchronization and output corruption.
@@ -289,13 +513,13 @@ This order mirrors the verification sequence library, matches the chosen configu
 
 ---
 
-## 7. Notes on Arithmetic Variant Dependence
+## 8. Notes on Arithmetic Variant Dependence
 
 Some field packing and active-column handling differ between INT and FP configurations (for example, split fields marked FP-only or INT-only in register definitions). Keep programming consistent with the active arithmetic build-time configuration.
 
 ---
 
-## 8. Relationship to Other Artifacts
+## 9. Relationship to Other Artifacts
 
 This document complements:
 

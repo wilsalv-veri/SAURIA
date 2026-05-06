@@ -25,7 +25,9 @@
 // MODULE DECLARATION
 // --------------------
 
-module context_fsm (
+module context_fsm #(
+    parameter IDX_W = 11 //NOTE: wilsalv :CORE_BUGID11
+    )(
     // Clk, RST
 	input  logic 				        i_clk,
 	input  logic					    i_rstn,
@@ -34,8 +36,12 @@ module context_fsm (
     input  logic                        i_soft_reset,
 
     // FSM Control inputs
+    //NOTE: wilsalv :CORE_BUGID11
+    input  logic [IDX_W-1:0]            i_ncontexts,        // Total number of contexts to compute
+    input  logic [IDX_W-1:0]            i_psm_ctx_cnt,      // Current context count from PSM manager
+    
     input  logic                        i_start,            // Start signal from interface
-    input  logic                        i_outbuf_done,      // Done signal from output buffer
+    input  logic                        i_outbuf_done,      // Done signal from output buffer 
     input  logic                        i_cdone,            // Context done flag -> Signals last input shifted to array
     input  logic                        i_cswitch_done,     // Context Switch done flag
     input  logic                        i_shift_done,       // First ready flag from output buffer
@@ -86,8 +92,8 @@ enum logic [4:0] {
     WAIT_CSWITCH_STALL,
     WAIT_OBUF,
     WAIT_OBUF_STALL,
-    SCND_SHIFT,
-    SCND_SHIFT_STALL,
+    SCND_SHIFT,        
+    SCND_SHIFT_STALL, 
     ALL_BUSY_SHIFT,
     ALL_BUSY,
     ARRAY_BUSY,
@@ -315,11 +321,14 @@ always_comb begin: state_transitions
 
             // WAIT_OBUF => Wait for Output Buffer completion
             WAIT_OBUF: begin
-                if(i_cdone && outbuf_done_hold) begin
+                //NOTE: wilsalv :CORE_BUGID10
+                //if(i_cdone && outbuf_done_hold) begin
+                if (i_cdone && i_outbuf_done)begin
                     main_state_d = SCND_SHIFT_STALL;
                 end else if(i_cdone) begin
                     main_state_d = WAIT_OBUF_STALL;
-                end else if(outbuf_done_hold) begin
+                //end else if(outbuf_done_hold) begin
+                end else if (i_outbuf_done)begin
                     main_state_d = SCND_SHIFT;
                 end
             end
@@ -395,7 +404,9 @@ always_comb begin: state_transitions
                 // If context switch and current context finish at the same time, jump directly to:
                 if(i_cdone && i_cswitch_done) begin
                     // If Feeders & Output Buffer have finished, advance to last section
-                    if (i_feeders_done && i_finalwrite) begin
+                    //NOTE: wilsalv :CORE_BUGID1
+                    //if (i_feeders_done && i_finalwrite) begin
+                    if (i_finalwrite) begin
                         main_state_d = LAST_SHIFT;
                     // Otherwise go to OBUF_BUSY_SHIFT
                     end else begin
@@ -409,7 +420,9 @@ always_comb begin: state_transitions
                 // When Context Switch Done flag arrives, decide:
                 end else if (i_cswitch_done) begin
                     // If Feeders & Output Buffer have finished, advance to last section
-                    if (i_feeders_done && i_finalwrite) begin
+                    //NOTE: wilsalv :CORE_BUGID1
+                    //if (i_feeders_done && i_finalwrite) begin
+                    if (i_finalwrite) begin
                         main_state_d = LAST_SHIFT;
 
                     // Otherwise back to computing
@@ -442,7 +455,9 @@ always_comb begin: state_transitions
             // OBUF_BUSY_SHIFT => Output Buffer fetching data, Array shifting zeros (soft-stall)
             OBUF_BUSY_SHIFT: begin
                 // If output buffer finishes completely, go to cswitch
-                if (outbuf_done_hold) begin
+                //NOTE: wilsalv :CORE_BUGID10
+                //if (outbuf_done_hold) begin
+                if (i_outbuf_done) begin
                     main_state_d = ARRAY_CSWITCH;
 
                 // If only shift part finishes, stall and wait
@@ -454,7 +469,9 @@ always_comb begin: state_transitions
             // FORCE_STALL => 1 cycle to force a stall in secondary FSM
             FORCE_STALL: begin
                 // If output buffer finishes completely, go to cswitch
-                if (outbuf_done_hold) begin
+                //NOTE: wilsalv :CORE_BUGID10
+                //if (outbuf_done_hold) begin
+                if(i_outbuf_done) begin
                     main_state_d = ARRAY_CSWITCH;
 
                 // Otherwise wait for output buffer
@@ -465,7 +482,9 @@ always_comb begin: state_transitions
 
             // OBUF_BUSY => Output Buffer fetching data, Array waiting (stall)
             OBUF_BUSY: begin
-                if (outbuf_done_hold) begin
+                //NOTE: wilsalv :CORE_BUGID10
+               // if (outbuf_done_hold) begin
+                if (i_outbuf_done) begin
                     main_state_d = ARRAY_CSWITCH;
                 end
             end
@@ -775,8 +794,11 @@ always_comb begin: output_logic
             computation_ready = 1;
             o_feeders_start = 0;
             o_feeders_reset = 0;
-            o_pop_gate = 1;
-
+            
+            //NOTE: wilsalv :CORE_BUGID11
+            //o_pop_gate = 1;
+            o_pop_gate = !((i_psm_ctx_cnt == 3) && (i_ncontexts < 3));
+         
             outbuf_enable_d = 1;
             o_outbuf_reset = 0;
 
@@ -797,8 +819,11 @@ always_comb begin: output_logic
             computation_ready = 0;
             o_feeders_start = 0;
             o_feeders_reset = 0;
-            o_pop_gate = 1;
-
+            
+            //NOTE: wilsalv :CORE_BUGID11
+            //o_pop_gate = 1;
+            o_pop_gate = !((i_psm_ctx_cnt == 3) && (i_ncontexts < 3));
+         
             outbuf_enable_d = 1;
             o_outbuf_reset = 0;
 
@@ -819,8 +844,11 @@ always_comb begin: output_logic
             computation_ready = 1;
             o_feeders_start = 0;
             o_feeders_reset = 0;
-            o_pop_gate = 1;
-
+            
+            //NOTE: wilsalv :CORE_BUGID11
+            //o_pop_gate = 1;
+            o_pop_gate = !((i_psm_ctx_cnt == 4) && (i_ncontexts < 3));
+         
             outbuf_enable_d = 0;
             o_outbuf_reset = 0;
 
@@ -885,8 +913,11 @@ always_comb begin: output_logic
             computation_ready = 0;
             o_feeders_start = 0;
             o_feeders_reset = 0;
-            o_pop_gate = 1;
-
+            
+            //NOTE: wilsalv :CORE_BUGID11
+            //o_pop_gate = 1;
+            o_pop_gate = !((i_psm_ctx_cnt == 3) && (i_ncontexts < 3));
+         
             outbuf_enable_d = 1;
             o_outbuf_reset = 0;
 
@@ -907,13 +938,21 @@ always_comb begin: output_logic
             computation_ready = 1;
             o_feeders_start = 0;
             o_feeders_reset = 0;
-            o_pop_gate = 1;
-
+            
+            //NOTE: wilsalv :CORE_BUGID11
+            //o_pop_gate = 1;
+            o_pop_gate = !((i_psm_ctx_cnt == 3) && (i_ncontexts < 3));
+         
             outbuf_enable_d = 0;
             o_outbuf_reset = 0;
 
             o_cswitch_en = 1;
-            o_cswitch_force = 0;
+            
+            //NOTE: wilsalv :CORE_BUGID11
+            //o_cswitch_force = 0;
+            o_cswitch_force = (i_psm_ctx_cnt == 4) && (i_ncontexts < 3);
+            
+            
             o_cswitch_cnt_clear = 0;
             o_sa_clear = 0;
 

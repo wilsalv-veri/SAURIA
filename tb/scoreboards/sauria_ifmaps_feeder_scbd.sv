@@ -72,6 +72,9 @@ class sauria_ifmaps_feeder_scbd extends uvm_scoreboard;
                     ifmaps_feeder_arr_info.pop_en,
                     ifmaps_feeder_arr_info.fifo_empty);
 
+        `sauria_info(message_id, $sformatf("IFMAPS Feeder Arr Info Pop_En: %0d Valid_Entry: %0d", 
+                    ifmaps_feeder_arr_info.pop_en, arr_feed_result.valid_entry))
+
         if (arr_feed_result.valid_entry &&
             (arr_feed_result.exp_srama_data != arr_feed_result.exp_a_arr_data))
             `sauria_error(message_id, $sformatf("Feeder Output Does Not Match SRAMA Read Data Addr: 0x%0h Exp: 0x%0h Act: 0x%0h",

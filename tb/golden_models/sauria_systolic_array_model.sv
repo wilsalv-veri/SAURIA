@@ -372,6 +372,8 @@ class sauria_systolic_array_model extends uvm_object;
 
         for(int row=0; row < sauria_pkg::Y; row++)begin
             for(int col=0; col < sauria_pkg::X; col++)begin
+                if (FP_ARITHMETIC)
+                    fp16_dpi_accum = shortint'(mac_psum_reg[row][col]);
                 for(int c=0; c < incntlim; c++)begin
                     if (FP_ARITHMETIC) begin
                         fp_ifmaps_data = fp16_to_shortreal(ifmaps_feeder_data[row].ifmaps_data[c]);

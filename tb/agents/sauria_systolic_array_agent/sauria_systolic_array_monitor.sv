@@ -95,7 +95,11 @@ class sauria_systolic_array_monitor extends uvm_monitor;
                 systolic_array_info.act_start_feeding = act_start_feeding;
                 systolic_array_info.wei_start_feeding = wei_start_feeding;
 
-                systolic_array_info.cscan_valid        = pipeline_en_q;
+                //systolic_array_info.cscan_valid        = sauria_systolic_array_if.pipeline_en || pipeline_en_d || pipeline_en_q;
+                
+                systolic_array_info.cscan_valid        = sauria_systolic_array_if.pipeline_en;// && pipeline_en_d || pipeline_en_q;
+                
+                
                 systolic_array_info.cswitch_valid      = pipeline_en_q &&
                                                          ((cswitch_arr_q != arr_row_data_t'(0)) || (cswitch_done_count != 0));
                 
@@ -110,8 +114,11 @@ class sauria_systolic_array_monitor extends uvm_monitor;
                 if (feeding_unpaused)
                     `sauria_info(message_id, $sformatf("FEEDING_UNPAUSED Normal: %0d Enabling: %0d", normal_operation_pipeline_en, enabling_pipeline))
 
-                if(feeding_paused_hold == 1'b1)  
+                if(feeding_paused_hold == 1'b1)  begin
                     `sauria_info(message_id, $sformatf("FEEDING_PAUSED_HOLD Normal: %0d Enabling: %0d Act_d: 0x%0h Act_q: 0x%0h Valid_Sel: %0d", normal_operation_pipeline_en, enabling_pipeline, act_data_valid_d, act_data_valid_q, data_valid_sel))
+                    `sauria_info(message_id, $sformatf("i_a_arr: 0x%0h i_b_arr: 0x%0h", systolic_array_info.a_arr, systolic_array_info.b_arr))
+                
+                end
                 else if (feeding_paused == 1'b1)
                     `sauria_info(message_id, $sformatf("FEEDING_PAUSED Normal: %0d Enabling: %0d", normal_operation_pipeline_en, enabling_pipeline))
                 

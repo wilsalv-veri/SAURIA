@@ -158,7 +158,11 @@ class sauria_weights_feeder_model extends sauria_feeder_base_model;
         
         for(int i=0; i < last_valid_queue_elem; i++)begin 
             
-            if ((i == sauria_pkg::X - 1 -  (idx_curr_comp - incntlim)) && (idx_curr_comp >= incntlim)  && (idx_curr_comp != (comp_feeding_len - 1)) && (!overlapping_comps))
+            if (//(feeder_data.size() < sauria_pkg::X) && 
+                (i == sauria_pkg::X - 1 -  (idx_curr_comp - incntlim)) 
+                && (idx_curr_comp >= incntlim)  
+                && (idx_curr_comp != (comp_feeding_len - 1)) 
+                && (!overlapping_comps))
                 break;
 
             for(int col=0; col < sauria_pkg::X; col++)begin
@@ -229,7 +233,8 @@ class sauria_weights_feeder_model extends sauria_feeder_base_model;
     endfunction
 
     virtual function void set_overlapping_comp();
-        wei_feeding_not_done = (idx_curr_comp >= incntlim) && (idx_curr_comp < (comp_feeding_len - 1));
+       //wei_feeding_not_done = (idx_curr_comp >= incntlim) && (idx_curr_comp < (comp_feeding_len - 1));
+        wei_feeding_not_done = (idx_curr_comp > 0) && (idx_curr_comp < (comp_feeding_len - 1));
         overlapping_comps    = wei_feeding_not_done;
         `sauria_info(message_id, $sformatf("Weight Feeding Started Overlapping_Comps: %0d Comp_Idx: %0d", overlapping_comps, idx_curr_comp))
     endfunction

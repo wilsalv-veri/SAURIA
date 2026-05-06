@@ -190,7 +190,7 @@ always_comb begin
     //if (i_aux_cnt) begin
     //    transition_flag = aux_ov_flag;
     //end else begin
-        transition_flag = (sram_idx_q[IDX_W-1:WOFS_W] != sram_idx_d[IDX_W-1:WOFS_W]) && (!i_waligned);
+        transition_flag = (sram_idx_q[IDX_W-1:WOFS_W] != sram_idx_d[IDX_W-1:WOFS_W]); //&& (!i_waligned);
     //end
 end
 
@@ -284,7 +284,11 @@ assign o_woffs =        woffs_outshim;
 
 // Flags
 assign o_outbounds =    outbounds_q;
-assign o_transn =       !transition_q2;
+
+//NOTE: wilsalv :ARCH_ID1
+//assign o_transn =       !transition_q2;
+assign o_transn =       transition_q1;
+
 assign o_done =         done_q              & i_cnt_en;
 assign o_til_done =     til_done_q          & i_cnt_en;
 

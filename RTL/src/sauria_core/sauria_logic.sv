@@ -99,6 +99,7 @@ logic [sauria_pkg::OUT_IDX_W-1:0]                   mc_wei_reps;
 logic                                               mc_outbuf_done;
 logic                                               mc_shift_done;
 logic                                               mc_finalwrite;
+logic [sauria_pkg::OUT_IDX_W-1:0]                   mc_psm_ctx_cnt;
 logic                                               mc_act_done;
 logic                                               mc_act_til_done;
 logic                                               mc_act_fifo_empty;
@@ -288,6 +289,9 @@ main_controller #(
         .i_outbuf_done      (mc_outbuf_done),
         .i_shift_done       (mc_shift_done),
         .i_finalwrite       (mc_finalwrite),
+        .i_psm_ctx_cnt      (mc_psm_ctx_cnt),
+
+        .i_ncontexts        (ob_ncontexts), //NOTE: wilsalv :CORE_BUGID11
         .i_incntlim	        (mc_incntlim),
         .i_act_reps         (mc_act_reps),
         .i_wei_reps         (mc_wei_reps),
@@ -463,6 +467,7 @@ psm_top #(
 
         .o_done         (mc_outbuf_done),
         .o_out_status   (cg_out_status),
+        .o_ctx_cnt      (mc_psm_ctx_cnt),
         .o_shift_done   (mc_shift_done),
         .o_finalwrite   (mc_finalwrite),
         .o_cscan_en     (sa_cscan_en),

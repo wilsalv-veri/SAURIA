@@ -69,6 +69,7 @@ module psm_top #(
     output logic					    o_done,             // Finish flag
     output logic                        o_finalwrite,       // Flag signaling that all outputs EXCEPT LAST have been written successfully
     output logic					    o_shift_done,       // Flag signaling that computation can start
+    output logic [IDX_W-1:0]            o_ctx_cnt,          // Current PSM context counter value
 
     // Status Outputs (External)
     output  logic [4:0]                 o_out_status,       // Output Scan FSM status
@@ -240,6 +241,7 @@ psm_shift_fsm #(
         //NOTE: wilsalv : CORE_BUGID8
         //.o_out_status       (o_out_status),
         .o_out_status       (shift_fsm_status),
+        .o_ctx_cnt          (o_ctx_cnt),
         
         .o_shift_done       (o_shift_done),
         .o_done             (o_done),

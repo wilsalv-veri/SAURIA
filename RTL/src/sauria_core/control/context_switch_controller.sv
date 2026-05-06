@@ -29,6 +29,8 @@ module context_switch_controller #(
     parameter X = 3,
     parameter Y = 3,
     parameter IDX_W = 11,
+    parameter OUT_IDX_W = 11, //NOTE: wilsalv :CORE_BUGID11
+    
     parameter PE_LAT = 5,
     parameter EXTRA_CSREG = 0
 )(
@@ -38,6 +40,11 @@ module context_switch_controller #(
 
     // Control inputs
     input  logic [IDX_W-1:0]            i_incntlim,         // Input counter limit
+    
+    //NOTE: wilsalv :CORE_BUGID11
+    input  logic [OUT_IDX_W-1:0]        i_ncontexts,        // Total number of contexts to compute
+    input  logic [OUT_IDX_W-1:0]        i_psm_ctx_cnt,      // Current context count from PSM manager
+    
     input  logic                        i_clear,            // Clear flag for counters and buffers
     input  logic                        i_pipeline_en,      // Pipeline enable
     input  logic                        i_wei_pop_en,       // Weight inputs pop enable
@@ -66,6 +73,8 @@ logic [IDX_W-1:0]            cdone_val;
 
 // Flags to force some special conditions to cdone at boundary cases (lim={0,1})
 logic                        cdone_force_q1, cdone_force_q2;
+logic                        cdone_force_q3, cdone_force_q3_set; //NOTE: wilsalv :CORE_BUGID11
+
 
 // Pop signals shimming (to equalize latency with PEs)
 logic pop_shim_init_q, pop_shim_init_d, pop_shim_q2;
@@ -83,6 +92,7 @@ logic cdone_shim_q1, cdone_q;
 logic                           cscnt_trigger;
 logic [CSWITCH_CNT_BITS-1:0]    cscnt_d, cscnt_q;
 logic                           cscnt_flag;
+logic                           skip_scnd_cswitch_fastfwd;
 
 // Intermediate CS signal
 logic [0:X-1] cswitch_arr_d, cswitch_arr_q;
@@ -140,6 +150,27 @@ assign cdone_val = (i_incntlim>1)? i_incntlim - 3 : 0;
 assign cdone_force_q1 = (i_incntlim==1)? 1 : 0;
 assign cdone_force_q2 = (i_incntlim==0)? 1 : 0;
 
+//NOTE: wilsalv :CORE_BUGID11
+// Register
+always_ff @(posedge i_clk or negedge i_rstn) begin : cdone_force_register
+    if(~i_rstn) begin
+        cdone_force_q3     <= 0;
+        cdone_force_q3_set <= 0;
+    end else if (!(i_psm_ctx_cnt == 4)) begin
+
+        cdone_force_q3_set <= 0;
+    end else if ((i_psm_ctx_cnt == 4) && (i_ncontexts == 2)) begin
+        
+        if (cdone_force_q3)begin
+            cdone_force_q3 <= 0;
+        end
+        else if (!cdone_force_q3_set) begin
+            cdone_force_q3     <= 1;
+            cdone_force_q3_set <= 1;
+        end
+    end
+end
+
 // Comb logic
 always_comb begin
 
@@ -171,9 +202,9 @@ always_ff @(posedge i_clk or negedge i_rstn) begin : incnt_reg
         // Synchronous reset
         if (i_clear) begin
             incnt_q <= 0;
-
         // Only count when pipeline is enable and inputs are popping
-        end else if (i_pipeline_en && pop_shim_q2) begin
+        end 
+        else if (i_pipeline_en && pop_shim_q2) begin
             incnt_q <= incnt_d;
         end
     end
@@ -263,6 +294,16 @@ end
 
 assign cscnt_trigger = (i_cswitch_en && cdone_shim_q1) || i_cswitch_force;
 
+// For the 2-context preload corner-case, skip the second non-forced context-switch by
+// directly fast-forwarding the cswitch counter to completion. This keeps internal done/flag
+// behavior consistent while preventing any array-visible cswitch pulse train.
+assign skip_scnd_cswitch_fastfwd = (cscnt_q == 0) &&
+                                   (i_psm_ctx_cnt == 3) &&
+                                   (i_ncontexts < 3) &&
+                                   i_cswitch_en &&
+                                   cdone_shim_q1 &&
+                                   !i_cswitch_force;
+
 // Comb logic
 always_comb begin
 
@@ -273,9 +314,14 @@ always_comb begin
     if (cscnt_q == CSWITCH_PROP_CYCLES) begin
         cscnt_flag = 1;
         cscnt_d = 0;
+
     end else begin
+        // Skip second cswitch by jumping directly to counter terminal value.
+        if (skip_scnd_cswitch_fastfwd) begin
+            cscnt_d = CSWITCH_PROP_CYCLES;
+
         // Start counting only after trigger
-        if (cscnt_trigger || (cscnt_q > 0)) begin
+        end else if (cscnt_trigger || (cscnt_q > 0)) begin
             cscnt_d = cscnt_q + 1;
         end
     end
@@ -338,8 +384,8 @@ assign o_cswitch_arr = cswitch_arr_q;
 
 //NOTE: wilsalv :CORE_BUGID5
 //assign o_cdone = (cdone_q || (cdone_force_q1 && cdone)) & i_pipeline_en & i_wei_pop_en & i_act_pop_en;
-assign o_cdone = (cdone_q || (cdone_force_q1 && cdone)) & i_pipeline_en;
-
+//assign o_cdone = (cdone_q || (cdone_force_q1 && cdone)) & i_pipeline_en;
+assign o_cdone = (cdone_q || (cdone_force_q1 && cdone) || cdone_force_q3) & i_pipeline_en;
 
 assign o_cswitch_done = cscnt_flag & i_pipeline_en & i_cswitch_en;
 

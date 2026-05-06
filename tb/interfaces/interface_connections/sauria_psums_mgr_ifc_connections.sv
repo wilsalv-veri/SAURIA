@@ -15,3 +15,4 @@ assign sauria_psums_mgr_if.i_c_arr      = sauria_ss.sauria_core_i.sauria_logic_t
 assign sauria_psums_mgr_if.o_c_arr      = sauria_ss.sauria_core_i.sauria_logic_top_i.psm_top_i.o_c_arr;  
 
 assign sauria_psums_mgr_if.shift_reg_shift  = sauria_ss.sauria_core_i.sauria_logic_top_i.psm_top_i.buff_shift_en;  
+assign sauria_psums_mgr_if.pipeline_en  = sauria_ss.sauria_core_i.sauria_logic_top_i.psm_top_i.i_pipeline_en;  

@@ -118,7 +118,7 @@ class sauria_psums_mgr_monitor extends uvm_monitor;
 
     virtual task get_preload_values_info();
         forever @ (posedge sauria_psums_mgr_if.clk)begin
-            if (sauria_psums_mgr_if.cscan_en == 1'b1)begin
+            if (sauria_psums_mgr_if.cscan_en && sauria_psums_mgr_if.pipeline_en)begin
                 psums_mgr_item.cscan_en     = sauria_psums_mgr_if.cscan_en;     
                 psums_mgr_item.i_c_arr      = sauria_psums_mgr_if.i_c_arr; 
                 psums_mgr_item.o_c_arr      = sauria_psums_mgr_if.o_c_arr; 

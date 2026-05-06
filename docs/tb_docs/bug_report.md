@@ -32,6 +32,8 @@ See `architectural_findings.md` for the architecture-specific issues.
 | CORE_BUGID7 | Main Controller | context_controller.sv | Extra Cycle (+1) Of Computation From Subsequent Contexts |
 | CORE_BUGID8 | Partial-Sums Manager | psm_top.sv | Partial Sums Manager Does Not Guarantee Zero Data For Inactive Columns |
 | CORE_BUGID9 | Partial-Sums Manager | psm_idxcnt.sv | Partial Sums Tile Reading and Writing Overflow Shift Register |
+| CORE_BUGID10 | Main Controller | context_fsm.sv | Context FSM Shifts States Prematurely When Using outbuf_done_hold, Leading To Hangs |
+| CORE_BUGID11 | Main Controller | sauria_logic.sv, main_controller.sv, context_fsm.sv, context_switch_controller.sv, psm_shift_fsm.sv | Main Controller Path Requires Ad-Hoc Workarounds For Fewer Than 3 Contexts |
 | COMMON_BUGID1 | Generic Counter | cnt_generic.sv | Generic Counter Sets Overflow Flag at Zero |
 
 ### Sauria Core
@@ -183,6 +185,44 @@ Introduce a new fastest-running counter whose limit matches the number of array 
 
 ---
 
+#### CORE_BUGID10 - Context FSM Shifts States Prematurely When Using outbuf_done_hold, Leading To Hangs
+
+- Area: Main Controller
+- File(s): context_fsm.sv
+
+**Issue**
+
+Several context-FSM transitions used outbuf_done_hold instead of i_outbuf_done to decide when to advance state. outbuf_done_hold is sticky and remains asserted until o_outbuf_start or o_outbuf_reset is issued.
+
+Because of that, the FSM can re-enter states like WAIT_OBUF, OBUF_BUSY_SHIFT, FORCE_STALL, or OBUF_BUSY with outbuf_done_hold already high from an earlier completion. It then advances immediately, before a new output-buffer completion event actually occurs.
+
+That premature state advance can desynchronize the context FSM from the output buffer and leave the flow in a stalled condition, causing hangs.
+
+**Proposed Fix**
+
+Use i_outbuf_done for transition edges that start new context-switch phases, and keep outbuf_done_hold only where a held completion is intentionally required.
+
+---
+
+#### CORE_BUGID11 - Main Controller Path Requires Ad-Hoc Workarounds For Fewer Than 3 Contexts
+
+- Area: Main Controller
+- File(s): sauria_logic.sv, main_controller.sv, context_fsm.sv, context_switch_controller.sv, psm_shift_fsm.sv
+
+**Issue**
+
+The main-controller path assumes at least three contexts in several places and does not cleanly support ncontexts < 3. To avoid hangs and invalid context-switch behavior, the current RTL relies on explicit corner-case guards and forced control behavior for the 2-context path.
+
+These workarounds appear across multiple units: special pop gating and forced context-switch behavior in context_fsm, corner-case cdone/cswitch handling in context_switch_controller, explicit ncontexts==2 preload boundary logic in psm_shift_fsm, and matching parameter/interface propagation notes in main_controller and sauria_logic.
+
+Without these ad-hoc conditions, the controller chain can advance incorrectly or stall when context count is below three.
+
+**Proposed Fix**
+
+Refactor the main-controller/context-switch/preload boundary logic so ncontexts is handled uniformly for all valid values, including 0, 1, and 2, without special-case force/popup hacks.
+
+---
+
 #### COMMON_BUGID1 - Generic Counter Sets Overflow Flag at Zero
 
 - Area: Generic Counter
@@ -195,8 +235,6 @@ The generic counter used by IFMAPS, weights, and partial sums asserts overflow i
 **Proposed Fix**
 
 Update the counter so overflow only changes when the counter is enabled.
-
----
 
 ### Dataflow Controller Summary
 

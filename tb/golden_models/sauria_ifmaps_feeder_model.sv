@@ -10,6 +10,10 @@ class sauria_ifmaps_feeder_model extends sauria_feeder_base_model;
     ifmaps_feeder_data_t    feeder_data[$];
     ifmaps_feeder_data_t    feeder_data_inst;
     bit                     ifmaps_feeding_not_done;
+
+    // Revert switch: set to 1'b1 to restore the exact legacy break behavior
+    // from update_feeder_data() (lines that gate i based on idx_curr_comp/incntlim).
+    localparam bit          USE_LEGACY_UPDATE_FEEDER_DATA_BOUNDARY = 1'b1;
       
     function new(string name="sauria_ifmaps_feeder_model");
         super.new(name);
@@ -63,6 +67,10 @@ class sauria_ifmaps_feeder_model extends sauria_feeder_base_model;
 
         add_ifmaps_systolic_feed_data(a_arr);
 
+        `sauria_info(message_id, $sformatf("Has_Valid_Entry: %0d Size: %0d Valid_Rows: %0d",
+          has_valid_entry(), feeder_data.size(), $countones(feeder_data[0].arr_byte_valid)))
+          
+        
         if (has_valid_entry() && !fifo_empty)
             result = get_valid_entry();
 
@@ -140,11 +148,26 @@ class sauria_ifmaps_feeder_model extends sauria_feeder_base_model;
         int last_valid_queue_elem = (feeder_data.size() < sauria_pkg::Y) ? feeder_data.size() : sauria_pkg::Y;
         
         for(int i=0; i < last_valid_queue_elem; i++)begin 
-            if ((i == sauria_pkg::Y - 1 - (idx_curr_comp - incntlim)) &&
-                (idx_curr_comp >= incntlim) &&
-                (idx_curr_comp != (comp_feeding_len - 1)) &&
-                (!overlapping_comps))
-                break;
+            // Legacy behavior (kept for revert): once idx_curr_comp reaches incntlim,
+            // this early break can stop filling entries beyond a boundary index.
+            // This may starve the next head entry when queue depth is already >= Y.
+            if (USE_LEGACY_UPDATE_FEEDER_DATA_BOUNDARY) begin
+                if ((i == sauria_pkg::Y - 1 - (idx_curr_comp - incntlim)) &&
+                    (idx_curr_comp >= incntlim) &&
+                    (idx_curr_comp != (comp_feeding_len - 1)) &&
+                    (!overlapping_comps))
+                    break;
+            end
+            // New default behavior: keep startup semantics, but once queue depth reaches Y
+            // continue filling the first Y entries so the popped head remains fully valid.
+            else begin
+                if ((feeder_data.size() < sauria_pkg::Y) &&
+                    (i == sauria_pkg::Y - 1 - (idx_curr_comp - incntlim)) &&
+                    (idx_curr_comp >= incntlim) &&
+                    (idx_curr_comp != (comp_feeding_len - 1)) &&
+                    (!overlapping_comps))
+                    break;
+            end
 
             for(int row=0; row < sauria_pkg::Y; row++)begin
                 //Find first invalid element
@@ -207,7 +230,10 @@ class sauria_ifmaps_feeder_model extends sauria_feeder_base_model;
     endfunction
 
     virtual function void set_overlapping_comp();
-        ifmaps_feeding_not_done = (idx_curr_comp >= incntlim) && (idx_curr_comp < (comp_feeding_len - 1));
+        // Overlap is only legal once the first incntlim components are already fed.
+        ifmaps_feeding_not_done = (idx_curr_comp > 0) && (idx_curr_comp < (comp_feeding_len - 1));
+        //ifmaps_feeding_not_done = (idx_curr_comp >= incntlim) && (idx_curr_comp < (comp_feeding_len - 1));
+        
         overlapping_comps       = ifmaps_feeding_not_done;
         `sauria_info(message_id, $sformatf("Ifmaps Feeding Started Overlapping_Comps: %0d Comp_Idx: %0d", overlapping_comps, idx_curr_comp))
     endfunction

@@ -289,6 +289,8 @@ These characteristics make verification primarily a system-level problem, where 
 
 For full setup instructions, see the [Setup and Usage Guide](docs/tb_docs/setup_guide.md).
 
+Note: DPI setup uses Berkeley SoftFloat and a shared library build step. Follow the DPI section in the setup guide before first compile.
+
 ### Build and Run
 
 1. Source the DSIM environment:

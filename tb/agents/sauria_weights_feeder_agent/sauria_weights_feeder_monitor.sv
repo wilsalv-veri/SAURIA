@@ -134,7 +134,6 @@ class sauria_weights_feeder_monitor extends uvm_monitor;
                 sauria_weights_feeder_if.feeder_en) begin
                 
                 if (wei_valid) begin
-                    weights_feeder_info.start_feeding = start_feeding;
                     weights_feeder_info.til_done      =  til_done_q;
                     weights_feeder_info.sramb_addr    =  sramb_addr_q;   
                     weights_feeder_info.sramb_data    =  sauria_weights_feeder_if.sramb_data; 
@@ -163,6 +162,7 @@ class sauria_weights_feeder_monitor extends uvm_monitor;
                 else begin
                     weights_feeder_info.start_feeding = (data_valid_d && !data_valid_q) && (feed_count == 0);
                     weights_feeder_info.pop_en        = pop_done_count != sauria_pkg::X;
+                    weights_feeder_info.fifo_empty    = sauria_weights_feeder_if.fifo_empty;
                     weights_feeder_info.b_arr         = sauria_weights_feeder_if.b_arr;
                     send_weights_feeder_arr_info.write(weights_feeder_info);
                 end

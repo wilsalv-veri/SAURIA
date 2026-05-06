@@ -71,6 +71,9 @@ class sauria_psums_mgr_scbd extends uvm_scoreboard;
             `sauria_error(message_id, "Empty Shift Register Fifo At Time of SRAMC Write")
         else if (write_result.exp_wdata != psums_mgr_info.sramc_wdata)
             `sauria_error(message_id, $sformatf("Shift Register and SRAMC Write Bus Data Value Mismatch Exp: 0x%0h Act: 0x%0h", write_result.exp_wdata, psums_mgr_info.sramc_wdata))
+        else if (write_result.exp_wdata == psums_mgr_info.sramc_wdata)
+            `sauria_info(message_id, $sformatf("Shift Register and SRAMC Write Bus Data Value Match Exp: 0x%0h Act: 0x%0h", write_result.exp_wdata, psums_mgr_info.sramc_wdata))
+    
     endfunction
 
     function write_psums_mgr_preload_values_info(sauria_psums_mgr_seq_item psums_mgr_info);

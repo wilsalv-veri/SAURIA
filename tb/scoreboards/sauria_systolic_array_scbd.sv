@@ -42,6 +42,9 @@ class sauria_systolic_array_scbd extends uvm_scoreboard;
         else begin
             //Normal Operation
             if (systolic_array_info.cscan_valid) begin
+
+                `sauria_info(message_id, "CSCAN Valid")
+                
                 scan_chain_result = systolic_array_model.observe_scan_chain_event(systolic_array_info.cscan_en,
                                                                                   systolic_array_info.i_c_arr,
                                                                                   systolic_array_info.arr_psum_reserve_reg);
