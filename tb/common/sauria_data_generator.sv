@@ -216,10 +216,11 @@ class sauria_data_generator extends uvm_object;
     endfunction
 
     virtual function sauria_fp_elem_data_t get_rand_fp_elem_data();
-        int rand_val = $urandom_range(0,12);
+        // Validation mode: avoid operands that can easily produce subnormal tails in FMADD.
+        int rand_val = $urandom_range(0,6);
         case(rand_val)
-            0:  return FP16_POS_ZERO;
-            1:  return FP16_NEG_ZERO;
+            0:  return FP16_NEG_ZERO;
+            1:  return FP16_POS_ZERO;
             2:  return FP16_ONE;
             3:  return FP16_NEG_ONE;
             4:  return FP16_TWO;

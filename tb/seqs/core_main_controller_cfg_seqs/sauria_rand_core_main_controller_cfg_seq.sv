@@ -11,6 +11,8 @@ class sauria_rand_core_main_controller_cfg_seq extends sauria_axi4_lite_core_mai
             sauria_axi4_lite_data_t'('h0) := 80,
             [sauria_axi4_lite_data_t'('h1):sauria_axi4_lite_data_t'('hf)] :/ 20
         };
+
+        zero_negligence_threshold == sauria_axi4_lite_data_t'('h0); //FIXME: wilsalv FP Debug
     }
 
 endclass

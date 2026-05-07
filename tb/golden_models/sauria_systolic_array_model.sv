@@ -91,7 +91,7 @@ class sauria_systolic_array_model extends uvm_object;
         if ((cscan_en || is_cscan_last_shift()) && is_scan_chain_out_data_valid()) begin
             `sauria_info(message_id, "Valid CSCAN")
             result.valid_scan_chain_out = 1'b1;
-            result.scan_chain_out_col_idx = get_curr_scan_chain_out_col_idx() - 1;
+            result.scan_chain_out_col_idx = get_curr_scan_chain_out_col_idx();
             result.exp_scan_chain_out_col = get_scan_chain_out_col();
         end
         else if (is_cscan_done()) begin
@@ -366,22 +366,27 @@ class sauria_systolic_array_model extends uvm_object;
         shortreal fp_weights_data;
         shortreal fp_accum;
 
-        shortint fp16_dpi_ifmaps_data;
-        shortint fp16_dpi_weights_data;
-        shortint fp16_dpi_accum;
+        shortint unsigned fp16_dpi_ifmaps_data;
+        shortint unsigned fp16_dpi_weights_data;
+        shortint unsigned fp16_dpi_accum;
 
         for(int row=0; row < sauria_pkg::Y; row++)begin
             for(int col=0; col < sauria_pkg::X; col++)begin
-                if (FP_ARITHMETIC)
-                    fp16_dpi_accum = shortint'(mac_psum_reg[row][col]);
+                if (FP_ARITHMETIC) begin
+                    fp_accum = 0.0;
+                    fp16_dpi_accum = $unsigned(mac_psum_reg[row][col]);
+                end
                 for(int c=0; c < incntlim; c++)begin
                     if (FP_ARITHMETIC) begin
                         fp_ifmaps_data = fp16_to_shortreal(ifmaps_feeder_data[row].ifmaps_data[c]);
                         fp_weights_data = fp16_to_shortreal(weights_feeder_data[col].weights_data[c]);
                         fp_accum += fp_ifmaps_data * fp_weights_data;
 
-                        fp16_dpi_accum = fp16_mac(shortint'(ifmaps_feeder_data[row].ifmaps_data[c]),
-                                                  shortint'(weights_feeder_data[col].weights_data[c]),
+                        fp16_dpi_ifmaps_data = $unsigned(ifmaps_feeder_data[row].ifmaps_data[c]);
+                        fp16_dpi_weights_data = $unsigned(weights_feeder_data[col].weights_data[c]);
+
+                        fp16_dpi_accum = fp16_mac(fp16_dpi_ifmaps_data,
+                                                  fp16_dpi_weights_data,
                                                   fp16_dpi_accum);
 
                         if (c == (incntlim - 1)) begin
@@ -408,7 +413,7 @@ class sauria_systolic_array_model extends uvm_object;
                 if (col == 0)
                     `sauria_info(message_id, $sformatf("Col0 Row: %0d PSUM_VAL: 0x%0h", row, psum_col[row]))
 
-                mac_psum_reg[row][col] = 0;
+                mac_psum_reg[row][col] = {mac_psum_reg[row][col][15], 15'h0000};
             end
             
             if (!wr_ptr)

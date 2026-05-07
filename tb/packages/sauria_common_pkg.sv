@@ -94,9 +94,9 @@ package sauria_common_pkg;
     parameter fp16_data_t FP16_NEG_INF   = 16'hFC00;
     parameter fp16_data_t FP16_QNAN      = 16'h7E00;
 
-    parameter IFMAPS_DATA_MODE  = INT_ARITHMETIC ? SING_NIB_INCR_PATTERN : FP_ONE_W_FRAC_COMP;
-    parameter WEIGHTS_DATA_MODE = INT_ARITHMETIC ? SING_NIB_INCR_PATTERN : FP_NEG_ONE;
-    parameter PSUMS_DATA_MODE   = INT_ARITHMETIC ? ALL_TWOS              : FP_ONE;
+    parameter IFMAPS_DATA_MODE  = INT_ARITHMETIC ? SING_NIB_INCR_PATTERN : RAND_FP; //FP_ONE_W_FRAC_COMP;
+    parameter WEIGHTS_DATA_MODE = INT_ARITHMETIC ? SING_NIB_INCR_PATTERN : RAND_FP; //FP_NEG_ONE;
+    parameter PSUMS_DATA_MODE   = INT_ARITHMETIC ? ALL_TWOS              : RAND_FP; //FP_ONE;
     
     parameter CS_FIRST_IDX = arr_row_data_t'('h8000);
     parameter CS_LAST_IDX  = arr_row_data_t'('h0001);
